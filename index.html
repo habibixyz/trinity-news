@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRINITY MARKETS | The Financial Intelligence Journal</title>
+  <meta name="description" content="TRINITY MARKETS delivers authoritative institutional analysis across Stocks, Commercial Real Estate, Crypto & Digital Assets, Private Equity, and Global Macro.">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><polygon points=%2250,5 95,85 5,85%22 fill=%22%23ffffff%22/><circle cx=%2250%22 cy=%2255%22 r=%2215%22 fill=%22%23000000%22/></svg>">
+</head>
+<body class="theme-dark">
+
+  <!-- ==================== Compact Executive Header ==================== -->
+  <header class="site-header">
+    
+    <!-- Tier 1: Brand & Utility Bar -->
+    <div class="top-brand-bar">
+      <div class="container nav-bar-inner">
+        <!-- Left: Brand Logo -->
+        <div class="brand-group">
+          <a href="#/" class="brand-logo" id="logoRefreshBtn">
+            <span class="brand-name">TRINITY</span>
+          </a>
+          <span class="brand-edition-tag">MARKETS JOURNAL</span>
+        </div>
+
+        <!-- Right: Action Controls (Dedicated Pages) -->
+        <div class="header-actions">
+          <a href="#/terminal" class="btn-header-markets" id="openMarketsHubBtn" title="Open Interactive Financial Terminal">
+            <span>Terminal</span>
+          </a>
+          
+          <a href="#/search" class="btn-header-search" id="openSearchBtn" title="Search Intelligence (⌘K)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span class="search-hint">⌘K</span>
+          </a>
+
+          <a href="#/saved" class="btn-bookmark-drawer" id="openBookmarksBtn" title="Saved Portfolio">
+            🔖
+            <span class="badge-count" id="bookmarkCountBadge">0</span>
+          </a>
+
+          <a href="#/settings" class="theme-icon-btn" title="Journal Settings & Preferences">
+            ⚙️
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tier 2: Dedicated Category Navigation Bar -->
+    <div class="category-nav-bar">
+      <div class="container category-nav-inner">
+        <nav class="nav-links-menu" id="categoryNavMenu">
+          <a href="#/" class="nav-link-btn" data-route="home">Cover</a>
+          <a href="#/category/stocks-and-equities" class="nav-link-btn" data-route="category/stocks-and-equities">Stocks</a>
+          <a href="#/category/commercial-real-estate" class="nav-link-btn" data-route="category/commercial-real-estate">Real Estate</a>
+          <a href="#/category/crypto-and-digital-assets" class="nav-link-btn" data-route="category/crypto-and-digital-assets">Crypto</a>
+          <a href="#/category/private-equity-and-vc" class="nav-link-btn" data-route="category/private-equity-and-vc">Private Equity</a>
+          <a href="#/category/macro-and-banking" class="nav-link-btn" data-route="category/macro-and-banking">Macro</a>
+          <a href="#/wire" class="nav-link-btn" data-route="wire">Live Wire</a>
+          <a href="#/perspectives" class="nav-link-btn" data-route="perspectives">Perspectives</a>
+          <a href="#/briefing" class="nav-link-btn" data-route="briefing">Briefing</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Tier 3: Real-Time Financial Sub-Ticker -->
+    <div class="ticker-subbar">
+      <div class="container ticker-subbar-inner">
+        <a href="#/terminal" class="ticker-badge-wrap" title="Open Terminal">
+          <span>MARKET TICKER</span>
+          <span class="markets-time-tag" id="marketsTimeTag">LIVE 24/7</span>
+        </a>
+
+        <div class="markets-ribbon">
+          <div class="markets-track" id="marketsTrack">
+            <!-- Injected by JS: Tickers linking to #/ticker/:symbol -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== Modular Page Views ==================== -->
+  <main class="container main-wrapper">
+
+    <!-- PAGE VIEW 1: Home Magazine Cover -->
+    <section id="viewHome" class="app-page-view">
+      <!-- Compact Forbes/FT-Style Executive Dateline Strip -->
+      <div class="editorial-dateline-strip">
+        <div class="dateline-left">
+          <span class="dateline-date" id="currentDynamicDate">Wednesday, Sept 16, 2026</span>
+          <span class="dateline-sep">•</span>
+          <span class="dateline-edition">GLOBAL WEALTH & FINANCIAL MARKETS EDITION</span>
+          <span class="dateline-sep">•</span>
+          <span class="dateline-status">AI-VERIFIED TELEMETRY</span>
+        </div>
+        <div class="dateline-right">
+          <a href="#/briefing" class="dateline-link">DAILY EXECUTIVE 10 DISPATCHES →</a>
+        </div>
+      </div>
+
+      <!-- Cover Story & Market Intelligence Radar -->
+      <div class="hero-editorial-layout" id="heroSection">
+        <!-- Injected by JS: Lead Cover Story + Side Market Radar -->
+      </div>
+
+      <!-- The Daily 10 Executive Dispatches -->
+      <div class="news-feed-section">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">The Daily 10 Dispatches</h2>
+            <p class="section-subtitle">Curated Institutional Intelligence Across Core Financial Asset Classes</p>
+          </div>
+          <button class="btn-scrape-now" id="scrapeNowBtn" title="Sync Live Primary Wires">
+            <span class="refresh-icon">🔄</span>
+            <span id="scrapeNowText">Sync Primary Feeds</span>
+          </button>
+        </div>
+
+        <div class="news-cards-grid" id="newsCardsGrid">
+          <!-- Injected by JS: 10 Curated Cards -->
+        </div>
+      </div>
+
+      <!-- Section: Market Viewpoints & Columnists -->
+      <div class="founding-voices-section">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Institutional Perspectives</h2>
+            <p class="section-subtitle">Executive Essays on Asset Allocation, Regulatory Shifts, and Strategic Liquidity</p>
+          </div>
+          <a href="#/perspectives" class="btn-scrape-now">All Columnists →</a>
+        </div>
+
+        <div class="columns-grid" id="foundingColumnsGrid">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+
+      <!-- Section: Executive Morning Briefing Subscription Banner -->
+      <div class="newsletter-banner">
+        <div class="newsletter-inner">
+          <div class="newsletter-badge">EXECUTIVE INTELLIGENCE BRIEFING</div>
+          <h2 class="newsletter-title">Receive The Morning Markets Dispatch</h2>
+          <p class="newsletter-desc">Delivered daily at 06:00 GMT to 250,000+ portfolio managers, sovereign wealth officers, and private equity executives worldwide.</p>
+          <div style="display: flex; justify-content: center; gap: 1rem;">
+            <a href="#/briefing" class="btn-newsletter-submit" style="display: inline-block;">Open Daily Briefing Edition →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 2: Dedicated Standalone Article Page -->
+    <section id="viewArticle" class="app-page-view hidden">
+      <div class="standalone-article-container" id="standaloneArticleContainer">
+        <!-- Injected by JS via renderArticlePage() -->
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 3: Dedicated Category / Sector Hub Page -->
+    <section id="viewCategory" class="app-page-view hidden">
+      <div class="category-page-container" id="categoryPageContainer">
+        <!-- Injected by JS via renderCategoryPage() -->
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 4: Dedicated Standalone Market Terminal Page -->
+    <section id="viewTerminal" class="app-page-view hidden">
+      <div class="terminal-page-container" id="terminalPageContainer">
+        <div class="section-head">
+          <div>
+            <h1 class="section-title">Institutional Market Terminal</h1>
+            <p class="section-subtitle">Real-Time Financial Telemetry: Equities, Commercial REITs, Crypto, Yields & Forex</p>
+          </div>
+          <button class="btn-scrape-now" id="refreshTerminalBtn">
+            <span>🔄</span>
+            <span>Live Sync</span>
+          </button>
+        </div>
+
+        <div class="markets-modal-controls" style="background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 2rem;">
+          <div class="market-category-tabs" id="terminalCategoryTabs">
+            <button class="market-tab-btn active" data-market-cat="All">All Assets</button>
+            <button class="market-tab-btn" data-market-cat="Stocks">Stocks & Equities</button>
+            <button class="market-tab-btn" data-market-cat="Real Estate">Real Estate REITs</button>
+            <button class="market-tab-btn" data-market-cat="Crypto">Crypto & Digital</button>
+            <button class="market-tab-btn" data-market-cat="Macro">Macro & Yields</button>
+            <button class="market-tab-btn" data-market-cat="Forex">Forex</button>
+          </div>
+          <input type="text" class="market-search-input" id="terminalSearchInput" placeholder="Filter ticker, asset name, or category...">
+        </div>
+
+        <div class="markets-grid" id="terminalGrid">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 5: Dedicated Individual Asset / Ticker Quote Page -->
+    <section id="viewTicker" class="app-page-view hidden">
+      <div class="ticker-page-container" id="tickerPageContainer">
+        <!-- Injected by JS via renderTickerView() -->
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 6: Dedicated Live Wire & Radar Page -->
+    <section id="viewWire" class="app-page-view hidden">
+      <div class="wire-page-container" id="wirePageContainer">
+        <!-- Injected by JS via renderWireView() -->
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 7: Dedicated Columnists & Perspectives Hub -->
+    <section id="viewPerspectives" class="app-page-view hidden">
+      <div class="perspectives-page-container" id="perspectivesPageContainer">
+        <!-- Injected by JS via renderPerspectivesView() -->
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 8: Dedicated Single Columnist Essay Page -->
+    <section id="viewPerspectiveDetail" class="app-page-view hidden">
+      <div class="perspective-detail-container" id="perspectiveDetailContainer">
+        <!-- Injected by JS via renderPerspectiveDetailView() -->
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 9: Dedicated Morning Briefing & Newsletter Page -->
+    <section id="viewBriefing" class="app-page-view hidden">
+      <div class="briefing-page-container" id="briefingPageContainer">
+        <!-- Injected by JS via renderBriefingView() -->
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 10: Dedicated Financial Bureaus Page -->
+    <section id="viewBureaus" class="app-page-view hidden">
+      <div class="bureaus-page-container" id="bureausPageContainer">
+        <!-- Injected by JS via renderBureausView() -->
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 11: Dedicated Saved Reading Portfolio Page -->
+    <section id="viewSaved" class="app-page-view hidden">
+      <div class="saved-page-container" id="savedPageContainer">
+        <div class="section-head">
+          <div>
+            <h1 class="section-title">Saved Reading Portfolio</h1>
+            <p class="section-subtitle">Your Bookmarked Institutional Financial Intelligence & Regulatory Filings</p>
+          </div>
+          <a href="#/" class="btn-scrape-now">← Back to Cover</a>
+        </div>
+
+        <div class="news-cards-grid" id="savedCardsGrid">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 12: Dedicated Standalone Search Engine Page -->
+    <section id="viewSearch" class="app-page-view hidden">
+      <div class="search-page-container" id="searchPageContainer">
+        <div class="section-head">
+          <div>
+            <h1 class="section-title">Intelligence Search Terminal</h1>
+            <p class="section-subtitle">Query our archive of verified institutional dispatches, tickers, and analysis</p>
+          </div>
+        </div>
+
+        <div class="search-page-input-wrap">
+          <input type="text" class="search-page-input" id="searchPageInput" placeholder="Search by topic, ticker, executive, sovereign fund..." autofocus>
+        </div>
+
+        <div class="news-cards-grid" id="searchPageCardsGrid">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE VIEW 13: Dedicated Journal Settings & Preferences Page -->
+    <section id="viewSettings" class="app-page-view hidden">
+      <div class="settings-page-container" id="settingsPageContainer">
+        <!-- Injected by JS via renderSettingsView() -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="toast-msg" id="toastMsg">
+    <span id="toastText">Action completed</span>
+  </div>
+
+  <!-- ==================== Footer ==================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top-grid">
+        <div>
+          <div class="footer-brand-title">TRINITY MARKETS</div>
+          <p class="footer-brand-desc">The premier global financial intelligence journal. Covering equities, commercial real estate, digital assets, venture capital, and macroeconomic liquidity for institutional allocators.</p>
+        </div>
+        <div>
+          <div class="footer-heading">Sectors</div>
+          <ul class="footer-links-list">
+            <li><a href="#/category/stocks-and-equities">Wall Street & Equities</a></li>
+            <li><a href="#/category/commercial-real-estate">Commercial Real Estate</a></li>
+            <li><a href="#/category/crypto-and-digital-assets">Crypto & Digital Assets</a></li>
+            <li><a href="#/category/private-equity-and-vc">Private Equity & VC</a></li>
+            <li><a href="#/category/macro-and-banking">Macro & Central Banking</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-heading">Intelligence Pages</div>
+          <ul class="footer-links-list">
+            <li><a href="#/terminal">Institutional Market Terminal</a></li>
+            <li><a href="#/wire">Live Telemetry Radar Wire</a></li>
+            <li><a href="#/perspectives">Institutional Columnists</a></li>
+            <li><a href="#/briefing">Daily Executive 10 Briefing</a></li>
+            <li><a href="#/saved">Saved Reading Portfolio</a></li>
+            <li><a href="#/search">Search Terminal (⌘K)</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-heading">Financial Bureaus</div>
+          <div class="bureau-cities">
+            <a href="#/bureaus" class="bureau-badge">New York</a>
+            <a href="#/bureaus" class="bureau-badge">London</a>
+            <a href="#/bureaus" class="bureau-badge">Singapore</a>
+            <a href="#/bureaus" class="bureau-badge">Dubai</a>
+            <a href="#/bureaus" class="bureau-badge">Tokyo</a>
+            <a href="#/bureaus" class="bureau-badge">Frankfurt</a>
+          </div>
+          <div style="margin-top: 1.25rem;">
+            <a href="#/settings" style="font-size: 0.8rem; color: var(--text-muted); text-decoration: underline;">⚙️ Journal Settings & Preferences</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom-bar">
+        <div>© 2026 TRINITY MARKETS JOURNAL. All rights reserved. Non-speculative verified analysis.</div>
+        <div>Financial Data Syndication: NYSE • NASDAQ • CME • Binance • Reuters</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
