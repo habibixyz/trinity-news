@@ -1029,6 +1029,32 @@ class TrinityMarketsApp {
             Clear Cache
           </button>
         </div>
+
+        <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 0.75rem;">
+          <div>
+            <div style="font-weight: 700; color: var(--text-primary);">Google Gemini AI API Key</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Powers real-time "Daily 10" financial article generation (Gemini 3.6 Flash)</div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 540px;">
+            <input type="password" id="geminiKeyInput" class="market-search-input" style="flex: 1; padding: 0.35rem 0.75rem; font-size: 0.78rem;" placeholder="Enter Gemini API Key (stored in browser only)..." value="${localStorage.getItem('trinity_gemini_api_key') || ''}">
+            <button class="btn-scrape-now" onclick="const val = document.getElementById('geminiKeyInput').value.trim(); if(val){ localStorage.setItem('trinity_gemini_api_key', val); window.trinityApp.forceGeminiRegeneration(); window.trinityApp.showToast('Gemini API Key Saved'); } else { localStorage.removeItem('trinity_gemini_api_key'); window.trinityApp.showToast('Gemini Key Removed'); }">
+              Save
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 0.75rem;">
+          <div>
+            <div style="font-weight: 700; color: var(--text-primary);">Alpha Vantage Market Key</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Powers live equities, REITs, and commodity forex feeds</div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 540px;">
+            <input type="password" id="avKeyInput" class="market-search-input" style="flex: 1; padding: 0.35rem 0.75rem; font-size: 0.78rem;" placeholder="Enter Alpha Vantage Key..." value="${localStorage.getItem('trinity_alpha_vantage_key') || 'O4Y0MFDAF40SYJ4J'}">
+            <button class="btn-scrape-now" onclick="const val = document.getElementById('avKeyInput').value.trim(); if(val){ localStorage.setItem('trinity_alpha_vantage_key', val); window.trinityApp.showToast('Alpha Vantage Key Saved'); }">
+              Save
+            </button>
+          </div>
+        </div>
       </div>
     `;
   }
