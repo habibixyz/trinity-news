@@ -667,13 +667,22 @@ export const FINANCIAL_BUREAUS = [
 ];
 
 // Helper functions for router
-export function findArticleBySlugOrId(slugOrId, scrapedArticles = []) {
-  const all = [...ARTICLES, ...scrapedArticles];
-  return all.find(a => a.slug === slugOrId || a.id === slugOrId);
+export function findArticleBySlugOrId(slugOrId, scrapedArticles = [], aiArticles = []) {
+  let storedAi = [];
+  try {
+    storedAi = JSON.parse(localStorage.getItem('trinity_ai_articles') || '[]');
+  } catch {}
+  const all = [...aiArticles, ...storedAi, ...ARTICLES, ...scrapedArticles];
+  const target = decodeURIComponent(slugOrId || '').toLowerCase().trim();
+  return all.find(a => (a.slug && a.slug.toLowerCase().trim() === target) || (a.id && a.id.toLowerCase().trim() === target));
 }
 
-export function findArticlesByCategorySlug(catSlug, scrapedArticles = []) {
-  const all = [...ARTICLES, ...scrapedArticles];
+export function findArticlesByCategorySlug(catSlug, scrapedArticles = [], aiArticles = []) {
+  let storedAi = [];
+  try {
+    storedAi = JSON.parse(localStorage.getItem('trinity_ai_articles') || '[]');
+  } catch {}
+  const all = [...aiArticles, ...storedAi, ...ARTICLES, ...scrapedArticles];
   const catData = CATEGORY_MAP[catSlug];
   if (!catData) return all;
   return all.filter(a => a.category === catData.name || a.categorySlug === catSlug);

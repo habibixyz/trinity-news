@@ -347,7 +347,18 @@ class TrinityMarketsApp {
     const container = document.getElementById('standaloneArticleContainer');
     if (!container) return;
 
-    const article = findArticleBySlugOrId(slug, this.scraperService ? this.scraperService.getArticles() : []);
+    const targetSlug = decodeURIComponent(slug || '').toLowerCase().trim();
+    const all = this.getAllArticles();
+    
+    // Check in all active articles, then fallback to helper
+    let article = all.find(a => 
+      (a.slug && a.slug.toLowerCase().trim() === targetSlug) || 
+      (a.id && a.id.toLowerCase().trim() === targetSlug)
+    );
+
+    if (!article) {
+      article = findArticleBySlugOrId(slug, this.scraperService ? this.scraperService.getArticles() : [], this.state.aiArticles || []);
+    }
 
     if (!article) {
       container.innerHTML = `
