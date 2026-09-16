@@ -273,7 +273,7 @@ class TrinityMarketsApp {
     const container = document.getElementById('newsCardsGrid');
     if (!container) return;
 
-    const items = this.getAllArticles().filter(a => !a.isLead).slice(0, 9);
+    const items = this.getAllArticles().filter(a => !a.isLead);
 
     container.innerHTML = items.map(story => {
       const isSaved = this.state.savedBookmarks.includes(story.id);
@@ -475,7 +475,8 @@ class TrinityMarketsApp {
     };
 
     document.title = `${catData.name} | TRINITY MARKETS`;
-    const articles = findArticlesByCategorySlug(catSlug, this.scraperService ? this.scraperService.getArticles() : []);
+    const all = this.getAllArticles();
+    const articles = all.filter(a => (catData && a.category === catData.name) || a.categorySlug === catSlug);
 
     container.innerHTML = `
       <div class="sector-hero-banner">

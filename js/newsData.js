@@ -427,6 +427,146 @@ export const ARTICLES = [
       <p>Faced with long-term sovereign debt expansion and persistent currency debasement risks, wealth custodians have engineered a comprehensive pivot toward real, cash-flowing physical assets with zero correlation to public market volatility.</p>
       <p>From high-grade productive farmland in the American Midwest to commercial trophy real estate in London and tokenized gold reserves, multi-generational capital is prioritizing physical preservation and perpetual yield over speculative momentum.</p>
     `
+  },
+  {
+    id: "art-11",
+    slug: "datacenter-reit-megawatt-pricing-power-pld-eqix",
+    title: "The Datacenter REIT Supercycle: How Prologis and Equinix Monetize 500MW Interconnect Backlogs",
+    subtitle: "Industrial real estate giants capture 22% annual rental rate escalation as hyperscalers bid for high-voltage computational power corridors.",
+    category: "Commercial Real Estate",
+    categorySlug: "commercial-real-estate",
+    region: "Virginia & Frankfurt",
+    author: {
+      name: "Claire Moreau",
+      role: "Real Estate & Asset Wealth Lead",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+    },
+    date: "Today's Executive Edition",
+    readTime: "5 min read",
+    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80",
+    caption: "High-density enterprise server architecture operating inside an Equinix colocation campus.",
+    tags: ["REITs", "Data Centers", "Real Estate", "Prologis"],
+    takeaways: [
+      "Forward datacenter colocation lease pricing surged 22% year-over-year in North American primary markets.",
+      "Industrial logistics REITs holding grandfathered utility interconnects trade at a 40% net asset value premium."
+    ],
+    content: `
+      <p>Industrial real estate investment trusts have completed an extraordinary transformation from warehouse operators into the primary landlords of the computational economy.</p>
+      <p>By securing multi-hundred-megawatt substation commitments before local utility grid saturation, operators like Equinix and Prologis have created insurmountable supply barriers around core digital infrastructure corridors.</p>
+      <p>Institutional allocators are rerouting billions from office real estate into specialized digital infrastructure REITs, locking in CPI-indexed 20-year master lease agreements with investment-grade tenants.</p>
+    `
+  },
+  {
+    id: "art-12",
+    slug: "sovereign-ai-foundry-monopolies-asml-tsmc-valuation",
+    title: "The Sovereign Foundry Monopoly: Extreme Ultraviolet Lithography and the $6 Trillion Tech Moat",
+    subtitle: "ASML and TSMC command impenetrable pricing power as forward orders for 2nm process nodes reach complete capacity through 2028.",
+    category: "Stocks & Equities",
+    categorySlug: "stocks-and-equities",
+    region: "Taiwan & Netherlands",
+    author: {
+      name: "Victoria Stirling",
+      role: "Chief Equities Analyst",
+      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80"
+    },
+    date: "Today's Executive Edition",
+    readTime: "6 min read",
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80",
+    caption: "Precision optical cleanroom during semiconductor photolithography wafer inspection.",
+    tags: ["Semiconductors", "ASML", "TSMC", "Equities"],
+    takeaways: [
+      "High-NA EUV machinery orders represent a $42B forward delivery pipeline through late 2028.",
+      "Pure-play foundry gross margins expanded to 54.2%, defying broader global manufacturing contractions."
+    ],
+    content: `
+      <p>In the global equity markets, few monopolies are as mathematically absolute as the advanced semiconductor lithography and fabrication ecosystem.</p>
+      <p>With each cutting-edge fabrication facility requiring over $20B in capital expenditure, sovereign governments in North America, Europe, and Asia are subsidizing foundry clusters to guarantee domestic silicon independence.</p>
+      <p>For equity portfolio managers, the semiconductor hardware supply chain represents the ultimate non-discretionary tollbooth of the global technology sector.</p>
+    `
+  },
+  {
+    id: "art-13",
+    slug: "tokenized-real-estate-syndication-commercial-liquidity",
+    title: "Fractionalizing Mayfair and Manhattan: The $80B Rise of Regulatory-Compliant Tokenized Real Estate",
+    subtitle: "Tier-one property developers partner with digital asset custodians to issue secondary-liquid security tokens for commercial skyscrapers.",
+    category: "Crypto & Digital Assets",
+    categorySlug: "crypto-and-digital-assets",
+    region: "London & New York",
+    author: {
+      name: "Arthur Pendelton",
+      role: "Senior Digital Asset Strategist",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80"
+    },
+    date: "Today's Executive Edition",
+    readTime: "5 min read",
+    image: "https://images.unsplash.com/photo-1577495508048-b635879837f1?w=800&auto=format&fit=crop&q=80",
+    caption: "High-density institutional trading floor in London overlooking Canary Wharf.",
+    tags: ["Tokenization", "Real Estate", "Securities", "Smart Contracts"],
+    takeaways: [
+      "Secondary market trading in tokenized commercial real estate expanded 280% in the last four quarters.",
+      "Minimum investment thresholds for trophy commercial equity dropped from $25M to $10,000 for verified accredited allocators."
+    ],
+    content: `
+      <p>The illiquidity discount that has historically plagued commercial real estate is rapidly evaporating under institutional tokenization frameworks.</p>
+      <p>By wrapping institutional equity into regulated smart contracts on public-permissioned blockchains, property sponsors can raise capital globally while providing limited partners with continuous secondary exit liquidity.</p>
+      <p>Sovereign regulatory approvals across the UK, Switzerland, and Singapore have paved the way for massive pension funds to syndicate trophy real estate assets without underwriting cumbersome private placement memorandums.</p>
+    `
+  },
+  {
+    id: "art-14",
+    slug: "direct-lending-private-debt-replaces-syndicated-bank-loans",
+    title: "The $2 Trillion Private Debt Empire: How Non-Bank Direct Lenders Displaced Wall Street Syndication Desks",
+    subtitle: "Mega-sponsors Blackstone, Ares, and Apollo underwrite $5B+ buyout debt packages entirely off-balance-sheet, capturing 11% senior secured coupons.",
+    category: "Private Equity & VC",
+    categorySlug: "private-equity-and-vc",
+    region: "Wall Street & Charlotte",
+    author: {
+      name: "Marcus Vance",
+      role: "Managing Editor, Institutional Capital",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
+    },
+    date: "Today's Executive Edition",
+    readTime: "6 min read",
+    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&auto=format&fit=crop&q=80",
+    caption: "Executive boardroom negotiation during a multi-billion dollar private credit debt syndication.",
+    tags: ["Private Debt", "Direct Lending", "Private Equity", "Blackstone"],
+    takeaways: [
+      "Direct lending now finances over 78% of all mid-market private equity leveraged buyouts.",
+      "Default rates across top-quartile private credit funds remain below 1.4% due to strict maintenance covenant structures."
+    ],
+    content: `
+      <p>The golden age of traditional commercial bank syndication is over. In its place stands an elite group of private credit managers who dictate the borrowing terms of corporate America.</p>
+      <p>Free from regulatory reserve capital mandates, private debt funds offer sponsors speed of execution, custom amortization structures, and total confidentiality for multi-billion-dollar corporate acquisitions.</p>
+      <p>Insurance companies and pension funds have permanently reallocated sovereign bond portfolios into senior secured direct loans, anchoring long-term institutional cash flow generation.</p>
+    `
+  },
+  {
+    id: "art-15",
+    slug: "sovereign-debt-yield-curve-repression-gold-all-time-highs",
+    title: "Sovereign Debt Repression: Why Central Bank Gold Accumulation Reached Century-Record Velocities",
+    subtitle: "As G10 fiscal deficits expand past $3.5T annually, sovereign monetary authorities accelerate non-dollar reserve diversification.",
+    category: "Macro & Banking",
+    categorySlug: "macro-and-banking",
+    region: "Zurich & Washington",
+    author: {
+      name: "Victoria Stirling",
+      role: "Chief Equities Analyst",
+      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80"
+    },
+    date: "Today's Executive Edition",
+    readTime: "6 min read",
+    image: "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800&auto=format&fit=crop&q=80",
+    caption: "Physical gold bullion reserves stored in sovereign underground bank vault chambers.",
+    tags: ["Gold", "Central Banks", "Sovereign Debt", "Macro"],
+    takeaways: [
+      "Global central banks added 1,180 metric tons of physical gold to national balance sheets over the trailing 12 months.",
+      "Non-Western foreign exchange reserves held in US Treasuries fell to a 30-year low of 48% of total allocations."
+    ],
+    content: `
+      <p>A profound tectonic shift is quietly recalibrating the balance sheets of sovereign central banks across the Eastern Hemisphere and Emerging Markets.</p>
+      <p>Recognizing the mathematical certainty of perpetual fiscal expansion in developed market economies, sovereign monetary authorities are systematically exchanging sovereign paper for unencumbered physical gold and bearer assets.</p>
+      <p>This structural institutional bidding has established an unyielding floor beneath bullion prices, redefining gold not as an archaic relic, but as the paramount tier-one riskless asset of modern sovereign finance.</p>
+    `
   }
 ];
 
