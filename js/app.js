@@ -144,6 +144,89 @@ class TrinityMarketsApp {
     };
   }
 
+  /* ==================== Dynamic SEO & Schema Engine ==================== */
+  updateSEO(options = {}) {
+    const {
+      title = 'TRINITY MARKETS | The Financial Intelligence Journal',
+      description = 'TRINITY MARKETS delivers authoritative institutional analysis across Stocks, Commercial Real Estate, Crypto & Digital Assets, Private Equity, and Global Macro.',
+      image = 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&auto=format&fit=crop&q=80',
+      type = 'website',
+      article = null
+    } = options;
+
+    document.title = title;
+
+    const metaDesc = document.getElementById('meta-description');
+    if (metaDesc) metaDesc.setAttribute('content', description);
+
+    const canonical = document.getElementById('canonical-url');
+    if (canonical) canonical.setAttribute('href', window.location.href);
+
+    const ogTitle = document.getElementById('meta-og-title');
+    if (ogTitle) ogTitle.setAttribute('content', title);
+
+    const ogDesc = document.getElementById('meta-og-desc');
+    if (ogDesc) ogDesc.setAttribute('content', description);
+
+    const ogType = document.getElementById('meta-og-type');
+    if (ogType) ogType.setAttribute('content', type);
+
+    const ogUrl = document.getElementById('meta-og-url');
+    if (ogUrl) ogUrl.setAttribute('content', window.location.href);
+
+    const ogImg = document.getElementById('meta-og-image');
+    if (ogImg) ogImg.setAttribute('content', image);
+
+    const twTitle = document.getElementById('meta-tw-title');
+    if (twTitle) twTitle.setAttribute('content', title);
+
+    const twDesc = document.getElementById('meta-tw-desc');
+    if (twDesc) twDesc.setAttribute('content', description);
+
+    const twImg = document.getElementById('meta-tw-image');
+    if (twImg) twImg.setAttribute('content', image);
+
+    const jsonLdScript = document.getElementById('json-ld-schema');
+    if (jsonLdScript) {
+      if (article) {
+        const schemaData = {
+          "@context": "https://schema.org",
+          "@type": "NewsArticle",
+          "headline": article.title,
+          "description": article.subtitle || description,
+          "image": [article.image || image],
+          "datePublished": article.date || "2026-03-31",
+          "author": {
+            "@type": "Person",
+            "name": typeof article.author === 'string' ? article.author : (article.author?.name || "Trinity Research Desk")
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "TRINITY MARKETS",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://trinitymarkets.com/logo.png"
+            }
+          },
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": window.location.href
+          }
+        };
+        jsonLdScript.textContent = JSON.stringify(schemaData, null, 2);
+      } else {
+        const schemaData = {
+          "@context": "https://schema.org",
+          "@type": "NewsMediaOrganization",
+          "name": "TRINITY MARKETS",
+          "url": "https://trinitymarkets.com",
+          "description": description
+        };
+        jsonLdScript.textContent = JSON.stringify(schemaData, null, 2);
+      }
+    }
+  }
+
   /* ==================== Unified Multi-Page Routing Engine ==================== */
   handleRouting() {
     try {
@@ -170,7 +253,10 @@ class TrinityMarketsApp {
       if (!hash || hash === '/' || hash === 'home') {
         this.showView('viewHome');
         this.renderHomeView();
-        document.title = "TRINITY MARKETS | The Financial Intelligence Journal";
+        this.updateSEO({
+          title: "TRINITY MARKETS | The Financial Intelligence Journal",
+          description: "TRINITY MARKETS delivers authoritative institutional analysis across Stocks, Commercial Real Estate, Crypto & Digital Assets, Private Equity, and Global Macro."
+        });
       } else if (hash.startsWith('article/')) {
         const slug = hash.replace('article/', '').split('?')[0];
         this.showView('viewArticle');
@@ -182,15 +268,24 @@ class TrinityMarketsApp {
       } else if (hash === 'data' || hash.startsWith('data')) {
         this.showView('viewData');
         this.renderDataDashboardView();
-        document.title = "Institutional Data & ETF Dashboard | TRINITY MARKETS";
+        this.updateSEO({
+          title: "Institutional Data & ETF Dashboard | TRINITY MARKETS",
+          description: "Real-time macroeconomic telemetry, sector heatmaps, ETF flows, and rate decision analytics."
+        });
       } else if (hash === 'research' || hash.startsWith('research')) {
         this.showView('viewResearch');
         this.renderResearchView();
-        document.title = "Institutional Research & Intelligence Reports | TRINITY MARKETS";
+        this.updateSEO({
+          title: "Institutional Research & Intelligence Reports | TRINITY MARKETS",
+          description: "Deep research papers, institutional filings, and macro financial models."
+        });
       } else if (hash.startsWith('terminal')) {
         this.showView('viewTerminal');
         this.renderTerminalView();
-        document.title = "Institutional Market Terminal | TRINITY MARKETS";
+        this.updateSEO({
+          title: "Institutional Market Terminal | TRINITY MARKETS",
+          description: "Interactive market telemetry terminal for financial analysts, wealth managers, and institutional funds."
+        });
       } else if (hash.startsWith('ticker/')) {
         const symbol = hash.replace('ticker/', '').split('?')[0];
         this.showView('viewTicker');
@@ -198,11 +293,17 @@ class TrinityMarketsApp {
       } else if (hash.startsWith('wire')) {
         this.showView('viewWire');
         this.renderWireView();
-        document.title = "Live Telemetry Radar Wire | TRINITY MARKETS";
+        this.updateSEO({
+          title: "Live Telemetry Radar Wire | TRINITY MARKETS",
+          description: "Breaking financial radar wire updating live with global rate cuts, M&A filings, and market telemetry."
+        });
       } else if (hash === 'perspectives' || hash.startsWith('perspectives')) {
         this.showView('viewPerspectives');
         this.renderPerspectivesView();
-        document.title = "Institutional Perspectives & Columnists | TRINITY MARKETS";
+        this.updateSEO({
+          title: "Institutional Perspectives & Columnists | TRINITY MARKETS",
+          description: "Exclusive opinion columns and strategic macro breakdowns from chief economists and quantitative analysts."
+        });
       } else if (hash.startsWith('perspective/')) {
         const id = hash.replace('perspective/', '').split('?')[0];
         this.showView('viewPerspectiveDetail');
@@ -210,28 +311,47 @@ class TrinityMarketsApp {
       } else if (hash.startsWith('briefing') || hash.startsWith('newsletter')) {
         this.showView('viewBriefing');
         this.renderBriefingView();
-        document.title = "Daily Executive 10 Briefing | TRINITY MARKETS";
+        this.updateSEO({
+          title: "Daily Executive 10 Briefing | TRINITY MARKETS",
+          description: "Curated daily executive 10 briefing summarizing market movers, rate decisions, and capital flows."
+        });
       } else if (hash.startsWith('bureaus')) {
         this.showView('viewBureaus');
         this.renderBureausView();
-        document.title = "Global Financial Bureaus | TRINITY MARKETS";
+        this.updateSEO({
+          title: "Global Financial Bureaus | TRINITY MARKETS",
+          description: "Global dispatch hubs across New York, London, Tokyo, Mumbai, and Singapore."
+        });
       } else if (hash.startsWith('saved')) {
         this.showView('viewSaved');
         this.renderSavedView();
-        document.title = "Saved Portfolio | TRINITY MARKETS";
+        this.updateSEO({
+          title: "Saved Portfolio | TRINITY MARKETS",
+          description: "Your saved institutional intelligence reports and bookmarks."
+        });
       } else if (hash.startsWith('search')) {
         this.showView('viewSearch');
         const urlParams = new URLSearchParams(hash.split('?')[1] || '');
         const query = urlParams.get('q') || '';
         this.renderSearchView(query);
-        document.title = "Intelligence Search Terminal | TRINITY MARKETS";
+        this.updateSEO({
+          title: "Intelligence Search Terminal | TRINITY MARKETS",
+          description: "Search institutional dispatches, filing disclosures, and market research."
+        });
       } else if (hash.startsWith('settings')) {
         this.showView('viewSettings');
         this.renderSettingsView();
-        document.title = "Journal Settings | TRINITY MARKETS";
+        this.updateSEO({
+          title: "Journal Settings | TRINITY MARKETS",
+          description: "Customize reader telemetry, theme preferences, and data feed settings."
+        });
       } else {
         this.showView('viewHome');
         this.renderHomeView();
+        this.updateSEO({
+          title: "TRINITY MARKETS | The Financial Intelligence Journal",
+          description: "TRINITY MARKETS delivers authoritative institutional analysis across Stocks, Commercial Real Estate, Crypto & Digital Assets, Private Equity, and Global Macro."
+        });
       }
     } catch (err) {
       console.error('[TRINITY ROUTER ERROR]', err);
@@ -539,7 +659,13 @@ class TrinityMarketsApp {
     }
 
     this.state.activeArticle = article;
-    document.title = `${article.title} | TRINITY MARKETS`;
+    this.updateSEO({
+      title: `${article.title} | TRINITY MARKETS`,
+      description: article.subtitle || article.caption || 'Institutional financial analysis dispatch from TRINITY MARKETS.',
+      image: article.image,
+      type: 'article',
+      article: article
+    });
 
     const isSaved = this.state.savedBookmarks.includes(article.id);
     const catSlug = article.categorySlug || 'stocks-and-equities';
@@ -674,7 +800,11 @@ class TrinityMarketsApp {
       leadTicker: "Active Markets Terminal"
     };
 
-    document.title = `${catData.name} | TRINITY MARKETS`;
+    this.updateSEO({
+      title: `${catData.name} | TRINITY MARKETS`,
+      description: `Institutional market intelligence, deep research dispatches, and filing analytics for ${catData.name}.`,
+      type: 'website'
+    });
     const all = this.getAllArticles();
 
     const articles = all.filter(a => {

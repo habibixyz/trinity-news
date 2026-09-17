@@ -114,7 +114,41 @@ img {
   max-width: 100%;
   height: auto;
   display: block;
+  filter: contrast(1.04) brightness(0.92) saturate(0.85);
+  transition: filter var(--transition-smooth), transform var(--transition-smooth);
 }
+
+/* Matte & Grainy Film Image Overlay Finish */
+.lead-media-wrap,
+.story-media,
+.standalone-hero-img,
+.media-frame,
+.card-media {
+  position: relative;
+  overflow: hidden;
+}
+
+.lead-media-wrap::after,
+.story-media::after,
+.standalone-hero-img::after,
+.media-frame::after,
+.card-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.45'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lead-category-pill,
+.story-tags-overlay,
+.story-category-tag {
+  z-index: 3 !important;
+}
+
 
 .container {
   width: 92%;

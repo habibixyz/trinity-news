@@ -719,7 +719,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=900&auto=format&fit=crop&q=85",
     caption: "Central bank monetary policy trading floor monitoring real-time sovereign yield curve differentials.",
     tags: ["Rate Cuts", "Federal Reserve", "RBI", "ECB", "Monetary Policy"],
     takeaways: [
@@ -748,7 +748,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900&auto=format&fit=crop&q=85",
     caption: "Institutional fixed income trading desks executing Indian G-Sec sovereign debt allocations.",
     tags: ["India", "Bonds", "JP Morgan Index", "FII Inflows", "G-Sec"],
     takeaways: [
@@ -777,7 +777,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=900&auto=format&fit=crop&q=85",
     caption: "State-of-the-art cleanroom optical systems engineered for 28nm and 40nm automotive and power management semiconductors.",
     tags: ["Tata", "Semiconductors", "India", "Capex", "Dholera"],
     takeaways: [
@@ -808,7 +808,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=900&auto=format&fit=crop&q=85",
     caption: "Modern corporate headquarters tower in Mumbai's central business district.",
     tags: ["Banking", "HDFC Bank", "ICICI Bank", "Credit Growth", "NIFTY"],
     takeaways: [
@@ -837,7 +837,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=900&auto=format&fit=crop&q=85",
     caption: "Federal Reserve Eccles Building in Washington DC overseeing interbank reserve balances.",
     tags: ["Federal Reserve", "Rate Cuts", "Quantitative Tightening", "Liquidity", "FOMC"],
     takeaways: [
@@ -896,7 +896,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=900&auto=format&fit=crop&q=85",
     caption: "Modern Grade-A corporate office parks in Bengaluru hosting multinational AI engineering teams.",
     tags: ["Commercial Real Estate", "India", "REITs", "Office Leasing", "GCC"],
     takeaways: [
@@ -925,7 +925,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=900&auto=format&fit=crop&q=85",
     caption: "Custom ASIC wafer layout engineered for high-throughput enterprise model inferencing.",
     tags: ["Semiconductors", "ASIC", "Google", "Amazon", "NVIDIA", "Equities"],
     takeaways: [
@@ -954,7 +954,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=900&auto=format&fit=crop&q=85",
     caption: "Institutional cryptographic key management vaults validating proof-of-stake blockchain transactions.",
     tags: ["Crypto", "Ethereum", "Staking", "Digital Assets", "Institutional Custody"],
     takeaways: [
@@ -1012,7 +1012,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=900&auto=format&fit=crop&q=85",
     caption: "Central bank sovereign reserve vaults storing unencumbered physical gold bullion.",
     tags: ["Macro", "M2 Money Supply", "Gold", "Central Banks", "Liquidity"],
     takeaways: [
@@ -1041,7 +1041,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=900&auto=format&fit=crop&q=85",
     caption: "Tokyo financial district trading desks executing sovereign currency swap hedges.",
     tags: ["Bank of Japan", "Yen", "Carry Trade", "Bonds", "Macro"],
     takeaways: [
@@ -1069,7 +1069,7 @@ export const ARTICLES = [
     },
     date: "Today's Executive Edition",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=900&auto=format&fit=crop&q=85",
+    image: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=900&auto=format&fit=crop&q=85",
     caption: "High-frequency equities algorithmic order flow monitoring enterprise tech valuations.",
     tags: ["Tech", "Capex", "Hyperscalers", "Microsoft", "Alphabet", "Equities"],
     takeaways: [
