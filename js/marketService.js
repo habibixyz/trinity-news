@@ -16,9 +16,14 @@ export class MarketService {
     this.syncInterval = null;
     this.tickInterval = null;
     this.status = 'initializing';
-    // Track Alpha Vantage calls (500/day limit — space them out)
-    this.alphaVantageCallCount = parseInt(sessionStorage.getItem('av_calls') || '0');
-    this.MAX_AV_CALLS_PER_SESSION = 60; // conservative per session
+    let avCalls = 0;
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        avCalls = parseInt(sessionStorage.getItem('av_calls') || '0') || 0;
+      }
+    } catch {}
+    this.alphaVantageCallCount = avCalls;
+    this.MAX_AV_CALLS_PER_SESSION = 60;
   }
 
   start() {
@@ -284,6 +289,7 @@ export class MarketService {
 
       const fxMap = [
         { trinSym: 'EUR-USD', price: rates.EUR ? 1 / rates.EUR : null, digits: 4 },
+        { trinSym: 'USD-INR', price: rates.INR ? rates.INR : null, digits: 2 },
       ];
 
       fxMap.forEach(fx => {
@@ -298,7 +304,7 @@ export class MarketService {
         target.dataSource = 'Open Exchange Rates Live';
       });
 
-      console.log('[TRINITY] ✅ Forex rates updated');
+      console.log('[TRINITY] ✅ Forex rates updated (EUR/USD, USD/INR)');
     } catch (e) {
       console.warn('[TRINITY] Forex fetch failed:', e.message);
     }
@@ -325,8 +331,12 @@ export class MarketService {
         item.value = this.formatPrice(newPrice, true);
       } else if (item.category === 'Forex') {
         item.value = newPrice.toFixed(newPrice > 20 ? 2 : 4);
-      } else if (['SP500', 'NASDAQ', 'DOW'].includes(item.symbol)) {
+      } else if (['SP500', 'NASDAQ', 'DOW', 'NIFTY50', 'SENSEX'].includes(item.symbol)) {
         item.value = newPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      } else if (item.category === 'India') {
+        item.value = `₹${newPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      } else if (item.category === 'Policy' || item.symbol === 'IN10Y' || item.symbol === 'US10Y') {
+        item.value = `${newPrice.toFixed(3)}%`;
       } else {
         item.value = `$${newPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       }

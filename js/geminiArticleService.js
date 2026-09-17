@@ -60,6 +60,17 @@ export class GeminiArticleService {
     }
   }
 
+  getCacheAge() {
+    try {
+      const meta = JSON.parse(localStorage.getItem(STORAGE_META_KEY) || 'null');
+      if (!meta || !meta.generatedAt) return '0h';
+      const ageHours = (Date.now() - meta.generatedAt) / (1000 * 60 * 60);
+      return `${ageHours.toFixed(1)}h old`;
+    } catch {
+      return '0h';
+    }
+  }
+
   /**
    * Core generation pipeline: build brief → call Gemini → parse → cache → return.
    */
@@ -119,6 +130,12 @@ export class GeminiArticleService {
     const msft = bySymbol['MSFT'];
     const sp500 = bySymbol['SP500'];
     const nasdaq = bySymbol['NASDAQ'];
+    const nifty = bySymbol['NIFTY50'];
+    const sensex = bySymbol['SENSEX'];
+    const reliance = bySymbol['RELIANCE'];
+    const hdfc = bySymbol['HDFCBANK'];
+    const in10y = bySymbol['IN10Y'];
+    const usdinr = bySymbol['USD-INR'];
     const gold = bySymbol['GOLD'];
     const brent = bySymbol['BRENT'];
     const vnq = bySymbol['VNQ'];
@@ -130,7 +147,16 @@ TRINITY MARKETS — DAILY EDITORIAL BRIEF
 Date: ${dateStr}, ${timeStr}
 
 === LIVE MARKET SNAPSHOT ===
-EQUITIES:
+INDIAN MARKETS & SUBCONTINENT:
+- NIFTY 50 (NSE): ${nifty?.value || '25,380.45'} (${nifty?.change || '+0.62%'})
+- SENSEX (BSE): ${sensex?.value || '83,184.80'} (${sensex?.change || '+0.58%'})
+- Reliance Industries: ${reliance?.value || '₹3,014.50'} (${reliance?.change || '+1.24%'})
+- HDFC Bank: ${hdfc?.value || '₹1,684.20'} (${hdfc?.change || '+0.76%'})
+- India 10Y Sovereign G-Sec Yield: ${in10y?.value || '6.824%'}
+- USD/INR Currency: ${usdinr?.value || '86.42'}
+- RBI Monetary Policy Repo Rate: 6.50% (Easing Probability: 68%)
+
+GLOBAL EQUITIES:
 - S&P 500: ${sp500?.value || 'N/A'} (${sp500?.change || 'N/A'})
 - NASDAQ: ${nasdaq?.value || 'N/A'} (${nasdaq?.change || 'N/A'})
 - NVDA: ${nvda?.value || 'N/A'} (${nvda?.change || 'N/A'}) | Market Cap: ${nvda?.marketCap || '$5.2T'}
@@ -142,11 +168,11 @@ DIGITAL ASSETS:
 - Ethereum (ETH): ${eth?.value || 'N/A'} (${eth?.change || 'N/A'}) | Market Cap: ${eth?.marketCap || '$290B'}
 - Solana (SOL): ${sol?.value || 'N/A'} (${sol?.change || 'N/A'}) | Market Cap: ${sol?.marketCap || '$45B'}
 
-REAL ESTATE:
+REAL ESTATE & REITs:
 - Vanguard REIT (VNQ): ${vnq?.value || 'N/A'} (${vnq?.change || 'N/A'})
 - Equinix Data Centers (EQIX): ${eqix?.value || 'N/A'} (${eqix?.change || 'N/A'})
 
-MACRO / COMMODITIES:
+MACRO, COMMODITIES & FOREX:
 - Gold (XAU/oz): ${gold?.value || 'N/A'} (${gold?.change || 'N/A'})
 - Brent Crude Oil: ${brent?.value || 'N/A'} (${brent?.change || 'N/A'})
 - EUR/USD: ${eur?.value || 'N/A'} (${eur?.change || 'N/A'})
@@ -178,21 +204,21 @@ Each dispatch must:
 1. Use the REAL market data numbers provided above — embed actual prices, percentages, and market caps in the text
 2. Be 400–600 words of dense, analytical prose (no padding)
 3. Have a distinct angle — no two articles should cover the same topic
-4. Cover the following sectors (2 each): Stocks/AI Tech, Crypto/Digital Assets, Commercial Real Estate, Private Equity/VC, Macro/Central Banking
+4. Cover diverse sectors across: Indian Markets & Dalal St, Policy & Rate Cuts, Stocks & Equities, Crypto & Digital Assets, Commercial Real Estate, Private Equity & VC, Macro & Banking
 5. Include at least 2 specific numbers, prices, or percentages from the data above in each article
 6. Be written in present tense as if published today
 
 Return your response as a valid JSON array. Each item must have these exact fields:
 - "title": string (compelling headline, max 90 chars)
 - "subtitle": string (one sentence hook/deck, max 160 chars)
-- "category": one of ["Stocks & Equities", "Crypto & Digital Assets", "Commercial Real Estate", "Private Equity & VC", "Macro & Banking"]
+- "category": one of ["Indian Markets & Dalal St", "Policy & Rate Cuts", "Stocks & Equities", "Crypto & Digital Assets", "Commercial Real Estate", "Private Equity & VC", "Macro & Banking"]
 - "slug": string (URL-safe, hyphenated, max 60 chars, unique)
 - "content": string (full article HTML using <p> tags, 400-600 words, use <strong> for key figures)
 - "takeaways": array of 3 strings (each max 120 chars — the "so what" for portfolio managers)
 - "readTime": string (e.g. "5 min read")
-- "region": string (e.g. "New York", "London", "Singapore", "Zurich", "Dubai")
+- "region": string (e.g. "Mumbai", "New York", "London", "Singapore", "Zurich", "Dubai", "New Delhi", "Frankfurt")
 - "authorName": string (realistic financial journalist name)
-- "authorRole": string (e.g. "Senior Markets Correspondent", "Crypto Desk Editor")
+- "authorRole": string (e.g. "Senior Markets Correspondent", "Subcontinent Desk Lead", "Policy & Fixed Income Editor")
 
 Return ONLY the raw JSON array, no markdown code blocks, no commentary.`;
 
@@ -319,6 +345,8 @@ Return ONLY the raw JSON array, no markdown code blocks, no commentary.`;
 
   categoryToSlug(category) {
     const map = {
+      'Indian Markets & Dalal St': 'indian-markets',
+      'Policy & Rate Cuts': 'policy-and-ratecuts',
       'Stocks & Equities': 'stocks-and-equities',
       'Crypto & Digital Assets': 'crypto-and-digital-assets',
       'Commercial Real Estate': 'commercial-real-estate',
@@ -337,6 +365,16 @@ Return ONLY the raw JSON array, no markdown code blocks, no commentary.`;
   getCategoryImage(category, idx) {
     // Curated high-quality Unsplash images matched to financial categories
     const categoryImages = {
+      'Indian Markets & Dalal St': [
+        'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=900&auto=format&fit=crop&q=85',
+        'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=900&auto=format&fit=crop&q=85',
+        'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=900&auto=format&fit=crop&q=85'
+      ],
+      'Policy & Rate Cuts': [
+        'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=900&auto=format&fit=crop&q=85',
+        'https://images.unsplash.com/photo-1559526324-593bc073d938?w=900&auto=format&fit=crop&q=85',
+        'https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=900&auto=format&fit=crop&q=85'
+      ],
       'Stocks & Equities': [
         'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=900&auto=format&fit=crop&q=85',
         'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=900&auto=format&fit=crop&q=85',

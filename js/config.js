@@ -19,7 +19,7 @@ const getStoredKey = (storageKey, fallback = '') => {
 export const CONFIG = {
   // Alpha Vantage — Real-time stock, forex, commodity prices
   // Set in browser Settings or via localStorage.setItem('trinity_alpha_vantage_key', '...')
-  ALPHA_VANTAGE_KEY: getStoredKey('trinity_alpha_vantage_key', 'O4Y0MFDAF40SYJ4J'),
+  ALPHA_VANTAGE_KEY: getStoredKey('trinity_alpha_vantage_key', 'demo'),
 
   // Google Gemini API — AI-generated daily financial article generation
   // Set in browser Settings or via localStorage.setItem('trinity_gemini_api_key', '...')
@@ -31,8 +31,8 @@ export const CONFIG = {
   // Alpha Vantage base URL
   ALPHA_VANTAGE_BASE: 'https://www.alphavantage.co/query',
 
-  // Gemini API Base endpoint (gemini-3.6-flash default)
-  GEMINI_API_BASE: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
+  // Gemini API Base endpoint (gemini-1.5-flash default)
+  GEMINI_API_BASE: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
 
   // Open Exchange Rates (free public /latest/USD endpoint)
   FOREX_BASE: 'https://open.er-api.com/v6/latest/USD',

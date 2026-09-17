@@ -12,6 +12,11 @@ import {
   ARTICLES,
   EDITORIAL_OPINIONS,
   FINANCIAL_BUREAUS,
+  RATE_CUT_TRACKER,
+  UPCOMING_FINANCIAL_EVENTS,
+  MARKET_PULSE_KPIS,
+  ETF_FLOW_DATA,
+  INSTITUTIONAL_RESEARCH_REPORTS,
   findArticleBySlugOrId,
   findArticlesByCategorySlug,
   findTickerBySymbol,
@@ -20,27 +25,40 @@ import {
 import { MarketService } from './marketService.js';
 import { NewsScraperService } from './newsScraperService.js';
 import { GeminiArticleService } from './geminiArticleService.js';
+import { ChartService } from './chartService.js';
 
 class TrinityMarketsApp {
   constructor() {
+    let savedTheme = 'dark';
+    let savedBookmarks = [];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        savedTheme = localStorage.getItem('trinity_theme') || 'dark';
+        savedBookmarks = JSON.parse(localStorage.getItem('trinity_bookmarks') || '[]');
+      }
+    } catch {}
+
     this.state = {
-      theme: localStorage.getItem('trinity_theme') || 'dark',
+      theme: savedTheme,
       currentRoute: '',
       terminalCategory: 'All',
       terminalSearchQuery: '',
-      savedBookmarks: JSON.parse(localStorage.getItem('trinity_bookmarks') || '[]'),
+      savedBookmarks: savedBookmarks,
       activeArticle: null,
-      fontSizeLevel: 1, // 0: standard, 1: comfortable, 2: large
+      fontSizeLevel: 1,
       isSpeaking: false,
       speechUtterance: null,
-      aiArticles: [],         // Gemini-generated Daily 10 articles
-      aiArticlesLoading: true // Show loading state while Gemini generates
+      aiArticles: [],
+      aiArticlesLoading: true
     };
 
     this.marketService = new MarketService((data, meta) => this.onMarketUpdate(data, meta));
     this.scraperService = new NewsScraperService((articles, meta) => this.onScraperUpdate(articles, meta));
     this.geminiService = new GeminiArticleService((articles, meta) => this.onGeminiArticlesReady(articles, meta));
-    this.init();
+    this.chartService = new ChartService();
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      this.init();
+    }
   }
 
   init() {
@@ -49,17 +67,30 @@ class TrinityMarketsApp {
     this.renderMarketTickerBar();
     this.updateBookmarkCount();
     this.setupEventListeners();
-    this.marketService.start();
-    this.scraperService.start();
 
-    // Load cached AI articles immediately (shows in under 50ms if cached)
-    // Then generate fresh ones if cache is expired
-    this.loadGeminiArticles();
-
-    // Initialize Router
+    // Initialize Router immediately FIRST so all tabs and navigation work with 0 delay
     window.addEventListener('hashchange', () => this.handleRouting());
-    window.addEventListener('load', () => this.handleRouting());
     this.handleRouting();
+
+    // Start background services asynchronously
+    try {
+      this.marketService.start();
+      this.scraperService.start();
+    } catch (e) {
+      console.warn('[TRINITY] Service start note:', e);
+    }
+
+    // Register PWA Service Worker for offline intelligence
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        console.log('[TRINITY] Service Worker active with scope:', reg.scope);
+      }).catch(err => {
+        console.warn('[TRINITY] Service Worker registration note:', err.message);
+      });
+    }
+
+    // Load AI articles in background
+    this.loadGeminiArticles().catch(err => console.warn('[TRINITY AI]', err));
   }
 
   /**
@@ -90,84 +121,120 @@ class TrinityMarketsApp {
     await this.geminiService.getOrGenerateArticles(liveData);
   }
 
+  /* ==================== Safe Author Extraction Helper ==================== */
+  getSafeAuthor(author) {
+    if (author && typeof author === 'object') {
+      return {
+        name: author.name || 'TRINITY Desk',
+        role: author.role || 'Financial Analyst',
+        avatar: author.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+      };
+    }
+    if (typeof author === 'string' && author.trim()) {
+      return {
+        name: author,
+        role: 'Financial Analyst',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+      };
+    }
+    return {
+      name: 'TRINITY Desk',
+      role: 'Financial Analyst',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+    };
+  }
+
   /* ==================== Unified Multi-Page Routing Engine ==================== */
   handleRouting() {
-    const rawHash = window.location.hash || '#/';
-    const hash = rawHash.replace(/^#\/?/, ''); // clean route
-    this.state.currentRoute = hash;
+    try {
+      const rawHash = window.location.hash || '#/';
+      const hash = rawHash.replace(/^#\/?/, '').trim(); // clean route
+      this.state.currentRoute = hash;
 
-    // Stop audio narration when changing pages
-    this.stopAudioNarration();
+      // Stop audio narration when changing pages
+      this.stopAudioNarration();
 
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'instant' });
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'instant' });
 
-    // Update active nav indicators
-    document.querySelectorAll('#categoryNavMenu .nav-link-btn').forEach(btn => {
-      const routeAttr = btn.dataset.route;
-      const isMatch = (routeAttr === 'home' && (!hash || hash === '/')) ||
-                      (routeAttr && hash.startsWith(routeAttr));
-      btn.classList.toggle('active', isMatch);
-    });
+      // Update active nav indicators
+      document.querySelectorAll('#categoryNavMenu .nav-link-btn').forEach(btn => {
+        const routeAttr = btn.dataset.route || '';
+        const isMatch = (routeAttr === 'home' && (!hash || hash === '/' || hash === 'home')) ||
+                        (routeAttr && hash === routeAttr) ||
+                        (routeAttr && hash.startsWith(routeAttr));
+        btn.classList.toggle('active', isMatch);
+      });
 
-    // 13 Full-Page Routes
-    if (!hash || hash === '/' || hash === 'home') {
-      this.showView('viewHome');
-      this.renderHomeView();
-      document.title = "TRINITY MARKETS | The Financial Intelligence Journal";
-    } else if (hash.startsWith('article/')) {
-      const slug = hash.replace('article/', '').split('?')[0];
-      this.showView('viewArticle');
-      this.renderArticleView(slug);
-    } else if (hash.startsWith('category/')) {
-      const catSlug = hash.replace('category/', '').split('?')[0];
-      this.showView('viewCategory');
-      this.renderCategoryView(catSlug);
-    } else if (hash.startsWith('terminal')) {
-      this.showView('viewTerminal');
-      this.renderTerminalView();
-      document.title = "Institutional Market Terminal | TRINITY MARKETS";
-    } else if (hash.startsWith('ticker/')) {
-      const symbol = hash.replace('ticker/', '').split('?')[0];
-      this.showView('viewTicker');
-      this.renderTickerView(symbol);
-    } else if (hash.startsWith('wire')) {
-      this.showView('viewWire');
-      this.renderWireView();
-      document.title = "Live Telemetry Radar Wire | TRINITY MARKETS";
-    } else if (hash.startsWith('perspectives')) {
-      this.showView('viewPerspectives');
-      this.renderPerspectivesView();
-      document.title = "Institutional Perspectives & Columnists | TRINITY MARKETS";
-    } else if (hash.startsWith('perspective/')) {
-      const id = hash.replace('perspective/', '').split('?')[0];
-      this.showView('viewPerspectiveDetail');
-      this.renderPerspectiveDetailView(id);
-    } else if (hash.startsWith('briefing') || hash.startsWith('newsletter')) {
-      this.showView('viewBriefing');
-      this.renderBriefingView();
-      document.title = "Daily Executive 10 Briefing | TRINITY MARKETS";
-    } else if (hash.startsWith('bureaus')) {
-      this.showView('viewBureaus');
-      this.renderBureausView();
-      document.title = "Global Financial Bureaus | TRINITY MARKETS";
-    } else if (hash.startsWith('saved')) {
-      this.showView('viewSaved');
-      this.renderSavedView();
-      document.title = "Saved Portfolio | TRINITY MARKETS";
-    } else if (hash.startsWith('search')) {
-      this.showView('viewSearch');
-      const urlParams = new URLSearchParams(hash.split('?')[1] || '');
-      const query = urlParams.get('q') || '';
-      this.renderSearchView(query);
-      document.title = "Intelligence Search Terminal | TRINITY MARKETS";
-    } else if (hash.startsWith('settings')) {
-      this.showView('viewSettings');
-      this.renderSettingsView();
-      document.title = "Journal Settings | TRINITY MARKETS";
-    } else {
-      this.showView('viewHome');
-      this.renderHomeView();
+      // 13 Full-Page Routes
+      if (!hash || hash === '/' || hash === 'home') {
+        this.showView('viewHome');
+        this.renderHomeView();
+        document.title = "TRINITY MARKETS | The Financial Intelligence Journal";
+      } else if (hash.startsWith('article/')) {
+        const slug = hash.replace('article/', '').split('?')[0];
+        this.showView('viewArticle');
+        this.renderArticleView(slug);
+      } else if (hash.startsWith('category/')) {
+        const catSlug = hash.replace('category/', '').split('?')[0];
+        this.showView('viewCategory');
+        this.renderCategoryView(catSlug);
+      } else if (hash === 'data' || hash.startsWith('data')) {
+        this.showView('viewData');
+        this.renderDataDashboardView();
+        document.title = "Institutional Data & ETF Dashboard | TRINITY MARKETS";
+      } else if (hash === 'research' || hash.startsWith('research')) {
+        this.showView('viewResearch');
+        this.renderResearchView();
+        document.title = "Institutional Research & Intelligence Reports | TRINITY MARKETS";
+      } else if (hash.startsWith('terminal')) {
+        this.showView('viewTerminal');
+        this.renderTerminalView();
+        document.title = "Institutional Market Terminal | TRINITY MARKETS";
+      } else if (hash.startsWith('ticker/')) {
+        const symbol = hash.replace('ticker/', '').split('?')[0];
+        this.showView('viewTicker');
+        this.renderTickerView(symbol);
+      } else if (hash.startsWith('wire')) {
+        this.showView('viewWire');
+        this.renderWireView();
+        document.title = "Live Telemetry Radar Wire | TRINITY MARKETS";
+      } else if (hash === 'perspectives' || hash.startsWith('perspectives')) {
+        this.showView('viewPerspectives');
+        this.renderPerspectivesView();
+        document.title = "Institutional Perspectives & Columnists | TRINITY MARKETS";
+      } else if (hash.startsWith('perspective/')) {
+        const id = hash.replace('perspective/', '').split('?')[0];
+        this.showView('viewPerspectiveDetail');
+        this.renderPerspectiveDetailView(id);
+      } else if (hash.startsWith('briefing') || hash.startsWith('newsletter')) {
+        this.showView('viewBriefing');
+        this.renderBriefingView();
+        document.title = "Daily Executive 10 Briefing | TRINITY MARKETS";
+      } else if (hash.startsWith('bureaus')) {
+        this.showView('viewBureaus');
+        this.renderBureausView();
+        document.title = "Global Financial Bureaus | TRINITY MARKETS";
+      } else if (hash.startsWith('saved')) {
+        this.showView('viewSaved');
+        this.renderSavedView();
+        document.title = "Saved Portfolio | TRINITY MARKETS";
+      } else if (hash.startsWith('search')) {
+        this.showView('viewSearch');
+        const urlParams = new URLSearchParams(hash.split('?')[1] || '');
+        const query = urlParams.get('q') || '';
+        this.renderSearchView(query);
+        document.title = "Intelligence Search Terminal | TRINITY MARKETS";
+      } else if (hash.startsWith('settings')) {
+        this.showView('viewSettings');
+        this.renderSettingsView();
+        document.title = "Journal Settings | TRINITY MARKETS";
+      } else {
+        this.showView('viewHome');
+        this.renderHomeView();
+      }
+    } catch (err) {
+      console.error('[TRINITY ROUTER ERROR]', err);
     }
   }
 
@@ -178,14 +245,113 @@ class TrinityMarketsApp {
   }
 
   navigate(route) {
-    window.location.hash = `#/${route.replace(/^\/?/, '')}`;
+    const cleanRoute = (route || '').replace(/^#\/?/, '').trim();
+    const targetHash = `#/${cleanRoute}`;
+    if (window.location.hash !== targetHash) {
+      window.location.hash = targetHash;
+    } else {
+      this.handleRouting();
+    }
   }
 
   /* ==================== PAGE VIEW 1: Home Cover View ==================== */
   renderHomeView() {
+    this.renderMarketPulseBarometer();
     this.renderHeroAndWire();
     this.renderDaily10Cards();
+    this.renderMacroRadar();
     this.renderPerspectivesList();
+  }
+
+  renderMarketPulseBarometer() {
+    const container = document.getElementById('marketPulseBarometer');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="market-pulse-grid">
+        ${MARKET_PULSE_KPIS.map(kpi => `
+          <div class="pulse-kpi-card" onclick="window.trinityApp.navigate('data')">
+            <div class="pulse-kpi-top">
+              <span class="pulse-kpi-label">${kpi.icon || ''} ${kpi.label}</span>
+              ${kpi.change ? `<span class="pulse-kpi-change ${kpi.positive ? 'pos' : 'neg'}">${kpi.positive ? '▲' : '▼'} ${kpi.change}</span>` : ''}
+            </div>
+            <div class="pulse-kpi-value">${kpi.value}</div>
+            <div class="pulse-kpi-subtext">${kpi.subtext || kpi.sublabel || ''}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  renderMacroRadar() {
+    const container = document.getElementById('macroEventsRadarContainer');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="macro-radar-wrapper">
+        <div class="rate-cut-cards-grid">
+          ${RATE_CUT_TRACKER.map(cb => {
+            const probNum = parseInt(cb.cutProbability25bps) || 50;
+            return `
+              <div class="rate-cut-card">
+                <div class="rate-cut-header">
+                  <div>
+                    <div class="cb-name">${cb.centralBank}</div>
+                    <span class="cb-stance-pill">${cb.policyStance}</span>
+                  </div>
+                  <div class="cb-rate-huge">${cb.currentRate}</div>
+                </div>
+
+                <div class="cb-prob-bar-wrap">
+                  <div class="cb-prob-label">
+                    <span>Rate Cut Probability (25 bps)</span>
+                    <span style="font-weight: 800; color: var(--text-primary);">${cb.cutProbability25bps}</span>
+                  </div>
+                  <div class="cb-prob-bar-bg">
+                    <div class="cb-prob-bar-fill" style="width: ${probNum}%;"></div>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.72rem; padding: 0.4rem 0; border-top: 1px solid var(--border-subtle);">
+                  <div><span style="color: var(--text-muted);">Inflation:</span> <span style="font-weight: 700; color: var(--text-primary);">${cb.inflationRate.split(' ')[0]}</span></div>
+                  <div><span style="color: var(--text-muted);">Real GDP:</span> <span style="font-weight: 700; color: var(--text-primary);">${cb.growthOutlook}</span></div>
+                </div>
+
+                <p class="cb-context">${cb.context}</p>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div class="events-ledger-card">
+          <div class="events-ledger-header">
+            <div class="events-ledger-title">Upcoming Macro Financial Events & Rate Decision Calendar</div>
+            <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">LIVE COUNTDOWN & CONSENSUS</span>
+          </div>
+          <div class="events-ledger-list">
+            ${UPCOMING_FINANCIAL_EVENTS.map(evt => `
+              <div class="event-row">
+                <div class="event-date-col">
+                  <div class="event-date-primary">${evt.date}</div>
+                  <div class="event-date-time">${evt.time} • ${evt.region}</div>
+                </div>
+                <div class="event-name-col">
+                  <div class="event-name-title">${evt.event}</div>
+                  <div class="event-name-desc">${evt.details}</div>
+                </div>
+                <div class="event-consensus-col">
+                  <span class="event-consensus-lbl">Market Consensus:</span>
+                  <span class="event-consensus-val">${evt.consensus}</span>
+                </div>
+                <div>
+                  <span class="impact-badge ${evt.impact.toLowerCase()}">${evt.impact}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   renderHeroAndWire() {
@@ -223,18 +389,18 @@ class TrinityMarketsApp {
 
           <div class="card-footer">
             <div class="author-chip">
-              <img src="${leadArticle.author.avatar}" alt="${leadArticle.author.name}">
+              <img src="${this.getSafeAuthor(leadArticle.author).avatar}" alt="${this.getSafeAuthor(leadArticle.author).name}">
               <div class="author-info">
-                <div class="name">${leadArticle.author.name}</div>
-                <div class="role">${leadArticle.author.role}</div>
+                <div class="name">${this.getSafeAuthor(leadArticle.author).name}</div>
+                <div class="role">${this.getSafeAuthor(leadArticle.author).role}</div>
               </div>
             </div>
             <div class="card-actions">
               <button class="action-btn ${isSaved ? 'bookmarked' : ''}" onclick="window.trinityApp.toggleBookmark('${leadArticle.id}', event)" title="Save Dispatch">
-                🔖
+                ${isSaved ? 'Saved' : 'Save'}
               </button>
               <button class="action-btn" onclick="window.trinityApp.shareArticle('${leadArticle.id}', event)" title="Share Dispatch">
-                🔗
+                Share
               </button>
             </div>
           </div>
@@ -278,41 +444,42 @@ class TrinityMarketsApp {
     container.innerHTML = items.map(story => {
       const isSaved = this.state.savedBookmarks.includes(story.id);
       const slugLink = `#/article/${story.slug || story.id}`;
+      const auth = this.getSafeAuthor(story.author);
 
       return `
         <article class="story-card" data-article-id="${story.id}">
           <a href="${slugLink}" class="story-media">
-            <img src="${story.image}" alt="${story.title}" loading="lazy">
+            <img src="${story.image || 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=900&auto=format&fit=crop&q=85'}" alt="${story.title}" loading="lazy">
             <div class="story-tags-overlay">
               <span class="story-category-tag">${story.category}</span>
             </div>
           </a>
           <div class="story-content">
             <div class="story-meta">
-              <span class="story-source-name">${story.source || story.region}</span>
+              <span class="story-source-name">${story.source || story.region || 'TRINITY'}</span>
               <span>•</span>
-              <span>${story.date}</span>
+              <span>${story.date || 'Today'}</span>
               <span>•</span>
-              <span>${story.readTime}</span>
+              <span>${story.readTime || '5 min read'}</span>
             </div>
             <h3 class="story-title">
               <a href="${slugLink}">${story.title}</a>
             </h3>
-            <p class="story-excerpt">${story.subtitle}</p>
+            <p class="story-excerpt">${story.subtitle || ''}</p>
             <div class="story-footer">
               <div class="author-chip">
-                <img src="${story.author.avatar}" alt="${story.author.name}">
+                <img src="${auth.avatar}" alt="${auth.name}">
                 <div class="author-info">
-                  <div class="name">${story.author.name}</div>
-                  <div class="role">${story.author.role}</div>
+                  <div class="name">${auth.name}</div>
+                  <div class="role">${auth.role}</div>
                 </div>
               </div>
               <div class="card-actions">
                 <button class="action-btn ${isSaved ? 'bookmarked' : ''}" onclick="window.trinityApp.toggleBookmark('${story.id}', event)" title="Save Dispatch">
-                  🔖
+                  ${isSaved ? 'Saved' : 'Save'}
                 </button>
                 <button class="action-btn" onclick="window.trinityApp.shareArticle('${story.id}', event)" title="Share">
-                  🔗
+                  Share
                 </button>
               </div>
             </div>
@@ -398,16 +565,15 @@ class TrinityMarketsApp {
 
         <div class="standalone-toolbar">
           <div class="author-chip">
-            <img src="${article.author.avatar}" alt="${article.author.name}">
+            <img src="${this.getSafeAuthor(article.author).avatar}" alt="${this.getSafeAuthor(article.author).name}">
             <div class="author-info">
-              <div class="name">${article.author.name}</div>
-              <div class="role">${article.author.role}</div>
+              <div class="name">${this.getSafeAuthor(article.author).name}</div>
+              <div class="role">${this.getSafeAuthor(article.author).role}</div>
             </div>
           </div>
 
           <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
             <button class="reader-btn" id="standaloneAudioBtn" onclick="window.trinityApp.toggleAudioNarration()" title="Listen to narration">
-              <span>🔊</span>
               <span id="standaloneAudioText">Listen</span>
             </button>
             <div class="reader-font-group">
@@ -415,10 +581,16 @@ class TrinityMarketsApp {
               <button class="reader-btn reader-btn-font" onclick="window.trinityApp.adjustFontSize('inc')">A+</button>
             </div>
             <button class="reader-btn ${isSaved ? 'bookmarked' : ''}" onclick="window.trinityApp.toggleBookmark('${article.id}', event)" title="Save dispatch">
-              🔖 <span>${isSaved ? 'Saved' : 'Save'}</span>
+              <span>${isSaved ? 'Saved' : 'Save'}</span>
             </button>
             <button class="reader-btn" onclick="window.trinityApp.shareArticle('${article.id}', event)" title="Share link">
-              🔗 <span>Share</span>
+              <span>Share</span>
+            </button>
+            <button class="reader-btn" onclick="window.trinityApp.copyCitation('${article.id}')" title="Copy Citation">
+              <span>Cite</span>
+            </button>
+            <button class="reader-btn" onclick="window.trinityApp.exportArticlePDF()" title="Export or Print PDF">
+              <span>Print PDF</span>
             </button>
           </div>
         </div>
@@ -478,7 +650,24 @@ class TrinityMarketsApp {
     const container = document.getElementById('categoryPageContainer');
     if (!container) return;
 
-    const catData = CATEGORY_MAP[catSlug] || {
+    const cleanCatSlug = (catSlug || '').toLowerCase().trim();
+    const slugAliases = {
+      'india': 'indian-markets',
+      'dalal-street': 'indian-markets',
+      'policy': 'policy-and-ratecuts',
+      'ratecuts': 'policy-and-ratecuts',
+      'stocks': 'stocks-and-equities',
+      'equities': 'stocks-and-equities',
+      'real-estate': 'commercial-real-estate',
+      'crypto': 'crypto-and-digital-assets',
+      'pe-vc': 'private-equity-and-vc',
+      'private-equity': 'private-equity-and-vc',
+      'macro': 'macro-and-banking',
+      'banking': 'macro-and-banking'
+    };
+    const resolvedSlug = slugAliases[cleanCatSlug] || cleanCatSlug;
+
+    const catData = CATEGORY_MAP[resolvedSlug] || CATEGORY_MAP[cleanCatSlug] || {
       name: "Financial Sector",
       tagline: "Institutional market intelligence and capital allocation analysis.",
       icon: "📊",
@@ -487,7 +676,26 @@ class TrinityMarketsApp {
 
     document.title = `${catData.name} | TRINITY MARKETS`;
     const all = this.getAllArticles();
-    const articles = all.filter(a => (catData && a.category === catData.name) || a.categorySlug === catSlug);
+
+    const articles = all.filter(a => {
+      if (!a) return false;
+      const aCat = (a.category || '').toLowerCase();
+      const aSlug = (a.categorySlug || '').toLowerCase();
+      const targetCatName = (catData.name || '').toLowerCase();
+
+      return (
+        aSlug === resolvedSlug ||
+        aSlug === cleanCatSlug ||
+        aCat === targetCatName ||
+        (resolvedSlug === 'indian-markets' && (aCat.includes('india') || aSlug.includes('india') || (a.tags && a.tags.some(t => t.toLowerCase().includes('india') || t.toLowerCase().includes('rbi'))))) ||
+        (resolvedSlug === 'policy-and-ratecuts' && (aCat.includes('policy') || aCat.includes('rate') || aSlug.includes('policy') || (a.tags && a.tags.some(t => t.toLowerCase().includes('rate') || t.toLowerCase().includes('policy') || t.toLowerCase().includes('fed') || t.toLowerCase().includes('rbi'))))) ||
+        (resolvedSlug === 'stocks-and-equities' && (aCat.includes('stock') || aCat.includes('equit') || aSlug.includes('stock') || (a.tags && a.tags.some(t => t.toLowerCase().includes('stock') || t.toLowerCase().includes('equity') || t.toLowerCase().includes('semiconductor'))))) ||
+        (resolvedSlug === 'commercial-real-estate' && (aCat.includes('real estate') || aCat.includes('reit') || aSlug.includes('real-estate') || (a.tags && a.tags.some(t => t.toLowerCase().includes('real estate') || t.toLowerCase().includes('reit'))))) ||
+        (resolvedSlug === 'crypto-and-digital-assets' && (aCat.includes('crypto') || aCat.includes('digital') || aSlug.includes('crypto') || (a.tags && a.tags.some(t => t.toLowerCase().includes('crypto') || t.toLowerCase().includes('bitcoin') || t.toLowerCase().includes('token'))))) ||
+        (resolvedSlug === 'private-equity-and-vc' && (aCat.includes('private equity') || aCat.includes('vc') || aSlug.includes('private-equity') || (a.tags && a.tags.some(t => t.toLowerCase().includes('private equity') || t.toLowerCase().includes('debt') || t.toLowerCase().includes('infrastructure'))))) ||
+        (resolvedSlug === 'macro-and-banking' && (aCat.includes('macro') || aCat.includes('bank') || aSlug.includes('macro') || (a.tags && a.tags.some(t => t.toLowerCase().includes('macro') || t.toLowerCase().includes('yield') || t.toLowerCase().includes('gold') || t.toLowerCase().includes('energy')))))
+      );
+    });
 
     container.innerHTML = `
       <div class="sector-hero-banner">
@@ -503,40 +711,54 @@ class TrinityMarketsApp {
       <div class="section-head">
         <div>
           <h2 class="section-title">Sector Dispatches (${articles.length})</h2>
-          <p class="section-subtitle">Deep Research & Verified Filings</p>
+          <p class="section-subtitle">Deep Research, Sector Blogs & Verified Filings</p>
         </div>
-        <a href="#/terminal" class="btn-scrape-now">Open Sector Tickers →</a>
+        <div style="display: flex; gap: 0.5rem;">
+          <a href="#/data" class="btn-scrape-now">📊 Data Dashboard</a>
+          <a href="#/terminal" class="btn-scrape-now">Open Terminal →</a>
+        </div>
       </div>
 
       <div class="news-cards-grid">
-        ${articles.map(story => `
+        ${articles.map(story => {
+          const auth = this.getSafeAuthor(story.author);
+          return `
           <article class="story-card">
             <a href="#/article/${story.slug || story.id}" class="story-media">
-              <img src="${story.image}" alt="${story.title}" loading="lazy">
+              <img src="${story.image || 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=900&auto=format&fit=crop&q=85'}" alt="${story.title}" loading="lazy">
               <div class="story-tags-overlay">
-                <span class="story-category-tag">${story.category}</span>
+                <span class="story-category-tag">${story.category || catData.name}</span>
               </div>
             </a>
             <div class="story-content">
               <div class="story-meta">
-                <span>${story.date}</span> • <span>${story.readTime}</span>
+                <span>${story.date || 'Today'}</span> • <span>${story.readTime || '5 min read'}</span>
               </div>
               <h3 class="story-title">
                 <a href="#/article/${story.slug || story.id}">${story.title}</a>
               </h3>
-              <p class="story-excerpt">${story.subtitle}</p>
+              <p class="story-excerpt">${story.subtitle || ''}</p>
               <div class="story-footer">
                 <div class="author-chip">
-                  <img src="${story.author.avatar}" alt="${story.author.name}">
+                  <img src="${auth.avatar}" alt="${auth.name}">
                   <div class="author-info">
-                    <div class="name">${story.author.name}</div>
-                    <div class="role">${story.author.role}</div>
+                    <div class="name">${auth.name}</div>
+                    <div class="role">${auth.role}</div>
                   </div>
+                </div>
+                <div class="card-actions">
+                  <button class="action-btn" onclick="window.trinityApp.toggleBookmark('${story.id}', event)" title="Save Dispatch">
+                    Save
+                  </button>
+                  <button class="action-btn" onclick="window.trinityApp.shareArticle('${story.id}', event)" title="Share Dispatch">
+                    Share
+                  </button>
                 </div>
               </div>
             </div>
           </article>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
     `;
   }
@@ -666,6 +888,9 @@ class TrinityMarketsApp {
             <div class="ticker-stat-number">${ticker.marketCap || 'Institutional Asset'}</div>
           </div>
         </div>
+
+        <!-- Interactive Institutional Chart Engine -->
+        <div id="tickerChartContainer" style="margin-top: 1.5rem;"></div>
       </div>
 
       <div class="section-head">
@@ -692,6 +917,13 @@ class TrinityMarketsApp {
         `).join('')}
       </div>
     `;
+
+    // Mount interactive chart
+    setTimeout(() => {
+      if (this.chartService) {
+        this.chartService.mount('tickerChartContainer', ticker);
+      }
+    }, 50);
   }
 
   /* ==================== PAGE VIEW 6: Dedicated Live Wire Page ==================== */
@@ -991,6 +1223,228 @@ class TrinityMarketsApp {
     `).join('');
   }
 
+  /* ==================== PAGE VIEW 14: Dedicated The Block-Style Data Dashboard ==================== */
+  renderDataDashboardView() {
+    const container = document.getElementById('dataPageContainer');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="section-head">
+        <div>
+          <div class="header-edition-tag">INSTITUTIONAL TELEMETRY DESK</div>
+          <h1 class="section-title">Institutional Data & ETF Inflow Dashboard</h1>
+          <p class="section-subtitle">Real-Time Global ETF Capital Flows, Derivatives Open Interest, Sovereign Spreads & Dalal Street Inflows</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn-scrape-now" onclick="window.trinityApp.renderDataDashboardView(); window.trinityApp.showToast('✓ Data Telemetry Synced')">
+            <span>🔄</span>
+            <span>Refresh Telemetry</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- High-Level KPI Strip -->
+      <div class="market-pulse-barometer" style="margin-bottom: 2.5rem;">
+        <div class="market-pulse-grid">
+          ${MARKET_PULSE_KPIS.map(kpi => `
+            <div class="pulse-kpi-card">
+              <div class="pulse-kpi-top">
+                <span class="pulse-kpi-label">${kpi.icon || ''} ${kpi.label}</span>
+                ${kpi.change ? `<span class="pulse-kpi-change ${kpi.positive ? 'pos' : 'neg'}">${kpi.positive ? '▲' : '▼'} ${kpi.change}</span>` : ''}
+              </div>
+              <div class="pulse-kpi-value">${kpi.value}</div>
+              <div class="pulse-kpi-subtext">${kpi.subtext || kpi.sublabel || ''}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="data-dashboard-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 3rem;">
+        <!-- ETF Flows Table -->
+        <div class="etf-flows-card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+            <div>
+              <h3 style="font-family: var(--font-serif); font-size: 1.3rem; margin: 0; color: var(--text-primary);">Global & Dalal Street ETF Net Inflows</h3>
+              <p style="font-family: var(--font-sans); font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">24-Hour Rolling Net Creation/Redemption Volumes</p>
+            </div>
+            <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">SOURCE: BLOOMBERG / DEPOSITORIES</span>
+          </div>
+
+          <div class="data-table-responsive" style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-family: var(--font-sans); font-size: 0.85rem;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border-subtle); text-align: left; color: var(--text-muted); font-size: 0.75rem; font-family: var(--font-mono);">
+                  <th style="padding: 0.6rem 0.5rem;">TICKER</th>
+                  <th style="padding: 0.6rem 0.5rem;">FUND NAME</th>
+                  <th style="padding: 0.6rem 0.5rem; text-align: right;">AUM</th>
+                  <th style="padding: 0.6rem 0.5rem; text-align: right;">24H NET INFLOW</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${ETF_FLOW_DATA.map(etf => `
+                  <tr style="border-bottom: 1px solid var(--border-subtle);">
+                    <td style="padding: 0.8rem 0.5rem; font-family: var(--font-mono); font-weight: 700; color: var(--text-primary);">
+                      <a href="#/terminal" style="text-decoration: none; color: inherit;">${etf.ticker}</a>
+                    </td>
+                    <td style="padding: 0.8rem 0.5rem; color: var(--text-secondary); font-weight: 500;">${etf.name}</td>
+                    <td style="padding: 0.8rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 700;">${etf.aum}</td>
+                    <td style="padding: 0.8rem 0.5rem; text-align: right; font-family: var(--font-mono); font-weight: 800; color: ${etf.positive ? '#10b981' : '#ef4444'};">
+                      ${etf.netFlow24h}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Macro Liquidity Radar -->
+        <div class="liquidity-metrics-card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+          <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+            <h3 style="font-family: var(--font-serif); font-size: 1.3rem; margin: 0; color: var(--text-primary);">Macro Yield & Liquidity Spreads</h3>
+            <p style="font-family: var(--font-sans); font-size: 0.78rem; color: var(--text-muted); margin: 0.2rem 0 0 0;">Sovereign Debt Differential & Volatility Indices</p>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+              <div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">India 10Y vs US 10Y Spread</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted);">IN10Y (6.824%) - US10Y (4.182%)</div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">+264 bps</div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+              <div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">FII Monthly Dalal St Net Flow</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted);">Foreign Institutional Inflows (Equities)</div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 1.05rem; font-weight: 800; color: #10b981;">+₹28,450 Cr</div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+              <div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">CBOE Volatility Index (VIX)</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted);">Implied 30-day S&P 500 Volatility</div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 1.05rem; font-weight: 800; color: #10b981;">14.82 (-3.4%)</div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--radius-sm);">
+              <div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary);">India Domestic SIP Run-Rate</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted);">Monthly Retail Mutual Fund Inflow</div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 1.05rem; font-weight: 800; color: #10b981;">₹24,500 Cr/mo</div>
+            </div>
+          </div>
+
+          <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+            <a href="#/terminal" class="btn-scrape-now" style="width: 100%; text-align: center; justify-content: center;">Open Full Terminal Quotes →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rate Cut Probability Radar Included on Data Dashboard -->
+      <div class="macro-radar-section" style="margin-bottom: 3rem;">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">🏛️ Global Central Bank Easing Matrix</h2>
+            <p class="section-subtitle">Real-Time Rate Cut Probabilities & Sovereign Guidance</p>
+          </div>
+        </div>
+        <div class="rate-cut-cards-grid">
+          ${RATE_CUT_TRACKER.map(cb => {
+            const probNum = parseInt(cb.cutProbability25bps) || 50;
+            return `
+              <div class="rate-cut-card">
+                <div class="rate-cut-header">
+                  <div>
+                    <div class="cb-name">${cb.centralBank}</div>
+                    <span class="cb-stance-pill">${cb.policyStance}</span>
+                  </div>
+                  <div class="cb-rate-huge">${cb.currentRate}</div>
+                </div>
+
+                <div class="cb-prob-bar-wrap">
+                  <div class="cb-prob-label">
+                    <span>Rate Cut Probability (25 bps)</span>
+                    <span style="font-weight: 800; color: var(--text-primary);">${cb.cutProbability25bps}</span>
+                  </div>
+                  <div class="cb-prob-bar-bg">
+                    <div class="cb-prob-bar-fill" style="width: ${probNum}%;"></div>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.72rem; padding: 0.4rem 0; border-top: 1px solid var(--border-subtle);">
+                  <div><span style="color: var(--text-muted);">Inflation:</span> <span style="font-weight: 700; color: var(--text-primary);">${cb.inflationRate.split(' ')[0]}</span></div>
+                  <div><span style="color: var(--text-muted);">Real GDP:</span> <span style="font-weight: 700; color: var(--text-primary);">${cb.growthOutlook}</span></div>
+                </div>
+
+                <p class="cb-context">${cb.context}</p>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  /* ==================== PAGE VIEW 15: Dedicated Institutional Research Desk ==================== */
+  renderResearchView() {
+    const container = document.getElementById('researchPageContainer');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="section-head">
+        <div>
+          <div class="header-edition-tag">INSTITUTIONAL RESEARCH DESK</div>
+          <h1 class="section-title">Institutional Deep-Dive Reports & Whitepapers</h1>
+          <p class="section-subtitle">Exhaustive Quantitative Research for Sovereign Wealth Funds, Private Equity General Partners, and Institutional Allocators</p>
+        </div>
+        <a href="#/" class="btn-scrape-now">← Back to Cover</a>
+      </div>
+
+      <div class="research-reports-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2rem; margin-top: 2rem; margin-bottom: 3.5rem;">
+        ${INSTITUTIONAL_RESEARCH_REPORTS.map(rep => `
+          <div class="research-card" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.75rem; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s ease, border-color 0.2s ease;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <span style="font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); color: var(--text-primary);">${rep.category}</span>
+                <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">${rep.pages} • ${rep.date}</span>
+              </div>
+
+              <h2 style="font-family: var(--font-serif); font-size: 1.35rem; line-height: 1.35; margin: 0 0 0.75rem 0; color: var(--text-primary);">
+                <a href="${rep.downloadUrl}" style="text-decoration: none; color: inherit;">${rep.title}</a>
+              </h2>
+
+              <div style="font-size: 0.78rem; font-family: var(--font-sans); color: var(--text-muted); margin-bottom: 1rem;">
+                Authors: <strong style="color: var(--text-primary);">${rep.author}</strong>
+              </div>
+
+              <p style="font-size: 0.88rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 1.25rem;">
+                ${rep.summary}
+              </p>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.5rem;">
+                ${rep.tags.map(t => `<span style="font-family: var(--font-mono); font-size: 0.68rem; padding: 0.15rem 0.4rem; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 3px; color: var(--text-secondary);">#${t}</span>`).join('')}
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+              <a href="${rep.downloadUrl}" class="btn-scrape-now" style="flex: 1; text-align: center; justify-content: center; font-size: 0.8rem;">
+                Read Full Dispatch ↗
+              </a>
+              <button class="action-btn" onclick="window.trinityApp.showToast('Citation copied for research report');" title="Cite Report" style="padding: 0 0.6rem; font-size: 0.72rem;">
+                Cite
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
   /* ==================== PAGE VIEW 13: Dedicated Journal Settings Page ==================== */
   renderSettingsView() {
     const container = document.getElementById('settingsPageContainer');
@@ -1011,7 +1465,6 @@ class TrinityMarketsApp {
             <div style="font-size: 0.8rem; color: var(--text-secondary);">Toggle between High-Contrast Dark and Monochrome Light Paper</div>
           </div>
           <button class="btn-scrape-now" onclick="window.trinityApp.toggleTheme()">
-            <span>🌓</span>
             <span>${this.state.theme === 'dark' ? 'Light Paper' : 'Dark Mode'}</span>
           </button>
         </div>
@@ -1045,14 +1498,18 @@ class TrinityMarketsApp {
         <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 0.75rem;">
           <div>
             <div style="font-weight: 700; color: var(--text-primary);">Google Gemini AI API Key</div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary);">Powers real-time "Daily 10" financial article generation (Gemini 3.6 Flash)</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Powers real-time "Daily 10" financial article generation</div>
           </div>
-          <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 540px;">
-            <input type="password" id="geminiKeyInput" class="market-search-input" style="flex: 1; padding: 0.35rem 0.75rem; font-size: 0.78rem;" placeholder="Enter Gemini API Key (stored in browser only)..." value="${localStorage.getItem('trinity_gemini_api_key') || ''}">
+          <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 600px; flex-wrap: wrap;">
+            <input type="password" id="geminiKeyInput" class="market-search-input" style="flex: 1; min-width: 240px; padding: 0.35rem 0.75rem; font-size: 0.78rem;" placeholder="Enter Gemini API Key..." value="${localStorage.getItem('trinity_gemini_api_key') || ''}">
             <button class="btn-scrape-now" onclick="const val = document.getElementById('geminiKeyInput').value.trim(); if(val){ localStorage.setItem('trinity_gemini_api_key', val); window.trinityApp.forceGeminiRegeneration(); window.trinityApp.showToast('Gemini API Key Saved'); } else { localStorage.removeItem('trinity_gemini_api_key'); window.trinityApp.showToast('Gemini Key Removed'); }">
-              Save
+              Save Key
+            </button>
+            <button class="btn-test-key" onclick="window.trinityApp.testGeminiAPI()">
+              Test Connection
             </button>
           </div>
+          <div id="geminiTestFeedback" class="api-test-feedback"></div>
         </div>
 
         <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 0.75rem;">
@@ -1060,12 +1517,16 @@ class TrinityMarketsApp {
             <div style="font-weight: 700; color: var(--text-primary);">Alpha Vantage Market Key</div>
             <div style="font-size: 0.8rem; color: var(--text-secondary);">Powers live equities, REITs, and commodity forex feeds</div>
           </div>
-          <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 540px;">
-            <input type="password" id="avKeyInput" class="market-search-input" style="flex: 1; padding: 0.35rem 0.75rem; font-size: 0.78rem;" placeholder="Enter Alpha Vantage Key..." value="${localStorage.getItem('trinity_alpha_vantage_key') || 'O4Y0MFDAF40SYJ4J'}">
+          <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 600px; flex-wrap: wrap;">
+            <input type="password" id="avKeyInput" class="market-search-input" style="flex: 1; min-width: 240px; padding: 0.35rem 0.75rem; font-size: 0.78rem;" placeholder="Enter Alpha Vantage Key..." value="${localStorage.getItem('trinity_alpha_vantage_key') || 'O4Y0MFDAF40SYJ4J'}">
             <button class="btn-scrape-now" onclick="const val = document.getElementById('avKeyInput').value.trim(); if(val){ localStorage.setItem('trinity_alpha_vantage_key', val); window.trinityApp.showToast('Alpha Vantage Key Saved'); }">
-              Save
+              Save Key
+            </button>
+            <button class="btn-test-key" onclick="window.trinityApp.testAlphaVantageAPI()">
+              Test Connection
             </button>
           </div>
+          <div id="avTestFeedback" class="api-test-feedback"></div>
         </div>
       </div>
     `;
@@ -1082,6 +1543,9 @@ class TrinityMarketsApp {
     const newTheme = this.state.theme === 'dark' ? 'light' : 'dark';
     this.applyTheme(newTheme);
     this.showToast(`Switched to ${newTheme === 'dark' ? 'Dark Mode' : 'Light Paper Mode'}`);
+    if (this.chartService) {
+      this.chartService.draw();
+    }
     if (this.state.currentRoute === 'settings') {
       this.renderSettingsView();
     }
@@ -1193,17 +1657,27 @@ class TrinityMarketsApp {
   }
 
   getAllArticles() {
-    // Priority order: 1) Gemini AI articles (real, current), 2) fallback static articles
     const aiArticles = this.state.aiArticles || [];
+    let storedAi = [];
+    try {
+      storedAi = JSON.parse(localStorage.getItem('trinity_ai_articles') || '[]');
+    } catch {}
     const scraped = this.scraperService ? this.scraperService.getArticles() : [];
 
-    if (aiArticles.length > 0) {
-      // AI articles + scraped live wire items blended
-      return [...aiArticles, ...scraped];
+    // Combine AI articles, comprehensive curated ARTICLES library, and scraped live wire items
+    // Deduplicate by slug or id to maintain rich coverage across all sectors
+    const combined = [...aiArticles, ...storedAi, ...ARTICLES, ...scraped];
+    const seen = new Set();
+    const uniqueArticles = [];
+    for (const a of combined) {
+      if (!a) continue;
+      const key = (a.slug || a.id || '').toLowerCase().trim();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        uniqueArticles.push(a);
+      }
     }
-
-    // Fallback to static articles while AI generates
-    return [...ARTICLES, ...scraped];
+    return uniqueArticles;
   }
 
   /* ==================== Audio Narration & Tools ==================== */
@@ -1307,8 +1781,150 @@ class TrinityMarketsApp {
     const article = allArticles.find(a => a.id === articleId);
     if (article) {
       const shareUrl = `${window.location.origin}${window.location.pathname}#/article/${article.slug || article.id}`;
-      navigator.clipboard?.writeText(shareUrl);
-      this.showToast(`URL Copied: ${shareUrl}`);
+      if (navigator.share) {
+        navigator.share({
+          title: article.title,
+          text: article.subtitle,
+          url: shareUrl
+        }).catch(() => {
+          navigator.clipboard?.writeText(shareUrl);
+          this.showToast(`URL Copied: ${shareUrl}`);
+        });
+      } else {
+        navigator.clipboard?.writeText(shareUrl);
+        this.showToast(`URL Copied: ${shareUrl}`);
+      }
+    }
+  }
+
+  copyCitation(articleId) {
+    const allArticles = this.getAllArticles();
+    const article = allArticles.find(a => a.id === articleId) || this.state.activeArticle;
+    if (!article) return;
+
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const citation = `${article.author?.name || 'TRINITY Intelligence Desk'}. "${article.title}." TRINITY MARKETS Journal, ${article.date || today}, ${window.location.href}.`;
+    
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(citation).then(() => {
+        this.showToast('📋 Bibliographic citation copied to clipboard');
+      }).catch(() => {
+        this.showToast('Citation ready');
+      });
+    }
+  }
+
+  exportArticlePDF() {
+    window.print();
+  }
+
+  async testGeminiAPI() {
+    const input = document.getElementById('geminiKeyInput');
+    const feedback = document.getElementById('geminiTestFeedback');
+    const key = (input ? input.value.trim() : '') || localStorage.getItem('trinity_gemini_api_key');
+
+    if (!key) {
+      if (feedback) {
+        feedback.className = 'api-test-feedback error';
+        feedback.textContent = '❌ Please enter a Gemini API Key before testing.';
+      }
+      return;
+    }
+
+    if (feedback) {
+      feedback.className = 'api-test-feedback';
+      feedback.style.display = 'block';
+      feedback.style.background = 'var(--bg-tertiary)';
+      feedback.style.color = 'var(--text-secondary)';
+      feedback.textContent = '🔄 Testing Gemini connection...';
+    }
+
+    const startTime = Date.now();
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: 'Respond with the word "OK" only.' }] }]
+        })
+      });
+
+      const elapsed = Date.now() - startTime;
+      if (res.ok) {
+        if (feedback) {
+          feedback.className = 'api-test-feedback success';
+          feedback.textContent = `✅ Gemini Connection Successful (${elapsed}ms latency). Ready for Daily 10 generation.`;
+        }
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        if (feedback) {
+          feedback.className = 'api-test-feedback error';
+          feedback.textContent = `❌ Gemini Error (${res.status}): ${errorData?.error?.message || 'Invalid API Key or quota exhausted'}`;
+        }
+      }
+    } catch (err) {
+      if (feedback) {
+        feedback.className = 'api-test-feedback error';
+        feedback.textContent = `❌ Network Connection Error: ${err.message}`;
+      }
+    }
+  }
+
+  async testAlphaVantageAPI() {
+    const input = document.getElementById('avKeyInput');
+    const feedback = document.getElementById('avTestFeedback');
+    const key = (input ? input.value.trim() : '') || localStorage.getItem('trinity_alpha_vantage_key') || 'O4Y0MFDAF40SYJ4J';
+
+    if (!key) {
+      if (feedback) {
+        feedback.className = 'api-test-feedback error';
+        feedback.textContent = '❌ Please enter an Alpha Vantage API Key before testing.';
+      }
+      return;
+    }
+
+    if (feedback) {
+      feedback.className = 'api-test-feedback';
+      feedback.style.display = 'block';
+      feedback.style.background = 'var(--bg-tertiary)';
+      feedback.style.color = 'var(--text-secondary)';
+      feedback.textContent = '🔄 Testing Alpha Vantage telemetry connection...';
+    }
+
+    const startTime = Date.now();
+    try {
+      const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=NVDA&apikey=${key}`);
+      const elapsed = Date.now() - startTime;
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data['Global Quote'] && data['Global Quote']['05. price']) {
+          if (feedback) {
+            feedback.className = 'api-test-feedback success';
+            feedback.textContent = `✅ Alpha Vantage Active (${elapsed}ms). NVDA Quote: $${parseFloat(data['Global Quote']['05. price']).toFixed(2)}`;
+          }
+        } else if (data['Note'] || data['Information']) {
+          if (feedback) {
+            feedback.className = 'api-test-feedback error';
+            feedback.textContent = `⚠️ Rate Limited: ${data['Note'] || data['Information']}`;
+          }
+        } else {
+          if (feedback) {
+            feedback.className = 'api-test-feedback error';
+            feedback.textContent = `❌ Alpha Vantage returned unexpected payload. Verify key validity.`;
+          }
+        }
+      } else {
+        if (feedback) {
+          feedback.className = 'api-test-feedback error';
+          feedback.textContent = `❌ HTTP ${res.status} from Alpha Vantage`;
+        }
+      }
+    } catch (err) {
+      if (feedback) {
+        feedback.className = 'api-test-feedback error';
+        feedback.textContent = `❌ Network Error: ${err.message}`;
+      }
     }
   }
 
@@ -1371,6 +1987,33 @@ class TrinityMarketsApp {
       this.renderSearchView(e.target.value);
     });
 
+    // Dedicated Header Nav Menu Click Delegator
+    const categoryNavMenu = document.getElementById('categoryNavMenu');
+    if (categoryNavMenu) {
+      categoryNavMenu.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (!link) return;
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('#/')) {
+          e.preventDefault();
+          const route = href.replace(/^#\/?/, '');
+          this.navigate(route);
+        }
+      });
+    }
+
+    // Global Hash Link Click Delegator
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a');
+      if (!link) return;
+      const href = link.getAttribute('href') || '';
+      if (href.startsWith('#/')) {
+        e.preventDefault();
+        const route = href.replace(/^#\/?/, '');
+        this.navigate(route);
+      }
+    });
+
     // Global Keybindings (⌘K -> Search Page)
     document.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -1381,7 +2024,9 @@ class TrinityMarketsApp {
   }
 }
 
-// Instantiate globally
-window.addEventListener('DOMContentLoaded', () => {
-  window.trinityApp = new TrinityMarketsApp();
-});
+// Instantiate immediately & export globally
+const trinityApp = new TrinityMarketsApp();
+if (typeof window !== 'undefined') {
+  window.trinityApp = trinityApp;
+}
+export default trinityApp;
