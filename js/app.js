@@ -140,35 +140,44 @@ class TrinityMarketsApp {
   }
 
   /**
-   * Show/update the generation progress overlay.
+   * Show/update the generation progress overlay (silent for regular users).
    */
   showGenerationProgress(completed, total, label) {
-    let overlay = document.getElementById('generationProgressOverlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'generationProgressOverlay';
-      overlay.className = 'gen-progress-overlay';
-      document.body.appendChild(overlay);
-    }
     const pct = Math.round((completed / total) * 100);
-    overlay.innerHTML = `
-      <div class="gen-progress-box">
-        <div class="gen-progress-header">
-          <span class="gen-progress-icon">🤖</span>
-          <div>
-            <div class="gen-progress-title">Generating Today's 100 Articles</div>
-            <div class="gen-progress-label">${label}</div>
+    console.log(`[TRINITY AI] Pipeline sync: ${pct}% (${completed}/${total} sections) — ${label}`);
+
+    // Clean up any lingering overlay from previous versions
+    const existing = document.getElementById('generationProgressOverlay');
+    if (existing) existing.remove();
+
+    // Only render visual popup if dev debug flag is explicitly enabled
+    if (localStorage.getItem('trinity_dev_debug') === 'true') {
+      let overlay = document.getElementById('generationProgressOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'generationProgressOverlay';
+        overlay.className = 'gen-progress-overlay';
+        document.body.appendChild(overlay);
+      }
+      overlay.innerHTML = `
+        <div class="gen-progress-box">
+          <div class="gen-progress-header">
+            <span class="gen-progress-icon">⚡</span>
+            <div>
+              <div class="gen-progress-title">Syncing Editorial Pipeline</div>
+              <div class="gen-progress-label">${label}</div>
+            </div>
+            <span class="gen-progress-pct">${pct}%</span>
           </div>
-          <span class="gen-progress-pct">${pct}%</span>
+          <div class="gen-progress-bar-track">
+            <div class="gen-progress-bar-fill" style="width: ${pct}%"></div>
+          </div>
+          <div class="gen-progress-sections">${completed}/${total} sections complete</div>
         </div>
-        <div class="gen-progress-bar-track">
-          <div class="gen-progress-bar-fill" style="width: ${pct}%"></div>
-        </div>
-        <div class="gen-progress-sections">${completed}/${total} sections complete</div>
-      </div>
-    `;
-    if (pct >= 100) {
-      setTimeout(() => { overlay.remove(); }, 1800);
+      `;
+      if (pct >= 100) {
+        setTimeout(() => { overlay.remove(); }, 1800);
+      }
     }
   }
 
@@ -1844,7 +1853,9 @@ class TrinityMarketsApp {
             <div style="font-weight: 700; color: var(--text-primary);">Market Telemetry Sync</div>
             <div style="font-size: 0.8rem; color: var(--text-secondary);">Real-time exchange quote refresh frequency</div>
           </div>
-          <span style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-primary);">60s Live Feed</span>
+          <span style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-primary); display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span> 60s Live Feed
+          </span>
         </div>
 
         <div class="settings-row">
@@ -1857,39 +1868,47 @@ class TrinityMarketsApp {
           </button>
         </div>
 
-        <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 0.75rem;">
-          <div>
-            <div style="font-weight: 700; color: var(--text-primary);">Google Gemini AI API Key</div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary);">Powers real-time "Daily 10" financial article generation</div>
-          </div>
-          <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 600px; flex-wrap: wrap;">
-            <input type="password" id="geminiKeyInput" class="market-search-input" style="flex: 1; min-width: 240px; padding: 0.35rem 0.75rem; font-size: 0.78rem;" placeholder="Enter Gemini API Key..." value="${localStorage.getItem('trinity_gemini_api_key') || ''}">
-            <button class="btn-scrape-now" onclick="const val = document.getElementById('geminiKeyInput').value.trim(); if(val){ localStorage.setItem('trinity_gemini_api_key', val); window.trinityApp.forceGeminiRegeneration(); window.trinityApp.showToast('Gemini API Key Saved'); } else { localStorage.removeItem('trinity_gemini_api_key'); window.trinityApp.showToast('Gemini Key Removed'); }">
-              Save Key
-            </button>
-            <button class="btn-test-key" onclick="window.trinityApp.testGeminiAPI()">
-              Test Connection
-            </button>
-          </div>
-          <div id="geminiTestFeedback" class="api-test-feedback"></div>
-        </div>
+        <!-- Advanced Developer & API Integration (Collapsible) -->
+        <details style="margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+          <summary style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); cursor: pointer; user-select: none; display: flex; align-items: center; gap: 0.4rem;">
+            ⚙️ Advanced Developer & API Integration
+          </summary>
+          <div style="margin-top: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 0.75rem; border-bottom: none; padding-bottom: 0;">
+              <div>
+                <div style="font-weight: 700; color: var(--text-primary);">Google Gemini AI API Key</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Powers real-time "Daily 10" financial article generation</div>
+              </div>
+              <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 600px; flex-wrap: wrap;">
+                <input type="password" id="geminiKeyInput" class="market-search-input" style="flex: 1; min-width: 240px; padding: 0.35rem 0.75rem; font-size: 0.78rem;" placeholder="Enter Gemini API Key..." value="${localStorage.getItem('trinity_gemini_api_key') || ''}">
+                <button class="btn-scrape-now" onclick="const val = document.getElementById('geminiKeyInput').value.trim(); if(val){ localStorage.setItem('trinity_gemini_api_key', val); window.trinityApp.forceGeminiRegeneration(); window.trinityApp.showToast('Gemini API Key Saved'); } else { localStorage.removeItem('trinity_gemini_api_key'); window.trinityApp.showToast('Gemini Key Removed'); }">
+                  Save Key
+                </button>
+                <button class="btn-test-key" onclick="window.trinityApp.testGeminiAPI()">
+                  Test Connection
+                </button>
+              </div>
+              <div id="geminiTestFeedback" class="api-test-feedback"></div>
+            </div>
 
-        <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 0.75rem;">
-          <div>
-            <div style="font-weight: 700; color: var(--text-primary);">Alpha Vantage Market Key</div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary);">Powers live equities, REITs, and commodity forex feeds</div>
+            <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 0.75rem; border-bottom: none; padding-bottom: 0;">
+              <div>
+                <div style="font-weight: 700; color: var(--text-primary);">Alpha Vantage Market Key</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Powers live equities, REITs, and commodity forex feeds</div>
+              </div>
+              <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 600px; flex-wrap: wrap;">
+                <input type="password" id="avKeyInput" class="market-search-input" style="flex: 1; min-width: 240px; padding: 0.35rem 0.75rem; font-size: 0.78rem;" placeholder="Enter Alpha Vantage Key..." value="${localStorage.getItem('trinity_alpha_vantage_key') || 'O4Y0MFDAF40SYJ4J'}">
+                <button class="btn-scrape-now" onclick="const val = document.getElementById('avKeyInput').value.trim(); if(val){ localStorage.setItem('trinity_alpha_vantage_key', val); window.trinityApp.showToast('Alpha Vantage Key Saved'); }">
+                  Save Key
+                </button>
+                <button class="btn-test-key" onclick="window.trinityApp.testAlphaVantageAPI()">
+                  Test Connection
+                </button>
+              </div>
+              <div id="avTestFeedback" class="api-test-feedback"></div>
+            </div>
           </div>
-          <div style="display: flex; gap: 0.5rem; width: 100%; max-width: 600px; flex-wrap: wrap;">
-            <input type="password" id="avKeyInput" class="market-search-input" style="flex: 1; min-width: 240px; padding: 0.35rem 0.75rem; font-size: 0.78rem;" placeholder="Enter Alpha Vantage Key..." value="${localStorage.getItem('trinity_alpha_vantage_key') || 'O4Y0MFDAF40SYJ4J'}">
-            <button class="btn-scrape-now" onclick="const val = document.getElementById('avKeyInput').value.trim(); if(val){ localStorage.setItem('trinity_alpha_vantage_key', val); window.trinityApp.showToast('Alpha Vantage Key Saved'); }">
-              Save Key
-            </button>
-            <button class="btn-test-key" onclick="window.trinityApp.testAlphaVantageAPI()">
-              Test Connection
-            </button>
-          </div>
-          <div id="avTestFeedback" class="api-test-feedback"></div>
-        </div>
+        </details>
       </div>
     `;
   }
