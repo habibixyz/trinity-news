@@ -918,26 +918,30 @@ class TrinityMarketsApp {
             </a>` : '<div></div>'}
           </nav>
 
-          <!-- Related Articles -->
+          <!-- Related Articles (Clean text-only institutional headline list — NO extra images) -->
           ${related.length > 0 ? `
           <div class="article-related-section">
-            <div class="section-head" style="margin-bottom: 1.5rem;">
+            <div class="section-head" style="margin-bottom: 1.25rem;">
               <div>
-                <h3 class="section-title" style="font-size: 1.2rem;">More from ${article.category}</h3>
+                <h3 class="section-title" style="font-size: 1.15rem;">More from ${article.category}</h3>
               </div>
-              <a href="#/category/${catSlug}" class="btn-scrape-now">View All →</a>
+              <a href="#/category/${catSlug}" class="btn-scrape-now">View All Sector Dispatches →</a>
             </div>
-            <div class="article-related-grid">
-              ${related.map(rel => `
-              <a href="#/article/${rel.slug || rel.id}" class="related-card">
-                <div class="related-card-img">
-                  <img src="${rel.image}" alt="${rel.title}" loading="lazy">
+            <div class="article-related-list">
+              ${related.map((rel, idx) => `
+              <a href="#/article/${rel.slug || rel.id}" class="related-text-item">
+                <div class="related-item-num">${String(idx + 1).padStart(2, '0')}</div>
+                <div class="related-item-content">
+                  <div class="related-item-title">${rel.title}</div>
+                  <div class="related-item-meta">
+                    <span class="related-item-cat">${rel.category}</span>
+                    <span class="meta-dot">·</span>
+                    <span>${rel.date || 'Today'}</span>
+                    <span class="meta-dot">·</span>
+                    <span>${rel.readTime || '5 min read'}</span>
+                  </div>
                 </div>
-                <div class="related-card-body">
-                  <div class="related-card-cat">${rel.category}</div>
-                  <div class="related-card-title">${rel.title}</div>
-                  <div class="related-card-meta">${rel.date || 'Today'} · ${rel.readTime || '5 min'}</div>
-                </div>
+                <div class="related-item-arrow">→</div>
               </a>`).join('')}
             </div>
           </div>
