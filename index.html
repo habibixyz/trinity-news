@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TRINITY MARKETS | The Financial Intelligence Journal</title>
-  <meta name="description" id="meta-description" content="TRINITY MARKETS delivers authoritative institutional analysis across Stocks, Commercial Real Estate, Crypto & Digital Assets, Private Equity, and Global Macro.">
+  <meta name="description" id="meta-description" content="TRINITY MARKETS delivers authoritative institutional analysis across Stocks, Commercial Real Estate, Crypto &amp; Digital Assets, Private Equity, and Global Macro.">
   <meta name="keywords" content="financial news, market analysis, institutional intelligence, stocks, private equity, commercial real estate, global macro, dalal street, wall street, central bank rates">
   <meta name="author" content="TRINITY MARKETS Editorial Board">
   <meta name="robots" content="index, follow">
@@ -13,16 +13,16 @@
   <meta property="og:site_name" content="TRINITY MARKETS">
   <meta property="og:type" id="meta-og-type" content="website">
   <meta property="og:title" id="meta-og-title" content="TRINITY MARKETS | The Financial Intelligence Journal">
-  <meta property="og:description" id="meta-og-desc" content="TRINITY MARKETS delivers authoritative institutional analysis across Stocks, Commercial Real Estate, Crypto & Digital Assets, Private Equity, and Global Macro.">
+  <meta property="og:description" id="meta-og-desc" content="TRINITY MARKETS delivers authoritative institutional analysis across Stocks, Commercial Real Estate, Crypto &amp; Digital Assets, Private Equity, and Global Macro.">
   <meta property="og:url" id="meta-og-url" content="https://trinitymarkets.com">
-  <meta property="og:image" id="meta-og-image" content="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&auto=format&fit=crop&q=80">
+  <meta property="og:image" id="meta-og-image" content="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&amp;auto=format&amp;fit=crop&amp;q=80">
 
   <!-- Twitter Card Meta Tags -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@trinitymarkets">
   <meta name="twitter:title" id="meta-tw-title" content="TRINITY MARKETS | The Financial Intelligence Journal">
-  <meta name="twitter:description" id="meta-tw-desc" content="TRINITY MARKETS delivers authoritative institutional analysis across Stocks, Commercial Real Estate, Crypto & Digital Assets, Private Equity, and Global Macro.">
-  <meta name="twitter:image" id="meta-tw-image" content="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&auto=format&fit=crop&q=80">
+  <meta name="twitter:description" id="meta-tw-desc" content="TRINITY MARKETS delivers authoritative institutional analysis across Stocks, Commercial Real Estate, Crypto &amp; Digital Assets, Private Equity, and Global Macro.">
+  <meta name="twitter:image" id="meta-tw-image" content="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&amp;auto=format&amp;fit=crop&amp;q=80">
 
   <!-- Canonical Tag -->
   <link rel="canonical" id="canonical-url" href="https://trinitymarkets.com/">
@@ -46,395 +46,583 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="TRINITY">
 
-  <!-- Typography: Google Fonts (Inter, Newsreader, JetBrains Mono) -->
+  <!-- Typography: Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;0,800;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;0,800;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&amp;display=swap" rel="stylesheet">
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles/main.css?v=10.0">
+  <link rel="stylesheet" href="styles/main.css?v=12.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><polygon points=%2250,5 95,85 5,85%22 fill=%22%23ffffff%22/><circle cx=%2250%22 cy=%2255%22 r=%2215%22 fill=%22%23000000%22/></svg>">
 </head>
 <body class="theme-dark">
 
-  <!-- ==================== Compact Executive Header ==================== -->
-  <header class="site-header">
-    
-    <!-- Tier 1: Brand & Utility Bar -->
-    <div class="top-brand-bar">
-      <div class="container nav-bar-inner">
-        <!-- Left: Brand Logo -->
-        <div class="brand-group">
-          <a href="#/" class="brand-logo" id="logoRefreshBtn">
-            <span class="brand-name">TRINITY</span>
-          </a>
-          <span class="brand-edition-tag">MARKETS JOURNAL</span>
-        </div>
+  <!-- ==================== SLIM TOP BAR ==================== -->
+  <header class="topbar" id="siteTopbar">
+    <!-- Hamburger (mobile only) -->
+    <button class="topbar-hamburger" id="sidebarToggleBtn" aria-label="Toggle sidebar" title="Toggle sidebar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
 
-        <!-- Right: Action Controls (Dedicated Pages) -->
-        <div class="header-actions">
-          <a href="#/terminal" class="btn-header-markets" id="openMarketsHubBtn" title="Open Interactive Financial Terminal">
-            <span>Terminal</span>
-          </a>
-          
-          <a href="#/search" class="btn-header-search" id="openSearchBtn" title="Search Intelligence (⌘K)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <span class="search-hint">⌘K</span>
-          </a>
+    <!-- Brand -->
+    <a href="#/" class="topbar-brand" id="logoRefreshBtn">
+      <span class="topbar-brand-name">TRINITY</span>
+      <span class="topbar-brand-tag">MARKETS</span>
+    </a>
 
-          <a href="#/saved" class="btn-bookmark-drawer" id="openBookmarksBtn" title="Saved Portfolio">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-            <span class="badge-count" id="bookmarkCountBadge">0</span>
-          </a>
-
-          <a href="#/settings" class="theme-icon-btn" title="Journal Settings & Preferences">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          </a>
+    <!-- Market Ticker (centre, fills remaining space) -->
+    <div class="topbar-ticker">
+      <div class="markets-ribbon">
+        <div class="markets-track" id="marketsTrack">
+          <!-- Injected by JS -->
         </div>
       </div>
     </div>
 
-    <!-- Tier 2: Dedicated Category Navigation Bar -->
-    <div class="category-nav-bar">
-      <div class="container category-nav-inner">
-        <nav class="nav-links-menu" id="categoryNavMenu">
-          <a href="#/" class="nav-link-btn" data-route="home">Cover</a>
-          <a href="#/data" class="nav-link-btn" data-route="data">Data & ETFs</a>
-          <a href="#/research" class="nav-link-btn" data-route="research">Research</a>
-          <a href="#/category/indian-markets" class="nav-link-btn" data-route="category/indian-markets">Indian Markets</a>
-          <a href="#/category/policy-and-ratecuts" class="nav-link-btn" data-route="category/policy-and-ratecuts">Policy & Rate Cuts</a>
-          <a href="#/category/stocks-and-equities" class="nav-link-btn" data-route="category/stocks-and-equities">Stocks</a>
-          <a href="#/category/commercial-real-estate" class="nav-link-btn" data-route="category/commercial-real-estate">Real Estate</a>
-          <a href="#/category/crypto-and-digital-assets" class="nav-link-btn" data-route="category/crypto-and-digital-assets">Crypto</a>
-          <a href="#/category/private-equity-and-vc" class="nav-link-btn" data-route="category/private-equity-and-vc">Private Equity</a>
-          <a href="#/category/macro-and-banking" class="nav-link-btn" data-route="category/macro-and-banking">Macro</a>
-          <a href="#/wire" class="nav-link-btn" data-route="wire">Live Wire</a>
-          <a href="#/perspectives" class="nav-link-btn" data-route="perspectives">Perspectives</a>
-          <a href="#/briefing" class="nav-link-btn" data-route="briefing">Briefing</a>
-        </nav>
-      </div>
-    </div>
+    <!-- Right actions -->
+    <div class="topbar-actions">
+      <span class="topbar-live-badge" id="marketsTimeTag">LIVE</span>
 
-    <!-- Tier 3: Real-Time Financial Sub-Ticker -->
-    <div class="ticker-subbar">
-      <div class="container ticker-subbar-inner">
-        <a href="#/terminal" class="ticker-badge-wrap" title="Open Terminal">
-          <span>MARKET TICKER</span>
-          <span class="markets-time-tag" id="marketsTimeTag">LIVE 24/7</span>
-        </a>
+      <a href="#/live" class="topbar-btn topbar-live" id="openLiveBroadcastBtn" title="Live Broadcast">
+        <span class="live-dot-pulse"></span>
+        <span>Live</span>
+      </a>
 
-        <div class="markets-ribbon">
-          <div class="markets-track" id="marketsTrack">
-            <!-- Injected by JS: Tickers linking to #/ticker/:symbol -->
-          </div>
-        </div>
-      </div>
+      <button class="topbar-btn" id="themeToggleBtn" title="Toggle Theme (Dark / Light)">
+        🌓
+      </button>
+
+      <button class="topbar-btn" id="openCopilotBtn" title="AI Analyst (⌘J)">
+        🧠
+      </button>
+
+      <a href="#/search" class="topbar-btn" id="openSearchBtn" title="Search (⌘K)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </a>
+
+      <a href="#/saved" class="topbar-btn topbar-bookmark" id="openBookmarksBtn" title="Saved">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span class="badge-count" id="bookmarkCountBadge">0</span>
+      </a>
+
+      <a href="#/settings" class="topbar-btn" title="Settings">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </a>
     </div>
   </header>
 
-  <!-- ==================== Modular Page Views ==================== -->
-  <main class="container main-wrapper">
+  <!-- ==================== SIDEBAR OVERLAY (mobile) ==================== -->
+  <div class="sidebar-overlay hidden" id="sidebarOverlay"></div>
 
-    <!-- PAGE VIEW 1: Home Magazine Cover -->
-    <section id="viewHome" class="app-page-view">
-      <!-- Compact Forbes/FT-Style Executive Dateline Strip -->
-      <div class="editorial-dateline-strip">
-        <div class="dateline-left">
-          <span class="dateline-date" id="currentDynamicDate">Wednesday, Sept 16, 2026</span>
-          <span class="dateline-sep">•</span>
-          <span class="dateline-edition">GLOBAL WEALTH & FINANCIAL MARKETS EDITION</span>
-          <span class="dateline-sep">•</span>
-          <span class="dateline-status">AI-VERIFIED TELEMETRY</span>
-        </div>
-        <div class="dateline-right">
-          <a href="#/data" class="dateline-link" style="margin-right: 1rem;">DATA DASHBOARD</a>
-          <a href="#/briefing" class="dateline-link">DAILY EXECUTIVE 10 DISPATCHES →</a>
-        </div>
+  <!-- ==================== LEFT SIDEBAR ==================== -->
+  <aside class="sidebar" id="mainSidebar">
+
+    <!-- Brand row (mirrors topbar height) -->
+    <div class="sidebar-brand-area">
+      <a href="#/" class="sidebar-logo" id="sidebarLogoBtn">
+        <svg width="18" height="18" viewBox="0 0 100 100" fill="none">
+          <polygon points="50,4 96,86 4,86" fill="currentColor"/>
+          <circle cx="50" cy="58" r="16" fill="var(--bg-primary)"/>
+        </svg>
+      </a>
+      <div class="sidebar-brand-text">
+        <div class="sidebar-brand-name">TRINITY</div>
+        <div class="sidebar-brand-sub">Markets Journal</div>
+      </div>
+      <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close" title="Close sidebar">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Quick Actions Strip -->
+    <div class="sidebar-actions-strip">
+      <button class="sidebar-action-pill" id="menuCopilotBtn" title="AI Analyst Copilot">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        <span class="sap-label">Copilot</span>
+      </button>
+      <button class="sidebar-action-pill" id="menuThemeToggleBtn" title="Toggle Theme">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <span class="sap-label" id="menuThemeLabel">Theme</span>
+      </button>
+      <button class="sidebar-action-pill" id="menuSyncBtn" title="Sync Feeds">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        <span class="sap-label">Sync</span>
+      </button>
+      <a href="#/live" class="sidebar-action-pill live-pill" id="menuLiveBtn" title="24/7 AI Broadcast">
+        <svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="5"/></svg>
+        <span class="sap-label">Live</span>
+      </a>
+    </div>
+
+    <!-- Main nav links -->
+    <nav class="sidebar-nav" id="categoryNavMenu">
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-label">Home</div>
+        <a href="#/" class="sidebar-link" data-route="home">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Cover
+        </a>
+        <a href="#/briefing" class="sidebar-link" data-route="briefing">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          Daily 100
+        </a>
       </div>
 
-      <!-- The Block-Style Institutional Market Pulse & KPI Barometer -->
-      <div class="market-pulse-barometer" id="marketPulseBarometer">
-        <!-- Injected by JS: Sentiment, ETF Flows, India SIPs, Open Interest -->
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-label">Markets</div>
+        <a href="#/category/stocks-and-equities" class="sidebar-link" data-route="category/stocks-and-equities">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          Stocks &amp; Equities
+        </a>
+        <a href="#/category/crypto-and-digital-assets" class="sidebar-link" data-route="category/crypto-and-digital-assets">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.5 8h3.5a2 2 0 0 1 0 4H9.5V8zm0 4h4a2 2 0 0 1 0 4H9.5v-4z"/></svg>
+          Crypto &amp; Digital
+        </a>
+        <a href="#/category/macro-and-banking" class="sidebar-link" data-route="category/macro-and-banking">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Global Macro
+        </a>
+        <a href="#/category/policy-and-ratecuts" class="sidebar-link" data-route="category/policy-and-ratecuts">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2"/></svg>
+          Policy &amp; Rates
+        </a>
+        <a href="#/category/private-equity-and-vc" class="sidebar-link" data-route="category/private-equity-and-vc">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          PE &amp; VC
+        </a>
+        <a href="#/category/commercial-real-estate" class="sidebar-link" data-route="category/commercial-real-estate">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 21V9"/></svg>
+          Real Estate
+        </a>
       </div>
 
-      <!-- Cover Story & Market Intelligence Radar -->
-      <div class="hero-editorial-layout" id="heroSection">
-        <!-- Injected by JS: Lead Cover Story + Side Market Radar -->
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-label">Intelligence</div>
+        <a href="#/terminal" class="sidebar-link" data-route="terminal">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          Terminal
+        </a>
+        <a href="#/wire" class="sidebar-link" data-route="wire">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.86 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l1.07-1.07a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          Live Wire
+        </a>
+        <a href="#/data" class="sidebar-link" data-route="data">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Data &amp; ETFs
+        </a>
+        <a href="#/calendar" class="sidebar-link" data-route="calendar">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Macro Calendar
+        </a>
+        <a href="#/research" class="sidebar-link" data-route="research">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Research
+        </a>
+        <a href="#/perspectives" class="sidebar-link" data-route="perspectives">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Perspectives
+        </a>
       </div>
 
-      <!-- The Daily 10 Executive Dispatches -->
-      <div class="news-feed-section">
-        <div class="section-head">
-          <div>
-            <h2 class="section-title">The Daily 10 Dispatches</h2>
-            <p class="section-subtitle">Curated Institutional Intelligence Across Core Financial Asset Classes</p>
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-label">Account</div>
+        <a href="#/saved" class="sidebar-link" data-route="saved">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          Saved
+        </a>
+        <a href="#/settings" class="sidebar-link" data-route="settings">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+      </div>
+    </nav>
+
+    <!-- Sidebar footer -->
+    <div class="sidebar-footer">
+      <div class="sidebar-article-count">
+        <span id="articleCountBadge"></span>
+        <span class="sidebar-count-label">Today's Edition</span>
+      </div>
+      <div class="sidebar-disclaimer">AI-generated &middot; Not financial advice</div>
+    </div>
+  </aside>
+
+
+  <!-- ==================== MAIN CONTENT AREA ==================== -->
+  <div class="page-shell">
+    <main class="main-wrapper">
+
+      <!-- PAGE VIEW 1: Home Magazine Cover -->
+      <section id="viewHome" class="app-page-view">
+        <!-- Dateline Strip -->
+        <div class="editorial-dateline-strip">
+          <div class="dateline-left">
+            <span class="dateline-date" id="currentDynamicDate">Wednesday, Sept 16, 2026</span>
+            <span class="dateline-sep">â€¢</span>
+            <span class="dateline-edition">GLOBAL FINANCIAL MARKETS EDITION</span>
+            <span class="dateline-sep">â€¢</span>
+            <span class="dateline-status">AI-VERIFIED TELEMETRY</span>
           </div>
-          <button class="btn-scrape-now" id="scrapeNowBtn" title="Sync Live Primary Wires">
-            <span class="refresh-icon">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6"/><path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M2.5 16l1.2 1.2A10 10 0 0 0 22 12.5"/></svg>
-            </span>
-            <span id="scrapeNowText">Sync Primary Feeds</span>
-          </button>
-        </div>
-
-        <div class="news-cards-grid" id="newsCardsGrid">
-          <!-- Injected by JS: 10 Curated Cards -->
-        </div>
-      </div>
-
-      <!-- Section: Central Bank Rate Cut Radar & Upcoming Macro Issues Calendar -->
-      <div class="macro-radar-section" style="margin-bottom: 4.5rem;">
-        <div class="section-head">
-          <div>
-            <h2 class="section-title">Central Bank Policy, Rate Cuts & Upcoming Events Radar</h2>
-            <p class="section-subtitle">Real-Time RBI MPC Easing Matrix, Fed Trajectories, Inflation Prints & Dalal Street Catalysts</p>
+          <div class="dateline-right">
+            <a href="#/data" class="dateline-link">DATA</a>
+            <a href="#/briefing" class="dateline-link">DAILY 100 â†’</a>
           </div>
-          <a href="#/category/policy-and-ratecuts" class="btn-scrape-now">All Policy Analysis →</a>
         </div>
 
-        <div id="macroEventsRadarContainer">
-          <!-- Injected by JS: Interactive Central Bank Rate Matrix + Upcoming Events Table -->
-        </div>
-      </div>
-
-      <!-- Section: Market Viewpoints & Columnists -->
-      <div class="founding-voices-section">
-        <div class="section-head">
-          <div>
-            <h2 class="section-title">Institutional Perspectives</h2>
-            <p class="section-subtitle">Executive Essays on Asset Allocation, Regulatory Shifts, and Strategic Liquidity</p>
-          </div>
-          <a href="#/perspectives" class="btn-scrape-now">All Columnists →</a>
-        </div>
-
-        <div class="columns-grid" id="foundingColumnsGrid">
+        <!-- Market Pulse KPI Barometer -->
+        <div class="market-pulse-barometer" id="marketPulseBarometer">
           <!-- Injected by JS -->
         </div>
-      </div>
 
-      <!-- Section: Executive Morning Briefing Subscription Banner -->
-      <div class="newsletter-banner">
-        <div class="newsletter-inner">
-          <div class="newsletter-badge">EXECUTIVE INTELLIGENCE BRIEFING</div>
-          <h2 class="newsletter-title">Receive The Morning Markets Dispatch</h2>
-          <p class="newsletter-desc">Delivered daily at 06:00 GMT to 250,000+ portfolio managers, sovereign wealth officers, and private equity executives worldwide.</p>
-          <div style="display: flex; justify-content: center; gap: 1rem;">
-            <a href="#/briefing" class="btn-newsletter-submit" style="display: inline-block;">Open Daily Briefing Edition →</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 2: Dedicated Standalone Article Page -->
-    <section id="viewArticle" class="app-page-view hidden">
-      <div class="standalone-article-container" id="standaloneArticleContainer">
-        <!-- Injected by JS via renderArticlePage() -->
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 3: Dedicated Category / Sector Hub Page -->
-    <section id="viewCategory" class="app-page-view hidden">
-      <div class="category-page-container" id="categoryPageContainer">
-        <!-- Injected by JS via renderCategoryPage() -->
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 4: Dedicated Standalone Market Terminal Page -->
-    <section id="viewTerminal" class="app-page-view hidden">
-      <div class="terminal-page-container" id="terminalPageContainer">
-        <div class="section-head">
-          <div>
-            <h1 class="section-title">Institutional Market Terminal</h1>
-            <p class="section-subtitle">Real-Time Financial Telemetry: Indian Equities, Global Indices, Crypto, Yields & Forex</p>
-          </div>
-          <button class="btn-scrape-now" id="refreshTerminalBtn">
-            <span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6"/><path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M2.5 16l1.2 1.2A10 10 0 0 0 22 12.5"/></svg>
-            </span>
-            <span>Live Sync</span>
-          </button>
-        </div>
-
-        <div class="markets-modal-controls" style="background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 2rem;">
-          <div class="market-category-tabs" id="terminalCategoryTabs">
-            <button class="market-tab-btn active" data-market-cat="All">All Assets</button>
-            <button class="market-tab-btn" data-market-cat="India">Indian Markets</button>
-            <button class="market-tab-btn" data-market-cat="Stocks">US & Global Stocks</button>
-            <button class="market-tab-btn" data-market-cat="Policy">Policy & Yields</button>
-            <button class="market-tab-btn" data-market-cat="Real Estate">Real Estate REITs</button>
-            <button class="market-tab-btn" data-market-cat="Crypto">Crypto & Digital</button>
-            <button class="market-tab-btn" data-market-cat="Macro">Macro & Commodities</button>
-            <button class="market-tab-btn" data-market-cat="Forex">Forex</button>
-          </div>
-          <input type="text" class="market-search-input" id="terminalSearchInput" placeholder="Filter ticker, asset name (e.g. NIFTY50, RELIANCE, NVDA)...">
-        </div>
-
-        <div class="markets-grid" id="terminalGrid">
+        <!-- Cover Story & Wire -->
+        <div class="hero-editorial-layout" id="heroSection">
           <!-- Injected by JS -->
         </div>
-      </div>
-    </section>
 
-    <!-- PAGE VIEW 5: Dedicated Individual Asset / Ticker Quote Page -->
-    <section id="viewTicker" class="app-page-view hidden">
-      <div class="ticker-page-container" id="tickerPageContainer">
-        <!-- Injected by JS via renderTickerView() -->
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 6: Dedicated Live Wire & Radar Page -->
-    <section id="viewWire" class="app-page-view hidden">
-      <div class="wire-page-container" id="wirePageContainer">
-        <!-- Injected by JS via renderWireView() -->
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 7: Dedicated Columnists & Perspectives Hub -->
-    <section id="viewPerspectives" class="app-page-view hidden">
-      <div class="perspectives-page-container" id="perspectivesPageContainer">
-        <!-- Injected by JS via renderPerspectivesView() -->
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 8: Dedicated Single Columnist Essay Page -->
-    <section id="viewPerspectiveDetail" class="app-page-view hidden">
-      <div class="perspective-detail-container" id="perspectiveDetailContainer">
-        <!-- Injected by JS via renderPerspectiveDetailView() -->
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 9: Dedicated Morning Briefing & Newsletter Page -->
-    <section id="viewBriefing" class="app-page-view hidden">
-      <div class="briefing-page-container" id="briefingPageContainer">
-        <!-- Injected by JS via renderBriefingView() -->
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 10: Dedicated Financial Bureaus Page -->
-    <section id="viewBureaus" class="app-page-view hidden">
-      <div class="bureaus-page-container" id="bureausPageContainer">
-        <!-- Injected by JS via renderBureausView() -->
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 11: Dedicated Saved Reading Portfolio Page -->
-    <section id="viewSaved" class="app-page-view hidden">
-      <div class="saved-page-container" id="savedPageContainer">
-        <div class="section-head">
-          <div>
-            <h1 class="section-title">Saved Reading Portfolio</h1>
-            <p class="section-subtitle">Your Bookmarked Institutional Financial Intelligence & Regulatory Filings</p>
+        <!-- Daily 100 AI News Cards -->
+        <div class="news-feed-section">
+          <div class="section-head">
+            <div>
+              <h2 class="section-title">Today's 100 Dispatches <span id="articleCountBadge"></span></h2>
+              <p class="section-subtitle">100 AI-Generated Articles Daily Â· 10 Global Sections Â· Real Market Data Â· Not Financial Advice</p>
+            </div>
+            <button class="btn-scrape-now" id="scrapeNowBtn" title="Regenerate All 100 Articles">
+              <span class="refresh-icon">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6"/><path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M2.5 16l1.2 1.2A10 10 0 0 0 22 12.5"/></svg>
+              </span>
+              <span id="scrapeNowText">Sync Primary Feeds</span>
+            </button>
           </div>
-          <a href="#/" class="btn-scrape-now">← Back to Cover</a>
-        </div>
-
-        <div class="news-cards-grid" id="savedCardsGrid">
-          <!-- Injected by JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 12: Dedicated Standalone Search Engine Page -->
-    <section id="viewSearch" class="app-page-view hidden">
-      <div class="search-page-container" id="searchPageContainer">
-        <div class="section-head">
-          <div>
-            <h1 class="section-title">Intelligence Search Terminal</h1>
-            <p class="section-subtitle">Query our archive of verified institutional dispatches, tickers, and analysis</p>
+          <div class="news-cards-grid" id="newsCardsGrid">
+            <!-- Injected by JS: 100 Daily AI-Generated Cards -->
           </div>
         </div>
 
-        <div class="search-page-input-wrap">
-          <input type="text" class="search-page-input" id="searchPageInput" placeholder="Search by topic, ticker, executive, sovereign fund..." autofocus>
+        <!-- Central Bank Rate Radar -->
+        <div class="macro-radar-section" style="margin-bottom: 4.5rem;">
+          <div class="section-head">
+            <div>
+              <h2 class="section-title">Central Bank Policy Radar</h2>
+              <p class="section-subtitle">Fed, ECB, RBI Rate Trajectories Â· Inflation Prints Â· Upcoming Events</p>
+            </div>
+            <a href="#/category/policy-and-ratecuts" class="btn-scrape-now">All Policy â†’</a>
+          </div>
+          <div id="macroEventsRadarContainer">
+            <!-- Injected by JS -->
+          </div>
         </div>
 
-        <div class="news-cards-grid" id="searchPageCardsGrid">
-          <!-- Injected by JS -->
+        <!-- Institutional Perspectives -->
+        <div class="founding-voices-section">
+          <div class="section-head">
+            <div>
+              <h2 class="section-title">Institutional Perspectives</h2>
+              <p class="section-subtitle">Executive Essays on Asset Allocation, Regulatory Shifts &amp; Strategic Liquidity</p>
+            </div>
+            <a href="#/perspectives" class="btn-scrape-now">All Columnists â†’</a>
+          </div>
+          <div class="columns-grid" id="foundingColumnsGrid">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Newsletter Banner -->
+        <div class="newsletter-banner">
+          <div class="newsletter-inner">
+            <div class="newsletter-badge">EXECUTIVE INTELLIGENCE BRIEFING</div>
+            <h2 class="newsletter-title">Receive The Morning Markets Dispatch</h2>
+            <p class="newsletter-desc">Delivered daily at 06:00 GMT to 250,000+ portfolio managers, sovereign wealth officers, and private equity executives worldwide.</p>
+            <div style="display: flex; justify-content: center; gap: 1rem;">
+              <a href="#/briefing" class="btn-newsletter-submit" style="display: inline-block;">Open Daily Briefing Edition â†’</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE VIEW 2: Article -->
+      <section id="viewArticle" class="app-page-view hidden">
+        <div class="standalone-article-container" id="standaloneArticleContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 3: Category -->
+      <section id="viewCategory" class="app-page-view hidden">
+        <div class="category-page-container" id="categoryPageContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 4: Terminal -->
+      <section id="viewTerminal" class="app-page-view hidden">
+        <div class="terminal-page-container" id="terminalPageContainer">
+          <div class="section-head">
+            <div>
+              <h1 class="section-title">Institutional Market Terminal</h1>
+              <p class="section-subtitle">Real-Time Financial Telemetry: Indian Equities, Global Indices, Crypto, Yields &amp; Forex</p>
+            </div>
+            <button class="btn-scrape-now" id="refreshTerminalBtn">
+              <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6"/><path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M2.5 16l1.2 1.2A10 10 0 0 0 22 12.5"/></svg></span>
+              <span>Live Sync</span>
+            </button>
+          </div>
+          <div class="markets-modal-controls" style="background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 2rem;">
+            <div class="market-category-tabs" id="terminalCategoryTabs">
+              <button class="market-tab-btn active" data-market-cat="All">All Assets</button>
+              <button class="market-tab-btn" data-market-cat="India">Indian Markets</button>
+              <button class="market-tab-btn" data-market-cat="Stocks">US &amp; Global Stocks</button>
+              <button class="market-tab-btn" data-market-cat="Policy">Policy &amp; Yields</button>
+              <button class="market-tab-btn" data-market-cat="Real Estate">Real Estate REITs</button>
+              <button class="market-tab-btn" data-market-cat="Crypto">Crypto &amp; Digital</button>
+              <button class="market-tab-btn" data-market-cat="Macro">Macro &amp; Commodities</button>
+              <button class="market-tab-btn" data-market-cat="Forex">Forex</button>
+            </div>
+            <input type="text" class="market-search-input" id="terminalSearchInput" placeholder="Filter ticker, asset name...">
+          </div>
+          <div class="markets-grid" id="terminalGrid"></div>
+        </div>
+      </section>
+
+      <!-- PAGE VIEW 5: Ticker -->
+      <section id="viewTicker" class="app-page-view hidden">
+        <div class="ticker-page-container" id="tickerPageContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 6: Wire -->
+      <section id="viewWire" class="app-page-view hidden">
+        <div class="wire-page-container" id="wirePageContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 7: Perspectives -->
+      <section id="viewPerspectives" class="app-page-view hidden">
+        <div class="perspectives-page-container" id="perspectivesPageContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 8: Perspective Detail -->
+      <section id="viewPerspectiveDetail" class="app-page-view hidden">
+        <div class="perspective-detail-container" id="perspectiveDetailContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 9: Briefing -->
+      <section id="viewBriefing" class="app-page-view hidden">
+        <div class="briefing-page-container" id="briefingPageContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 10: Bureaus -->
+      <section id="viewBureaus" class="app-page-view hidden">
+        <div class="bureaus-page-container" id="bureausPageContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 11: Saved -->
+      <section id="viewSaved" class="app-page-view hidden">
+        <div class="saved-page-container" id="savedPageContainer">
+          <div class="section-head">
+            <div>
+              <h1 class="section-title">Saved Reading Portfolio</h1>
+              <p class="section-subtitle">Your Bookmarked Institutional Financial Intelligence</p>
+            </div>
+            <a href="#/" class="btn-scrape-now">â† Back to Cover</a>
+          </div>
+          <div class="news-cards-grid" id="savedCardsGrid"></div>
+        </div>
+      </section>
+
+      <!-- PAGE VIEW 12: Search -->
+      <section id="viewSearch" class="app-page-view hidden">
+        <div class="search-page-container" id="searchPageContainer">
+          <div class="section-head">
+            <div>
+              <h1 class="section-title">Intelligence Search Terminal</h1>
+              <p class="section-subtitle">Query our archive of verified institutional dispatches, tickers, and analysis</p>
+            </div>
+          </div>
+          <div class="search-page-input-wrap">
+            <input type="text" class="search-page-input" id="searchPageInput" placeholder="Search by topic, ticker, executive..." autofocus>
+          </div>
+          <div class="news-cards-grid" id="searchPageCardsGrid"></div>
+        </div>
+      </section>
+
+      <!-- PAGE VIEW 13: Settings -->
+      <section id="viewSettings" class="app-page-view hidden">
+        <div class="settings-page-container" id="settingsPageContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 14: Data -->
+      <section id="viewData" class="app-page-view hidden">
+        <div class="data-page-container" id="dataPageContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 15: Research -->
+      <section id="viewResearch" class="app-page-view hidden">
+        <div class="research-page-container" id="researchPageContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 16: Live -->
+      <section id="viewLive" class="app-page-view hidden">
+        <div class="live-studio-container" id="liveStudioContainer"></div>
+      </section>
+
+      <!-- PAGE VIEW 17: Calendar -->
+      <section id="viewCalendar" class="app-page-view hidden">
+        <div class="calendar-page-container" id="calendarPageContainer"></div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="footer-top-grid">
+        <div>
+          <div class="footer-brand-title">TRINITY MARKETS</div>
+          <p class="footer-brand-desc">The premier global financial intelligence journal. Covering equities, crypto, real estate, venture capital, and global macro for institutional allocators.</p>
+        </div>
+        <div>
+          <div class="footer-heading">Sectors</div>
+          <ul class="footer-links-list">
+            <li><a href="#/category/stocks-and-equities">Stocks &amp; Equities</a></li>
+            <li><a href="#/category/crypto-and-digital-assets">Crypto &amp; Digital Assets</a></li>
+            <li><a href="#/category/commercial-real-estate">Commercial Real Estate</a></li>
+            <li><a href="#/category/private-equity-and-vc">Private Equity &amp; VC</a></li>
+            <li><a href="#/category/macro-and-banking">Macro &amp; Banking</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-heading">Intelligence</div>
+          <ul class="footer-links-list">
+            <li><a href="#/terminal">Market Terminal</a></li>
+            <li><a href="#/wire">Live Wire</a></li>
+            <li><a href="#/briefing">Daily 100 Briefing</a></li>
+            <li><a href="#/data">Data &amp; ETFs</a></li>
+            <li><a href="#/search">Search Terminal</a></li>
+          </ul>
         </div>
       </div>
-    </section>
-
-    <!-- PAGE VIEW 14: Dedicated The Block-Style Data Pulse Dashboard Page -->
-    <section id="viewData" class="app-page-view hidden">
-      <div class="data-page-container" id="dataPageContainer">
-        <!-- Injected by JS via renderDataDashboardView() -->
+      <div class="footer-bottom-bar">
+        <div>Â© 2026 TRINITY MARKETS JOURNAL. All rights reserved. AI-generated analysis Â· Not financial advice.</div>
+        <div>Data: NYSE Â· NASDAQ Â· CME Â· Binance Â· Reuters</div>
       </div>
-    </section>
-
-    <!-- PAGE VIEW 15: Dedicated Institutional Research Desk Page -->
-    <section id="viewResearch" class="app-page-view hidden">
-      <div class="research-page-container" id="researchPageContainer">
-        <!-- Injected by JS via renderResearchView() -->
-      </div>
-    </section>
-
-    <!-- PAGE VIEW 13: Dedicated Journal Settings & Preferences Page -->
-    <section id="viewSettings" class="app-page-view hidden">
-      <div class="settings-page-container" id="settingsPageContainer">
-        <!-- Injected by JS via renderSettingsView() -->
-      </div>
-    </section>
-
-  </main>
+    </footer>
+  </div>
 
   <!-- Toast Notification -->
   <div class="toast-msg" id="toastMsg">
     <span id="toastText">Action completed</span>
   </div>
 
-  <!-- ==================== Footer ==================== -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-top-grid">
-        <div>
-          <div class="footer-brand-title">TRINITY MARKETS</div>
-          <p class="footer-brand-desc">The premier global financial intelligence journal. Covering equities, commercial real estate, digital assets, venture capital, and macroeconomic liquidity for institutional allocators.</p>
-        </div>
-        <div>
-          <div class="footer-heading">Sectors</div>
-          <ul class="footer-links-list">
-            <li><a href="#/category/stocks-and-equities">Wall Street & Equities</a></li>
-            <li><a href="#/category/commercial-real-estate">Commercial Real Estate</a></li>
-            <li><a href="#/category/crypto-and-digital-assets">Crypto & Digital Assets</a></li>
-            <li><a href="#/category/private-equity-and-vc">Private Equity & VC</a></li>
-            <li><a href="#/category/macro-and-banking">Macro & Central Banking</a></li>
-          </ul>
-        </div>
-        <div>
-          <div class="footer-heading">Intelligence Pages</div>
-          <ul class="footer-links-list">
-            <li><a href="#/terminal">Institutional Market Terminal</a></li>
-            <li><a href="#/wire">Live Telemetry Radar Wire</a></li>
-            <li><a href="#/perspectives">Institutional Columnists</a></li>
-            <li><a href="#/briefing">Daily Executive 10 Briefing</a></li>
-            <li><a href="#/saved">Saved Reading Portfolio</a></li>
-            <li><a href="#/search">Search Terminal (⌘K)</a></li>
-          </ul>
-        </div>
-        <div>
-          <div class="footer-heading">Financial Bureaus</div>
-          <div class="bureau-cities">
-            <a href="#/bureaus" class="bureau-badge">New York</a>
-            <a href="#/bureaus" class="bureau-badge">London</a>
-            <a href="#/bureaus" class="bureau-badge">Singapore</a>
-            <a href="#/bureaus" class="bureau-badge">Dubai</a>
-            <a href="#/bureaus" class="bureau-badge">Tokyo</a>
-            <a href="#/bureaus" class="bureau-badge">Frankfurt</a>
-          </div>
-          <div style="margin-top: 1.25rem;">
-            <a href="#/settings" style="font-size: 0.8rem; color: var(--text-muted); text-decoration: underline;">⚙️ Journal Settings & Preferences</a>
-          </div>
-        </div>
+  <!-- Audio Player Bar -->
+  <div class="global-audio-bar hidden" id="globalAudioPlayerBar">
+    <div class="audio-bar-inner">
+      <div class="audio-status-badge">
+        <span class="live-dot-pulse"></span>
+        <span id="audioStatusText">TRINITY AUDIO DISPATCH</span>
       </div>
+      <div class="audio-title-info" id="audioTitleInfo">Select an article to play institutional voice synthesis</div>
+      <div class="audio-controls-group">
+        <button class="audio-btn" id="audioPlayPauseBtn" title="Play/Pause">
+          <svg id="audioPlayIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg id="audioPauseIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <button class="audio-btn" id="audioStopBtn" title="Stop">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16"/></svg>
+        </button>
+        <select class="audio-speed-select" id="audioSpeedSelect">
+          <option value="0.8">0.8x</option>
+          <option value="1.0" selected>1.0x</option>
+          <option value="1.25">1.25x</option>
+          <option value="1.5">1.5x</option>
+        </select>
+      </div>
+      <button class="audio-close-btn" id="closeAudioBarBtn" title="Close">&times;</button>
+    </div>
+  </div>
 
-      <div class="footer-bottom-bar">
-        <div>© 2026 TRINITY MARKETS JOURNAL. All rights reserved. Non-speculative verified analysis.</div>
-        <div>Financial Data Syndication: NYSE • NASDAQ • CME • Binance • Reuters</div>
+  <!-- AI Copilot Drawer -->
+  <div class="copilot-drawer-backdrop hidden" id="copilotBackdrop"></div>
+  <aside class="copilot-drawer hidden" id="aiCopilotDrawer">
+    <div class="copilot-header">
+      <div class="copilot-title-group">
+        <span class="copilot-badge">TRINITY AI</span>
+        <span class="copilot-title">Terminal Copilot</span>
+      </div>
+      <div class="copilot-actions">
+        <span class="shortcut-tag">âŒ˜J</span>
+        <button class="copilot-close-btn" id="closeCopilotBtn">&times;</button>
       </div>
     </div>
-  </footer>
+    <div class="copilot-body" id="copilotChatBody">
+      <div class="copilot-msg system">
+        <div class="copilot-avatar">ðŸ§ </div>
+        <div class="msg-content">
+          <strong>TRINITY AI Quantitative Analyst Online</strong>
+          <p>Ready to answer quantitative queries, summarize macro guidance, analyze stock technical setups, or parse SEC filing context.</p>
+          <div class="copilot-prompt-chips" id="copilotPromptChips">
+            <button class="chip-btn" data-query="Explain CPI Inflation impact on REIT cap rates">CPI &amp; REITs</button>
+            <button class="chip-btn" data-query="Analyze NVDA forward EPS guidance and technical setup">NVDA Setup</button>
+            <button class="chip-btn" data-query="Compare Spot Gold vs Bitcoin inflation hedging">Gold vs BTC</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="copilot-footer">
+      <form id="copilotInputForm" class="copilot-input-wrap">
+        <input type="text" id="copilotInput" placeholder="Ask quantitative analyst or macro query..." autocomplete="off">
+        <button type="submit" id="copilotSendBtn" class="copilot-send-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </form>
+    </div>
+  </aside>
 
   <!-- Scripts -->
-  <script type="module" src="js/app.js?v=7.0"></script>
+  <script type="module" src="js/app.js?v=12.0"></script>
+
+  <!-- Sidebar toggle script (inline, no module dependency) -->
+  <script>
+    (function() {
+      const btn = document.getElementById('sidebarToggleBtn');
+      const closeBtn = document.getElementById('sidebarCloseBtn');
+      const sidebar = document.getElementById('mainSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+
+      function closeSidebar() {
+        if (sidebar) sidebar.classList.remove('sidebar-open');
+        if (overlay) overlay.classList.add('hidden');
+      }
+
+      function toggleSidebar() {
+        if (window.innerWidth > 768) {
+          document.body.classList.toggle('sidebar-collapsed');
+        } else {
+          if (sidebar) {
+            const isOpen = sidebar.classList.toggle('sidebar-open');
+            if (overlay) {
+              overlay.classList.toggle('hidden', !isOpen);
+            }
+          }
+        }
+      }
+
+      if (btn) btn.addEventListener('click', toggleSidebar);
+      if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+      if (overlay) overlay.addEventListener('click', closeSidebar);
+
+      // Close mobile sidebar on nav link or action pill click
+      if (sidebar) {
+        sidebar.querySelectorAll('.sidebar-link, .sidebar-action-pill').forEach(function(el) {
+          el.addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+              closeSidebar();
+            }
+          });
+        });
+      }
+
+      // Close on Escape key
+      window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeSidebar();
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

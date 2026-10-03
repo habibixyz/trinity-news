@@ -26,6 +26,9 @@ import { MarketService } from './marketService.js';
 import { NewsScraperService } from './newsScraperService.js';
 import { GeminiArticleService } from './geminiArticleService.js';
 import { ChartService } from './chartService.js';
+import { audioService } from './audioService.js';
+import { aiCopilotService } from './aiCopilotService.js';
+import { calendarService } from './calendarService.js';
 
 class TrinityMarketsApp {
   constructor() {
@@ -54,7 +57,10 @@ class TrinityMarketsApp {
 
     this.marketService = new MarketService((data, meta) => this.onMarketUpdate(data, meta));
     this.scraperService = new NewsScraperService((articles, meta) => this.onScraperUpdate(articles, meta));
-    this.geminiService = new GeminiArticleService((articles, meta) => this.onGeminiArticlesReady(articles, meta));
+    this.geminiService = new GeminiArticleService(
+      (articles, meta) => this.onGeminiArticlesReady(articles, meta),
+      (sectionName, count, total) => this.onGeminiProgress(sectionName, count, total)
+    );
     this.chartService = new ChartService();
     if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       this.init();
@@ -94,31 +100,84 @@ class TrinityMarketsApp {
   }
 
   /**
-   * Load Gemini-generated articles. Uses cached version if fresh (<6h old),
-   * otherwise waits for market prices then generates fresh articles.
+   * Load Gemini-generated articles. Uses date-keyed cache (today's edition)
+   * or triggers fresh 100-article generation pipeline with progress UI.
    */
   async loadGeminiArticles() {
-    // First: serve from cache instantly if available
+    // First: serve from cache instantly if today's edition is ready
     const cached = this.geminiService.loadFromCache();
     if (cached) {
       this.state.aiArticles = cached;
       this.state.aiArticlesLoading = false;
       const cacheAge = this.geminiService.getCacheAge();
-      console.log(`[TRINITY] ✅ Loaded ${cached.length} AI articles from cache (${cacheAge})`);
+      console.log(`[TRINITY] ✅ Loaded ${cached.length} AI articles from today's cache (${cacheAge})`);
+      this.updateArticleCountBadge(cached.length);
       if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
         this.renderHomeView();
       }
       return;
     }
 
-    // No cache: wait a moment for market service to fetch real prices, then generate
-    console.log('[TRINITY] 🔄 No cached articles — generating with Gemini AI after market data loads...');
+    // No cache: show generation progress overlay, wait for market data, then generate
+    console.log('[TRINITY] 🔄 No today\'s edition cached — generating 100 articles via Gemini AI...');
     this.state.aiArticlesLoading = true;
+    this.showGenerationProgress(0, 10, 'Initializing market data...');
 
-    // Wait up to 8 seconds for market data to initialize before generating
-    await new Promise(resolve => setTimeout(resolve, 8000));
+    // Wait up to 6 seconds for market data to initialize before generating
+    await new Promise(resolve => setTimeout(resolve, 6000));
     const liveData = this.marketService ? this.marketService.getMarkets() : MARKET_DATA;
     await this.geminiService.getOrGenerateArticles(liveData);
+  }
+
+  /**
+   * Fired after each of the 10 sections completes generation.
+   * Updates the progress bar and counter badge.
+   */
+  onGeminiProgress(sectionName, sectionCount, totalSoFar) {
+    const sectionsCompleted = Math.ceil(totalSoFar / 10);
+    this.showGenerationProgress(sectionsCompleted, 10, `${sectionName} (${totalSoFar} articles ready)`);
+    this.updateArticleCountBadge(totalSoFar);
+  }
+
+  /**
+   * Show/update the generation progress overlay.
+   */
+  showGenerationProgress(completed, total, label) {
+    let overlay = document.getElementById('generationProgressOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'generationProgressOverlay';
+      overlay.className = 'gen-progress-overlay';
+      document.body.appendChild(overlay);
+    }
+    const pct = Math.round((completed / total) * 100);
+    overlay.innerHTML = `
+      <div class="gen-progress-box">
+        <div class="gen-progress-header">
+          <span class="gen-progress-icon">🤖</span>
+          <div>
+            <div class="gen-progress-title">Generating Today's 100 Articles</div>
+            <div class="gen-progress-label">${label}</div>
+          </div>
+          <span class="gen-progress-pct">${pct}%</span>
+        </div>
+        <div class="gen-progress-bar-track">
+          <div class="gen-progress-bar-fill" style="width: ${pct}%"></div>
+        </div>
+        <div class="gen-progress-sections">${completed}/${total} sections complete</div>
+      </div>
+    `;
+    if (pct >= 100) {
+      setTimeout(() => { overlay.remove(); }, 1800);
+    }
+  }
+
+  /**
+   * Update the article count badge in the header.
+   */
+  updateArticleCountBadge(count) {
+    const badge = document.getElementById('articleCountBadge');
+    if (badge) badge.textContent = `${count} articles today`;
   }
 
   /* ==================== Safe Author Extraction Helper ==================== */
@@ -237,11 +296,15 @@ class TrinityMarketsApp {
       // Stop audio narration when changing pages
       this.stopAudioNarration();
 
+      // Clean up article reading progress bar listener
+      if (this._cleanupProgressBar) { this._cleanupProgressBar(); this._cleanupProgressBar = null; }
+
       // Scroll to top
       window.scrollTo({ top: 0, behavior: 'instant' });
 
-      // Update active nav indicators
-      document.querySelectorAll('#categoryNavMenu .nav-link-btn').forEach(btn => {
+
+      // Update active nav indicators (sidebar links)
+      document.querySelectorAll('#categoryNavMenu .sidebar-link, #categoryNavMenu .nav-link-btn').forEach(btn => {
         const routeAttr = btn.dataset.route || '';
         const isMatch = (routeAttr === 'home' && (!hash || hash === '/' || hash === 'home')) ||
                         (routeAttr && hash === routeAttr) ||
@@ -278,6 +341,20 @@ class TrinityMarketsApp {
         this.updateSEO({
           title: "Institutional Research & Intelligence Reports | TRINITY MARKETS",
           description: "Deep research papers, institutional filings, and macro financial models."
+        });
+      } else if (hash === 'live' || hash.startsWith('live')) {
+        this.showView('viewLive');
+        this.renderLiveStudioView();
+        this.updateSEO({
+          title: "24/7 AI Audio Broadcast Studio | TRINITY MARKETS",
+          description: "Live financial broadcast stream with AI audio anchor, lower-third telemetry, and breaking market dispatches."
+        });
+      } else if (hash === 'calendar' || hash.startsWith('calendar')) {
+        this.showView('viewCalendar');
+        this.renderCalendarView();
+        this.updateSEO({
+          title: "Macro Economic Calendar & Earnings Matrix | TRINITY MARKETS",
+          description: "Central Bank rate decisions, CPI releases, jobs reports, and quarterly earnings beat/miss track records."
         });
       } else if (hash.startsWith('terminal')) {
         this.showView('viewTerminal');
@@ -637,7 +714,6 @@ class TrinityMarketsApp {
     const targetSlug = decodeURIComponent(slug || '').toLowerCase().trim();
     const all = this.getAllArticles();
     
-    // Check in all active articles, then fallback to helper
     let article = all.find(a => 
       (a.slug && a.slug.toLowerCase().trim() === targetSlug) || 
       (a.id && a.id.toLowerCase().trim() === targetSlug)
@@ -649,10 +725,11 @@ class TrinityMarketsApp {
 
     if (!article) {
       container.innerHTML = `
-        <div style="text-align: center; padding: 4rem 1rem;">
-          <h2 style="font-family: var(--font-display); font-size: 2rem; margin-bottom: 1rem;">Dispatch Not Found</h2>
-          <p style="color: var(--text-secondary); margin-bottom: 2rem;">The requested financial dispatch could not be found or has expired.</p>
-          <a href="#/" class="btn-scrape-now" style="display: inline-flex;">← Return to Daily 10 Cover</a>
+        <div style="text-align: center; padding: 6rem 1rem;">
+          <div style="font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 1.5rem;">Dispatch Not Found</div>
+          <h2 style="font-family: var(--font-serif); font-size: 2.2rem; margin-bottom: 1rem;">The requested dispatch has expired or moved.</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 2.5rem; max-width: 400px; margin-left: auto; margin-right: auto;">Our archive refreshes daily. Return to the cover for today's 100 dispatches.</p>
+          <a href="#/" class="btn-scrape-now" style="display: inline-flex;">← Return to Today's Cover</a>
         </div>
       `;
       return;
@@ -661,7 +738,7 @@ class TrinityMarketsApp {
     this.state.activeArticle = article;
     this.updateSEO({
       title: `${article.title} | TRINITY MARKETS`,
-      description: article.subtitle || article.caption || 'Institutional financial analysis dispatch from TRINITY MARKETS.',
+      description: article.subtitle || 'Institutional financial analysis dispatch from TRINITY MARKETS.',
       image: article.image,
       type: 'article',
       article: article
@@ -669,107 +746,262 @@ class TrinityMarketsApp {
 
     const isSaved = this.state.savedBookmarks.includes(article.id);
     const catSlug = article.categorySlug || 'stocks-and-equities';
-    const related = this.getAllArticles().filter(a => a.id !== article.id && (a.category === article.category || a.categorySlug === catSlug)).slice(0, 2);
+    const safeAuthor = this.getSafeAuthor(article.author);
+
+    // Get 3 related articles
+    const related = this.getAllArticles()
+      .filter(a => a.id !== article.id && (a.category === article.category || a.categorySlug === catSlug))
+      .slice(0, 3);
+
+    // Get next/prev articles in the same category
+    const sameCategory = this.getAllArticles().filter(a => a.categorySlug === catSlug);
+    const currentIdx = sameCategory.findIndex(a => a.id === article.id);
+    const prevArticle = currentIdx > 0 ? sameCategory[currentIdx - 1] : null;
+    const nextArticle = currentIdx < sameCategory.length - 1 ? sameCategory[currentIdx + 1] : null;
+
+    // Share URL
+    const shareUrl = `${window.location.origin}${window.location.pathname}#/article/${article.slug || article.id}`;
+    const encodedTitle = encodeURIComponent(article.title);
+    const encodedUrl = encodeURIComponent(shareUrl);
 
     container.innerHTML = `
+      <!-- Reading Progress Bar -->
+      <div class="article-progress-bar" id="articleProgressBar"></div>
+
+      <!-- Breadcrumb -->
       <nav class="article-breadcrumb">
         <a href="#/">Cover</a>
-        <span>/</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         <a href="#/category/${catSlug}">${article.category}</a>
-        <span>/</span>
-        <span>${article.slug || article.id}</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>${(article.slug || article.id).slice(0, 40)}…</span>
       </nav>
 
-      <header class="standalone-article-header">
-        <div class="reader-meta-pills">
-          <a href="#/category/${catSlug}" class="reader-category-pill">${article.category}</a>
-          ${article.channelTag ? `<span class="reader-category-pill" style="background: var(--bg-tertiary); color: var(--text-primary);">${article.channelTag} WIRE</span>` : ''}
-        </div>
+      <!-- Two-column article layout -->
+      <div class="article-layout-grid">
 
-        <h1 class="standalone-headline">${article.title}</h1>
-        <p class="standalone-subtitle">${article.subtitle}</p>
+        <!-- LEFT: Main Article Column -->
+        <div class="article-main-col">
 
-        <div class="standalone-toolbar">
-          <div class="author-chip">
-            <img src="${this.getSafeAuthor(article.author).avatar}" alt="${this.getSafeAuthor(article.author).name}">
-            <div class="author-info">
-              <div class="name">${this.getSafeAuthor(article.author).name}</div>
-              <div class="role">${this.getSafeAuthor(article.author).role}</div>
+          <!-- Article Header -->
+          <header class="standalone-article-header">
+            <div class="reader-meta-pills">
+              <a href="#/category/${catSlug}" class="reader-category-pill">${article.category}</a>
+              ${article.region ? `<span class="reader-region-pill"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z"/></svg>${article.region}</span>` : ''}
+              ${article.isAIGenerated ? `<span class="reader-ai-pill">🤖 AI Generated</span>` : ''}
             </div>
-          </div>
 
-          <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
-            <button class="reader-btn" id="standaloneAudioBtn" onclick="window.trinityApp.toggleAudioNarration()" title="Listen to narration">
-              <span id="standaloneAudioText">Listen</span>
-            </button>
-            <div class="reader-font-group">
-              <button class="reader-btn reader-btn-font" onclick="window.trinityApp.adjustFontSize('dec')">A−</button>
-              <button class="reader-btn reader-btn-font" onclick="window.trinityApp.adjustFontSize('inc')">A+</button>
-            </div>
-            <button class="reader-btn ${isSaved ? 'bookmarked' : ''}" onclick="window.trinityApp.toggleBookmark('${article.id}', event)" title="Save dispatch">
-              <span>${isSaved ? 'Saved' : 'Save'}</span>
-            </button>
-            <button class="reader-btn" onclick="window.trinityApp.shareArticle('${article.id}', event)" title="Share link">
-              <span>Share</span>
-            </button>
-            <button class="reader-btn" onclick="window.trinityApp.copyCitation('${article.id}')" title="Copy Citation">
-              <span>Cite</span>
-            </button>
-            <button class="reader-btn" onclick="window.trinityApp.exportArticlePDF()" title="Export or Print PDF">
-              <span>Print PDF</span>
-            </button>
-          </div>
-        </div>
-      </header>
+            <h1 class="standalone-headline">${article.title}</h1>
+            <p class="standalone-subtitle">${article.subtitle || ''}</p>
 
-      <div class="standalone-hero-img">
-        <img src="${article.image}" alt="${article.title}">
-        ${article.caption ? `<div class="reader-caption">${article.caption}</div>` : ''}
-      </div>
-
-      <div class="reader-article-prose" id="readerProseContent">
-        ${article.content}
-      </div>
-
-      ${article.takeaways ? `
-        <div class="takeaways-box" style="margin-top: 3rem;">
-          <div class="takeaways-title">Summary & Regulatory Mandate</div>
-          <ul class="takeaways-list">
-            ${article.takeaways.map(t => `<li>${t}</li>`).join('')}
-          </ul>
-        </div>
-      ` : ''}
-
-      <div style="margin-top: 4rem; padding-top: 2rem; border-top: 2px solid var(--text-primary);">
-        <div class="section-head">
-          <div>
-            <h3 class="section-title" style="font-size: 1.3rem;">Related ${article.category} Dispatches</h3>
-          </div>
-          <a href="#/category/${catSlug}" class="btn-scrape-now">View All ${article.category} →</a>
-        </div>
-
-        <div class="news-cards-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
-          ${related.map(rel => `
-            <article class="story-card">
-              <a href="#/article/${rel.slug || rel.id}" class="story-media">
-                <img src="${rel.image}" alt="${rel.title}" loading="lazy">
-              </a>
-              <div class="story-content">
-                <div class="story-meta">
-                  <span>${rel.date}</span> • <span>${rel.readTime}</span>
+            <!-- Author + Meta toolbar -->
+            <div class="standalone-toolbar">
+              <div class="article-author-block">
+                <img class="author-avatar-lg" src="${safeAuthor.avatar}" alt="${safeAuthor.name}" onerror="this.src='https://ui-avatars.com/api/?name=TRINITY+Desk&background=0a0a0a&color=ffffff&size=80&format=svg'">
+                <div>
+                  <div class="author-name-lg">${safeAuthor.name}</div>
+                  <div class="author-role-lg">${safeAuthor.role}</div>
+                  <div class="article-date-meta">
+                    <span>${article.date || 'Today'}</span>
+                    <span class="meta-dot">·</span>
+                    <span>${article.readTime || '5 min read'}</span>
+                    ${article.isAIGenerated ? `<span class="meta-dot">·</span><span style="color: var(--text-muted);">AI-authored</span>` : ''}
+                  </div>
                 </div>
-                <h4 class="story-title" style="font-size: 1.1rem;">
-                  <a href="#/article/${rel.slug || rel.id}">${rel.title}</a>
-                </h4>
               </div>
-            </article>
-          `).join('')}
+
+              <div class="article-action-group">
+                <button class="reader-btn" id="standaloneAudioBtn" onclick="window.trinityApp.toggleAudioNarration()" title="Listen">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  <span id="standaloneAudioText">Listen</span>
+                </button>
+                <div class="reader-font-group">
+                  <button class="reader-btn reader-btn-font" onclick="window.trinityApp.adjustFontSize('dec')">A−</button>
+                  <button class="reader-btn reader-btn-font" onclick="window.trinityApp.adjustFontSize('inc')">A+</button>
+                </div>
+                <button class="reader-btn ${isSaved ? 'bookmarked' : ''}" onclick="window.trinityApp.toggleBookmark('${article.id}', event)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  ${isSaved ? 'Saved' : 'Save'}
+                </button>
+                <button class="reader-btn" onclick="window.trinityApp.exportArticlePDF()" title="Print PDF">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  PDF
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <!-- Hero Image -->
+          <div class="standalone-hero-img">
+            <img src="${article.image}" alt="${article.title}" loading="lazy">
+            ${article.caption ? `<div class="reader-caption">${article.caption}</div>` : `<div class="reader-caption">TRINITY MARKETS · ${article.category} · ${article.date || 'Today'}</div>`}
+          </div>
+
+          <!-- Article Body -->
+          <div class="reader-article-prose" id="readerProseContent">
+            ${article.content}
+          </div>
+
+          <!-- AI Disclosure -->
+          ${article.isAIGenerated ? `
+          <div class="article-ai-disclosure">
+            <div class="ai-disclosure-icon">🤖</div>
+            <div>
+              <div class="ai-disclosure-title">AI-Generated Dispatch</div>
+              <div class="ai-disclosure-body">This article was generated by TRINITY's AI editorial system using real-time market data. It reflects synthesized analysis and is <strong>not financial advice</strong>. Always conduct independent research before making investment decisions. TRINITY MARKETS is not SEBI/SEC registered.</div>
+            </div>
+          </div>
+          ` : ''}
+
+          <!-- Key Takeaways -->
+          ${article.takeaways && article.takeaways.length ? `
+          <div class="takeaways-box">
+            <div class="takeaways-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              Key Takeaways for Portfolio Managers
+            </div>
+            <ul class="takeaways-list">
+              ${article.takeaways.map(t => `<li>${t}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+
+          <!-- Share Bar -->
+          <div class="article-share-bar">
+            <span class="share-label">Share this dispatch</span>
+            <div class="share-btn-group">
+              <a href="https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}" target="_blank" rel="noopener" class="share-btn share-twitter" title="Share on X/Twitter">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.735-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                Post
+              </a>
+              <a href="https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}" target="_blank" rel="noopener" class="share-btn share-linkedin" title="Share on LinkedIn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                LinkedIn
+              </a>
+              <a href="https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}" target="_blank" rel="noopener" class="share-btn share-whatsapp" title="Share via WhatsApp">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.938 0C5.351 0 0 5.351 0 11.938c0 2.101.549 4.079 1.508 5.789L0 24l6.502-1.683A11.876 11.876 0 0 0 11.938 23.875C18.524 23.875 24 18.524 24 11.938 24 5.351 18.524 0 11.938 0z"/></svg>
+                WhatsApp
+              </a>
+              <button class="share-btn share-copy" onclick="window.trinityApp.shareArticle('${article.id}', event)" title="Copy link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy Link
+              </button>
+            </div>
+          </div>
+
+          <!-- Prev / Next navigation -->
+          <nav class="article-prev-next">
+            ${prevArticle ? `
+            <a href="#/article/${prevArticle.slug || prevArticle.id}" class="article-nav-btn article-nav-prev">
+              <div class="nav-arrow">←</div>
+              <div class="nav-text">
+                <div class="nav-label">Previous</div>
+                <div class="nav-title">${prevArticle.title.slice(0, 55)}…</div>
+              </div>
+            </a>` : '<div></div>'}
+            ${nextArticle ? `
+            <a href="#/article/${nextArticle.slug || nextArticle.id}" class="article-nav-btn article-nav-next">
+              <div class="nav-text" style="text-align: right;">
+                <div class="nav-label">Next</div>
+                <div class="nav-title">${nextArticle.title.slice(0, 55)}…</div>
+              </div>
+              <div class="nav-arrow">→</div>
+            </a>` : '<div></div>'}
+          </nav>
+
+          <!-- Related Articles -->
+          ${related.length > 0 ? `
+          <div class="article-related-section">
+            <div class="section-head" style="margin-bottom: 1.5rem;">
+              <div>
+                <h3 class="section-title" style="font-size: 1.2rem;">More from ${article.category}</h3>
+              </div>
+              <a href="#/category/${catSlug}" class="btn-scrape-now">View All →</a>
+            </div>
+            <div class="article-related-grid">
+              ${related.map(rel => `
+              <a href="#/article/${rel.slug || rel.id}" class="related-card">
+                <div class="related-card-img">
+                  <img src="${rel.image}" alt="${rel.title}" loading="lazy">
+                </div>
+                <div class="related-card-body">
+                  <div class="related-card-cat">${rel.category}</div>
+                  <div class="related-card-title">${rel.title}</div>
+                  <div class="related-card-meta">${rel.date || 'Today'} · ${rel.readTime || '5 min'}</div>
+                </div>
+              </a>`).join('')}
+            </div>
+          </div>
+          ` : ''}
+
         </div>
+
+        <!-- RIGHT: Sticky Sidebar -->
+        <aside class="article-sidebar">
+
+          <!-- Quick Info Card -->
+          <div class="article-sidebar-card">
+            <div class="sidebar-card-label">Dispatch Info</div>
+            <div class="dispatch-info-grid">
+              <div><div class="dispatch-info-key">Category</div><div class="dispatch-info-val">${article.category}</div></div>
+              <div><div class="dispatch-info-key">Region</div><div class="dispatch-info-val">${article.region || 'Global'}</div></div>
+              <div><div class="dispatch-info-key">Read time</div><div class="dispatch-info-val">${article.readTime || '5 min'}</div></div>
+              <div><div class="dispatch-info-key">Published</div><div class="dispatch-info-val">${article.date || 'Today'}</div></div>
+            </div>
+          </div>
+
+          <!-- Cite / Save card -->
+          <div class="article-sidebar-card">
+            <div class="sidebar-card-label">Actions</div>
+            <div class="sidebar-actions-stack">
+              <button class="sidebar-action-btn ${isSaved ? 'saved' : ''}" onclick="window.trinityApp.toggleBookmark('${article.id}', event)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                ${isSaved ? 'Saved to Portfolio' : 'Save Dispatch'}
+              </button>
+              <button class="sidebar-action-btn" onclick="window.trinityApp.copyCitation('${article.id}')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Copy Citation
+              </button>
+              <button class="sidebar-action-btn" onclick="window.trinityApp.exportArticlePDF()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Export PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- Disclaimer -->
+          <div class="article-sidebar-card article-sidebar-disclaimer">
+            <div class="sidebar-card-label">Disclaimer</div>
+            <p>TRINITY MARKETS content is AI-generated for informational purposes only. This is <strong>not financial advice</strong>. Past performance does not guarantee future results. Always consult a licensed financial advisor.</p>
+          </div>
+
+        </aside>
       </div>
     `;
 
     this.applyFontScaling();
+
+    // Inject reading progress bar
+    this._initReadingProgress();
   }
+
+  _initReadingProgress() {
+    const bar = document.getElementById('articleProgressBar');
+    if (!bar) return;
+    const prose = document.getElementById('readerProseContent');
+    if (!prose) return;
+    const onScroll = () => {
+      const proseRect = prose.getBoundingClientRect();
+      const totalHeight = prose.offsetHeight;
+      const scrolled = Math.max(0, -proseRect.top);
+      const pct = Math.min(100, Math.round((scrolled / totalHeight) * 100));
+      bar.style.width = pct + '%';
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    // Clean up on next navigation
+    this._cleanupProgressBar = () => window.removeEventListener('scroll', onScroll);
+  }
+
 
   /* ==================== PAGE VIEW 3: Dedicated Category / Sector Hub Page ==================== */
   renderCategoryView(catSlug) {
@@ -1662,11 +1894,306 @@ class TrinityMarketsApp {
     `;
   }
 
+  /* ==================== PAGE VIEW 16: 24/7 AI Audio Broadcast Studio (`#/live`) ==================== */
+  renderLiveStudioView() {
+    const container = document.getElementById('liveStudioContainer');
+    if (!container) return;
+
+    const liveMarkets = this.marketService ? this.marketService.getMarkets() : MARKET_DATA;
+    const topArticles = this.state.aiArticles && this.state.aiArticles.length > 0 ? this.state.aiArticles : ARTICLES;
+    const leadStory = topArticles[0] || ARTICLES[0];
+
+    container.innerHTML = `
+      <div class="studio-header-strip">
+        <div class="studio-brand-title">
+          <span>TRINITY LIVE</span>
+          <span class="live-tv-tag">BROADCAST 24/7</span>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 0.8rem; color: #888;">
+          AUDIO STREAM • REAL-TIME TELEMETRY • AUTONOMOUS AI ANCHOR
+        </div>
+        <button class="btn-scrape-now" id="studioStartBroadcastBtn" style="border-color: #ef4444; color: #ef4444; font-weight: 800; cursor: pointer;">
+          🎙️ Start AI Voice Anchor
+        </button>
+      </div>
+
+      <div class="studio-layout-grid">
+        <div class="studio-main-stage">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 0.75rem;">
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #ef4444; text-transform: uppercase; font-weight: 800;">BREAKING DISPATCH</span>
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #888;">LIVE ANCHOR NARRATION</span>
+          </div>
+
+          <h2 style="font-family: var(--font-display); font-size: 1.8rem; line-height: 1.3; color: #fff;">${leadStory.title}</h2>
+          <p style="font-family: var(--font-sans); font-size: 1rem; color: #ccc; line-height: 1.6;">${leadStory.excerpt || leadStory.subtitle}</p>
+
+          <div style="margin-top: 1rem; background: #141414; border: 1px solid #262626; border-radius: 6px; padding: 1.25rem;">
+            <div style="font-family: var(--font-mono); font-size: 0.75rem; color: #888; margin-bottom: 0.75rem;">LIVE MARKET TELEMETRY RADAR</div>
+            <div id="liveStudioChartCanvasContainer" style="height: 320px; width: 100%;"></div>
+          </div>
+        </div>
+
+        <aside class="studio-side-wire">
+          <div style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 800; color: #fff; text-transform: uppercase; border-bottom: 1px solid #262626; padding-bottom: 0.5rem;">
+            ⚡ LIVE TELEMETRY RADAR WIRE
+          </div>
+          <div class="wire-stream-list" style="display: flex; flex-direction: column; gap: 0.85rem;">
+            ${topArticles.slice(1, 6).map(a => `
+              <div class="wire-stream-item" style="border-bottom: 1px solid #1a1a1a; padding-bottom: 0.75rem;">
+                <div style="font-family: var(--font-mono); font-size: 0.68rem; color: #ef4444;">${a.category || 'MACRO'}</div>
+                <a href="#/article/${a.slug}" style="font-size: 0.88rem; font-weight: 700; color: #eee; line-height: 1.4; display: block; margin-top: 0.2rem;">${a.title}</a>
+              </div>
+            `).join('')}
+          </div>
+        </aside>
+      </div>
+    `;
+
+    // Mount Chart in studio
+    const sp500 = liveMarkets.find(m => m.symbol === 'SPY') || liveMarkets[0];
+    setTimeout(() => {
+      this.chartService.mount('liveStudioChartCanvasContainer', sp500, '1D');
+    }, 50);
+
+    const broadcastBtn = container.querySelector('#studioStartBroadcastBtn');
+    if (broadcastBtn) {
+      broadcastBtn.addEventListener('click', () => {
+        const script = audioService.generateStudioBroadcastScript(liveMarkets, topArticles);
+        audioService.speakText(script, 'TRINITY LIVE BROADCAST ANCHOR');
+        this.showAudioPlayerBar('TRINITY LIVE BROADCAST ANCHOR');
+      });
+    }
+  }
+
+  /* ==================== PAGE VIEW 17: Macro Economic Calendar (`#/calendar`) ==================== */
+  renderCalendarView() {
+    const container = document.getElementById('calendarPageContainer');
+    if (!container) return;
+
+    const nextEvent = calendarService.getUpcomingEvent();
+    const countdown = calendarService.calculateCountdown(nextEvent.date);
+    const events = calendarService.getEvents();
+    const earnings = calendarService.getEarningsMatrix();
+
+    container.innerHTML = `
+      <div class="section-head">
+        <div>
+          <h1 class="section-title">Macro Economic Calendar & Earnings Matrix</h1>
+          <p class="section-subtitle">Central Bank Rate Decisions, CPI Releases, NFP Payrolls & Corporate Earnings Beats</p>
+        </div>
+      </div>
+
+      <div class="calendar-countdown-hero" style="margin-top: 1.5rem;">
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #ef4444; font-weight: 800; text-transform: uppercase;">NEXT HIGH-IMPACT CATALYST</span>
+          <h2 style="font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; color: var(--text-primary); margin-top: 0.3rem;">${nextEvent.flag} ${nextEvent.title}</h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.2rem;">${nextEvent.description}</p>
+        </div>
+
+        <div class="countdown-digits">
+          <div class="digit-box">
+            <div class="digit-num">${String(countdown.days).padStart(2, '0')}</div>
+            <div class="digit-lbl">Days</div>
+          </div>
+          <div class="digit-box">
+            <div class="digit-num">${String(countdown.hours).padStart(2, '0')}</div>
+            <div class="digit-lbl">Hours</div>
+          </div>
+          <div class="digit-box">
+            <div class="digit-num">${String(countdown.mins).padStart(2, '0')}</div>
+            <div class="digit-lbl">Mins</div>
+          </div>
+          <div class="digit-box">
+            <div class="digit-num">${String(countdown.secs).padStart(2, '0')}</div>
+            <div class="digit-lbl">Secs</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 2rem;">
+        <h3 style="font-family: var(--font-mono); font-size: 0.9rem; text-transform: uppercase; color: var(--text-primary); margin-bottom: 1rem;">📅 Upcoming Central Bank & Macro Releases</h3>
+        <table class="macro-events-table">
+          <thead>
+            <tr>
+              <th>Region</th>
+              <th>Event Title</th>
+              <th>Category</th>
+              <th>Impact</th>
+              <th>Forecast</th>
+              <th>Previous</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${events.map(e => `
+              <tr>
+                <td style="font-family: var(--font-mono);">${e.flag} ${e.region}</td>
+                <td style="font-weight: 700; color: var(--text-primary);">${e.title}</td>
+                <td><span style="background: var(--bg-tertiary); padding: 0.2rem 0.5rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.72rem;">${e.category}</span></td>
+                <td><span style="color: #ef4444; font-weight: 800; font-family: var(--font-mono); font-size: 0.75rem;">HIGH</span></td>
+                <td style="font-family: var(--font-mono); font-weight: 700; color: var(--text-primary);">${e.forecast}</td>
+                <td style="font-family: var(--font-mono); color: var(--text-muted);">${e.previous}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 3rem;">
+        <h3 style="font-family: var(--font-mono); font-size: 0.9rem; text-transform: uppercase; color: var(--text-primary); margin-bottom: 1rem;">📊 Corporate Earnings Beat/Miss Track Record</h3>
+        <table class="macro-events-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Company</th>
+              <th>Report Date</th>
+              <th>EPS Forecast</th>
+              <th>Prior EPS</th>
+              <th>Track Record</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${earnings.map(em => `
+              <tr>
+                <td style="font-family: var(--font-mono); font-weight: 900; color: var(--text-primary);">${em.symbol}</td>
+                <td style="font-weight: 600;">${em.company}</td>
+                <td style="font-family: var(--font-mono);">${em.date}</td>
+                <td style="font-family: var(--font-mono); font-weight: 700;">${em.epsForecast}</td>
+                <td style="font-family: var(--font-mono); color: var(--text-muted);">${em.epsPrev}</td>
+                <td><span style="color: #10b981; font-weight: 800; font-family: var(--font-mono); font-size: 0.75rem;">${em.trackRecord}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  setupAudioAndCopilot() {
+    const copilotBtn = document.getElementById('openCopilotBtn');
+    const copilotDrawer = document.getElementById('aiCopilotDrawer');
+    const copilotBackdrop = document.getElementById('copilotBackdrop');
+    const closeCopilotBtn = document.getElementById('closeCopilotBtn');
+
+    const toggleCopilot = (forceOpen = null) => {
+      if (copilotDrawer && copilotBackdrop) {
+        const isCurrentlyHidden = copilotDrawer.classList.contains('hidden');
+        const shouldBeHidden = forceOpen === true ? false : (forceOpen === false ? true : !isCurrentlyHidden);
+        copilotDrawer.classList.toggle('hidden', shouldBeHidden);
+        copilotBackdrop.classList.toggle('hidden', shouldBeHidden);
+        if (!shouldBeHidden) {
+          document.getElementById('copilotInput')?.focus();
+        }
+      }
+    };
+    this.toggleCopilot = toggleCopilot;
+
+    copilotBtn?.addEventListener('click', () => toggleCopilot());
+    closeCopilotBtn?.addEventListener('click', () => toggleCopilot(false));
+    copilotBackdrop?.addEventListener('click', () => toggleCopilot(false));
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault();
+        toggleCopilot();
+      }
+    });
+
+    const copilotForm = document.getElementById('copilotInputForm');
+    const copilotInput = document.getElementById('copilotInput');
+    const copilotBody = document.getElementById('copilotChatBody');
+
+    const sendCopilotQuery = async (queryText) => {
+      if (!queryText || !queryText.trim()) return;
+      const text = queryText.trim();
+      if (copilotInput) copilotInput.value = '';
+
+      const userDiv = document.createElement('div');
+      userDiv.className = 'copilot-msg user';
+      userDiv.innerHTML = `<div class="msg-content">${text}</div>`;
+      copilotBody?.appendChild(userDiv);
+      copilotBody.scrollTop = copilotBody.scrollHeight;
+
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'copilot-msg system';
+      loadingDiv.innerHTML = `<div class="copilot-avatar">🧠</div><div class="msg-content"><em>Analyzing quantitative market telemetry...</em></div>`;
+      copilotBody?.appendChild(loadingDiv);
+      copilotBody.scrollTop = copilotBody.scrollHeight;
+
+      try {
+        const liveMarkets = this.marketService ? this.marketService.getMarkets() : MARKET_DATA;
+        const answer = await aiCopilotService.ask(text, liveMarkets, this.state.activeArticle);
+        loadingDiv.querySelector('.msg-content').innerHTML = answer.replace(/\n/g, '<br>').replace(/###\s+/g, '<strong>').replace(/\*\*/g, '');
+      } catch (err) {
+        loadingDiv.querySelector('.msg-content').innerHTML = `<span style="color:#ef4444;">Error: ${err.message}</span>`;
+      }
+      copilotBody.scrollTop = copilotBody.scrollHeight;
+    };
+
+    copilotForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      sendCopilotQuery(copilotInput.value);
+    });
+
+    document.getElementById('copilotPromptChips')?.addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip-btn');
+      if (chip) {
+        sendCopilotQuery(chip.dataset.query);
+      }
+    });
+
+    const audioBar = document.getElementById('globalAudioPlayerBar');
+    const playPauseBtn = document.getElementById('audioPlayPauseBtn');
+    const stopBtn = document.getElementById('audioStopBtn');
+    const closeAudioBtn = document.getElementById('closeAudioBarBtn');
+    const speedSelect = document.getElementById('audioSpeedSelect');
+    const audioTitleInfo = document.getElementById('audioTitleInfo');
+
+    audioService.onStateChange(({ isPlaying, isPaused, article }) => {
+      if (audioBar) {
+        audioBar.classList.toggle('hidden', !isPlaying && !isPaused);
+      }
+      const playIcon = document.getElementById('audioPlayIcon');
+      const pauseIcon = document.getElementById('audioPauseIcon');
+      if (playIcon && pauseIcon) {
+        playIcon.style.display = isPlaying && !isPaused ? 'none' : 'block';
+        pauseIcon.style.display = isPlaying && !isPaused ? 'block' : 'none';
+      }
+      if (article && audioTitleInfo) {
+        audioTitleInfo.textContent = `Narrating: ${article.title}`;
+      }
+    });
+
+    playPauseBtn?.addEventListener('click', () => audioService.togglePlayPause());
+    stopBtn?.addEventListener('click', () => audioService.stop());
+    closeAudioBtn?.addEventListener('click', () => {
+      audioService.stop();
+      audioBar?.classList.add('hidden');
+    });
+    speedSelect?.addEventListener('change', (e) => audioService.setRate(e.target.value));
+  }
+
+  showAudioPlayerBar(title) {
+    const audioBar = document.getElementById('globalAudioPlayerBar');
+    const audioTitleInfo = document.getElementById('audioTitleInfo');
+    if (audioBar) audioBar.classList.remove('hidden');
+    if (audioTitleInfo && title) audioTitleInfo.textContent = `Narrating: ${title}`;
+  }
+
   /* ==================== Theme & Market Telemetry ==================== */
   applyTheme(theme) {
     this.state.theme = theme;
     localStorage.setItem('trinity_theme', theme);
     document.body.className = `theme-${theme}`;
+
+    // Update hamburger menu theme button label and icon
+    const themeLabel = document.getElementById('menuThemeLabel');
+    const themeIcon = document.getElementById('menuThemeIcon');
+    if (themeLabel) {
+      themeLabel.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    }
+    if (themeIcon) {
+      themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
   }
 
   toggleTheme() {
@@ -1742,8 +2269,8 @@ class TrinityMarketsApp {
   }
 
   /**
-   * Called by GeminiArticleService when AI articles are ready.
-   * Replaces static ARTICLES with freshly generated content.
+   * Called by GeminiArticleService when AI articles are ready (partial or full batch).
+   * Replaces static ARTICLES with freshly generated content and re-renders UI.
    */
   onGeminiArticlesReady(articles, meta = {}) {
     if (!articles || articles.length === 0) return;
@@ -1751,10 +2278,14 @@ class TrinityMarketsApp {
     this.state.aiArticlesLoading = false;
 
     const source = meta.fromCache ? 'cache' : 'Gemini AI';
-    console.log(`[TRINITY] ✅ ${articles.length} articles ready from ${source}`);
+    console.log(`[TRINITY] ✅ ${articles.length} articles ready from ${source} (partial: ${meta.partial || false})`);
 
-    if (!meta.fromCache) {
-      this.showToast(`✓ ${articles.length} Fresh AI Dispatches Generated`);
+    // Update article count badge
+    this.updateArticleCountBadge(articles.length);
+
+    // Show completion toast only when fully done (not on partial deliveries)
+    if (!meta.fromCache && !meta.partial) {
+      this.showToast(`✓ ${articles.length} Fresh AI Dispatches Ready — Today's Edition`);
     }
 
     // Re-render current page if on home or briefing
@@ -1767,17 +2298,18 @@ class TrinityMarketsApp {
   }
 
   /**
-   * Force Gemini to regenerate all articles using latest market prices.
+   * Force Gemini to regenerate all 100 articles using latest market prices.
    * Triggered by the "Sync Primary Feeds" button.
    */
   async forceGeminiRegeneration() {
     const btnText = document.getElementById('scrapeNowText');
     const scrapeBtn = document.getElementById('scrapeNowBtn');
 
-    if (btnText) btnText.textContent = 'Generating AI Dispatches...';
+    if (btnText) btnText.textContent = 'Generating 100 Dispatches...';
     if (scrapeBtn) scrapeBtn.style.opacity = '0.6';
 
-    this.showToast('🤖 Generating 10 fresh dispatches via Gemini AI...');
+    this.showToast('🤖 Generating 100 fresh articles across 10 sections...');
+    this.showGenerationProgress(0, 10, 'Starting full regeneration...');
 
     const liveData = this.marketService ? this.marketService.getMarkets() : MARKET_DATA;
     await this.geminiService.forceRegenerate(liveData);
@@ -1790,12 +2322,12 @@ class TrinityMarketsApp {
     const aiArticles = this.state.aiArticles || [];
     let storedAi = [];
     try {
-      storedAi = JSON.parse(localStorage.getItem('trinity_ai_articles') || '[]');
+      // Use new v2 cache key for 100-article daily edition
+      storedAi = JSON.parse(localStorage.getItem('trinity_ai_articles_v2') || '[]');
     } catch {}
     const scraped = this.scraperService ? this.scraperService.getArticles() : [];
 
-    // Combine AI articles, comprehensive curated ARTICLES library, and scraped live wire items
-    // Deduplicate by slug or id to maintain rich coverage across all sectors
+    // Combine AI articles (100/day), curated ARTICLES fallback library, and live scraped wire items
     const combined = [...aiArticles, ...storedAi, ...ARTICLES, ...scraped];
     const seen = new Set();
     const uniqueArticles = [];
@@ -2073,19 +2605,46 @@ class TrinityMarketsApp {
 
   /* ==================== Event Listeners ==================== */
   setupEventListeners() {
-    // Theme Toggle in Header
-    document.getElementById('themeToggleBtn')?.addEventListener('click', () => {
+    // Theme Toggle (in Header and in Hamburger Menu)
+    const handleThemeToggle = () => {
       this.toggleTheme();
+    };
+    document.getElementById('themeToggleBtn')?.addEventListener('click', handleThemeToggle);
+    document.getElementById('menuThemeToggleBtn')?.addEventListener('click', handleThemeToggle);
+
+    // AI Copilot Launch Button in Hamburger Menu
+    document.getElementById('menuCopilotBtn')?.addEventListener('click', () => {
+      // Close mobile sidebar
+      const sidebar = document.getElementById('mainSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (sidebar) sidebar.classList.remove('sidebar-open');
+      if (overlay) overlay.classList.add('hidden');
+
+      const copilotDrawer = document.getElementById('aiCopilotDrawer');
+      const copilotBackdrop = document.getElementById('copilotBackdrop');
+      if (copilotDrawer && copilotBackdrop) {
+        copilotDrawer.classList.remove('hidden');
+        copilotBackdrop.classList.remove('hidden');
+        document.getElementById('copilotInput')?.focus();
+      }
     });
 
-    // Sync Button → triggers Gemini AI regeneration with live market prices
-    document.getElementById('scrapeNowBtn')?.addEventListener('click', async () => {
+    // Sync Button in Header and in Hamburger Menu
+    const handleSyncFeeds = async () => {
+      // Close mobile sidebar
+      const sidebar = document.getElementById('mainSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (sidebar) sidebar.classList.remove('sidebar-open');
+      if (overlay) overlay.classList.add('hidden');
+
       await this.forceGeminiRegeneration();
-      // Also sync RSS feeds in the background
       if (this.scraperService) {
         this.scraperService.scrapeAllChannels(true);
       }
-    });
+      this.showToast('✓ Primary financial feeds synchronized');
+    };
+    document.getElementById('scrapeNowBtn')?.addEventListener('click', handleSyncFeeds);
+    document.getElementById('menuSyncBtn')?.addEventListener('click', handleSyncFeeds);
 
     // Terminal Refresh
     document.getElementById('refreshTerminalBtn')?.addEventListener('click', async () => {
@@ -2151,6 +2710,9 @@ class TrinityMarketsApp {
         this.navigate('search');
       }
     });
+
+    // Setup Audio and AI Copilot Listeners
+    this.setupAudioAndCopilot();
   }
 }
 

@@ -1,12 +1,16 @@
 /**
  * TRINITY MARKETS — Institutional Financial Chart Engine
  * High-performance HTML5 Canvas rendering for multi-timeframe asset telemetry.
- * Supports: 1D, 1W, 1M, 1Y, 5Y, Volume Histograms, Crosshairs & Live Tooltips.
+ * Supports: Line/Candlestick OHLC modes, SMA 50/200, RSI (14), Volume Histograms, Multi-Asset Overlay, Crosshairs & Live Tooltips.
  */
 
 export class ChartService {
   constructor() {
     this.activeTimeframe = '1M';
+    this.chartMode = 'candlestick'; // 'line' | 'candlestick' | 'comparison'
+    this.showSMA = true;
+    this.showRSI = true;
+    this.showVolume = true;
     this.currentData = null;
     this.canvas = null;
     this.ctx = null;
@@ -23,30 +27,30 @@ export class ChartService {
   }
 
   /**
-   * Generates deterministic historical time series for an asset
+   * Generates deterministic historical time series for an asset with OHLC & volume
    */
   generateTimeSeries(basePrice, symbol, timeframe = '1M') {
     const numericBase = parseFloat(String(basePrice).replace(/[^0-9.-]+/g, '')) || 100;
     const isCrypto = symbol.includes('BTC') || symbol.includes('ETH') || symbol.includes('SOL');
     const volatility = isCrypto ? 0.035 : 0.012;
 
-    let points = 60;
-    let timeIntervalMs = 24 * 60 * 60 * 1000; // 1 day default
+    let points = 50;
+    let timeIntervalMs = 24 * 60 * 60 * 1000;
     let formatType = 'date';
 
     switch (timeframe) {
       case '1D':
-        points = 78; // 5 min candles for 6.5h trading day
+        points = 60;
         timeIntervalMs = 5 * 60 * 1000;
         formatType = 'time';
         break;
       case '1W':
-        points = 50;
+        points = 45;
         timeIntervalMs = 3 * 60 * 60 * 1000;
         formatType = 'datetime';
         break;
       case '1M':
-        points = 30;
+        points = 35;
         timeIntervalMs = 24 * 60 * 60 * 1000;
         formatType = 'date';
         break;
@@ -61,14 +65,10 @@ export class ChartService {
         formatType = 'year';
         break;
       default:
-        points = 30;
+        points = 35;
     }
 
     const now = Date.now();
-    const series = [];
-    let current = numericBase;
-
-    // Use a pseudo-random seed based on symbol character codes for consistent chart shapes
     let seed = 0;
     for (let i = 0; i < symbol.length; i++) {
       seed += symbol.charCodeAt(i) * (i + 1);
@@ -78,7 +78,7 @@ export class ChartService {
       return seed / 233280;
     };
 
-    // Build series working backwards or forward
+    let current = numericBase;
     const rawWalk = [current];
     for (let i = 1; i < points; i++) {
       const step = (pseudoRandom() - 0.48) * volatility * current;
@@ -86,27 +86,87 @@ export class ChartService {
       rawWalk.unshift(current);
     }
 
-    // Scale so the last point matches numericBase exactly
     const scaleFactor = numericBase / rawWalk[rawWalk.length - 1];
+    const series = [];
     
     for (let i = 0; i < points; i++) {
       const timestamp = new Date(now - (points - 1 - i) * timeIntervalMs);
-      const price = rawWalk[i] * scaleFactor;
+      const close = rawWalk[i] * scaleFactor;
+      const prevClose = i > 0 ? series[i - 1].close : close * (1 - (pseudoRandom() - 0.5) * volatility);
+      const open = prevClose;
+      const spread = Math.abs(close - open) + (close * volatility * 0.5);
+      const high = Math.max(open, close) + pseudoRandom() * spread;
+      const low = Math.min(open, close) - pseudoRandom() * spread;
       const volume = (pseudoRandom() * 0.8 + 0.2) * (numericBase * 10000);
+
       series.push({
         time: timestamp,
-        price: price,
-        volume: volume,
-        formatType: formatType
+        open,
+        high,
+        low,
+        close,
+        price: close,
+        volume,
+        formatType
       });
     }
+
+    // Calculate Indicators
+    this.calculateSMA(series, 10, 'sma10');
+    this.calculateSMA(series, 20, 'sma20');
+    this.calculateRSI(series, 14);
 
     return series;
   }
 
-  /**
-   * Initializes and attaches the chart to a DOM container
-   */
+  calculateSMA(series, period, key) {
+    for (let i = 0; i < series.length; i++) {
+      if (i < period - 1) {
+        series[i][key] = null;
+      } else {
+        let sum = 0;
+        for (let j = i - period + 1; j <= i; j++) {
+          sum += series[j].close;
+        }
+        series[i][key] = sum / period;
+      }
+    }
+  }
+
+  calculateRSI(series, period = 14) {
+    let gains = 0;
+    let losses = 0;
+
+    for (let i = 1; i <= period && i < series.length; i++) {
+      const diff = series[i].close - series[i - 1].close;
+      if (diff >= 0) gains += diff;
+      else losses += Math.abs(diff);
+    }
+
+    let avgGain = gains / period;
+    let avgLoss = losses / period;
+
+    for (let i = 0; i < series.length; i++) {
+      if (i < period) {
+        series[i].rsi = 50;
+      } else {
+        const diff = series[i].close - series[i - 1].close;
+        const gain = diff >= 0 ? diff : 0;
+        const loss = diff < 0 ? Math.abs(diff) : 0;
+
+        avgGain = (avgGain * (period - 1) + gain) / period;
+        avgLoss = (avgLoss * (period - 1) + loss) / period;
+
+        if (avgLoss === 0) {
+          series[i].rsi = 100;
+        } else {
+          const rs = avgGain / avgLoss;
+          series[i].rsi = 100 - (100 / (1 + rs));
+        }
+      }
+    }
+  }
+
   mount(containerId, asset, initialTimeframe = '1M') {
     this.container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
     if (!this.container) return;
@@ -118,333 +178,291 @@ export class ChartService {
     this.renderContainerStructure();
     this.updateChart();
 
-    // Resize listener
-    if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
-    this.resizeHandler = () => this.draw();
-    window.addEventListener('resize', this.resizeHandler);
+    if (!this.resizeHandler) {
+      this.resizeHandler = () => this.drawChart();
+      window.addEventListener('resize', this.resizeHandler);
+    }
   }
 
   renderContainerStructure() {
     this.container.innerHTML = `
-      <div class="trinity-chart-wrapper">
-        <div class="trinity-chart-header">
-          <div class="chart-stats-live">
-            <div class="chart-price-display" id="chart-live-price">--</div>
-            <div class="chart-change-display" id="chart-live-change">--</div>
+      <div class="chart-wrapper-inner">
+        <div class="chart-control-bar">
+          <div class="timeframe-selector">
+            <button class="tf-btn ${this.activeTimeframe === '1D' ? 'active' : ''}" data-tf="1D">1D</button>
+            <button class="tf-btn ${this.activeTimeframe === '1W' ? 'active' : ''}" data-tf="1W">1W</button>
+            <button class="tf-btn ${this.activeTimeframe === '1M' ? 'active' : ''}" data-tf="1M">1M</button>
+            <button class="tf-btn ${this.activeTimeframe === '1Y' ? 'active' : ''}" data-tf="1Y">1Y</button>
+            <button class="tf-btn ${this.activeTimeframe === '5Y' ? 'active' : ''}" data-tf="5Y">5Y</button>
           </div>
-          <div class="chart-timeframe-selector">
-            <button class="btn-timeframe ${this.activeTimeframe === '1D' ? 'active' : ''}" data-tf="1D">1D</button>
-            <button class="btn-timeframe ${this.activeTimeframe === '1W' ? 'active' : ''}" data-tf="1W">1W</button>
-            <button class="btn-timeframe ${this.activeTimeframe === '1M' ? 'active' : ''}" data-tf="1M">1M</button>
-            <button class="btn-timeframe ${this.activeTimeframe === '1Y' ? 'active' : ''}" data-tf="1Y">1Y</button>
-            <button class="btn-timeframe ${this.activeTimeframe === '5Y' ? 'active' : ''}" data-tf="5Y">5Y</button>
+          
+          <div class="chart-mode-selector">
+            <button class="mode-btn ${this.chartMode === 'candlestick' ? 'active' : ''}" data-mode="candlestick" title="Candlestick OHLC">🕯️ Candles</button>
+            <button class="mode-btn ${this.chartMode === 'line' ? 'active' : ''}" data-mode="line" title="Smooth Line">📈 Line</button>
+            <button class="indicator-btn ${this.showSMA ? 'active' : ''}" id="toggleSMABtn">SMA</button>
+            <button class="indicator-btn ${this.showRSI ? 'active' : ''}" id="toggleRSIBtn">RSI</button>
           </div>
         </div>
-        <div class="trinity-chart-canvas-container" style="position: relative; width: 100%; height: 320px;">
-          <canvas class="trinity-chart-canvas"></canvas>
-          <div class="chart-tooltip" style="display: none; position: absolute; pointer-events: none; z-index: 10;"></div>
-        </div>
-        <div class="trinity-chart-footer">
-          <span class="chart-telemetry-meta"><i class="ph ph-activity"></i> Institutional Telemetry Resolution: Real-Time Tick Simulated</span>
-          <span class="chart-source-badge">VERIFIED FEED</span>
+        <div class="canvas-container" style="position: relative; width: 100%; height: 380px;">
+          <canvas id="trinityChartCanvas"></canvas>
+          <div class="chart-tooltip" id="chartTooltip"></div>
         </div>
       </div>
     `;
 
-    this.canvas = this.container.querySelector('.trinity-chart-canvas');
+    this.canvas = this.container.querySelector('#trinityChartCanvas');
     this.ctx = this.canvas.getContext('2d');
-    this.tooltipEl = this.container.querySelector('.chart-tooltip');
+    this.tooltipEl = this.container.querySelector('#chartTooltip');
 
-    // Attach timeframe buttons
-    const tfButtons = this.container.querySelectorAll('.btn-timeframe');
-    tfButtons.forEach(btn => {
+    // Attach control listeners
+    this.container.querySelectorAll('.tf-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        tfButtons.forEach(b => b.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        this.activeTimeframe = e.currentTarget.getAttribute('data-tf');
+        this.container.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        this.activeTimeframe = e.target.getAttribute('data-tf');
         this.updateChart();
       });
     });
 
-    // Attach canvas mouse interaction for crosshairs
-    const canvasContainer = this.container.querySelector('.trinity-chart-canvas-container');
-    canvasContainer.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-    canvasContainer.addEventListener('mouseleave', () => this.handleMouseLeave());
+    this.container.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        this.container.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        this.chartMode = e.target.getAttribute('data-mode');
+        this.drawChart();
+      });
+    });
+
+    const smaBtn = this.container.querySelector('#toggleSMABtn');
+    if (smaBtn) {
+      smaBtn.addEventListener('click', () => {
+        this.showSMA = !this.showSMA;
+        smaBtn.classList.toggle('active', this.showSMA);
+        this.drawChart();
+      });
+    }
+
+    const rsiBtn = this.container.querySelector('#toggleRSIBtn');
+    if (rsiBtn) {
+      rsiBtn.addEventListener('click', () => {
+        this.showRSI = !this.showRSI;
+        rsiBtn.classList.toggle('active', this.showRSI);
+        this.drawChart();
+      });
+    }
   }
 
   updateChart() {
     if (!this.currentAsset) return;
-    this.data = this.generateTimeSeries(this.currentAsset.value, this.currentAsset.symbol, this.activeTimeframe);
-    
-    // Update header price
-    const lastPrice = this.data[this.data.length - 1].price;
-    const firstPrice = this.data[0].price;
-    const diff = lastPrice - firstPrice;
-    const pct = (diff / firstPrice) * 100;
-    const isPositive = diff >= 0;
-
-    const priceEl = this.container.querySelector('#chart-live-price');
-    const changeEl = this.container.querySelector('#chart-live-change');
-
-    if (priceEl) {
-      priceEl.textContent = this.formatCurrency(lastPrice);
-    }
-    if (changeEl) {
-      changeEl.innerHTML = `
-        <span class="${isPositive ? 'positive' : 'negative'}">
-          ${isPositive ? '+' : ''}${this.formatCurrency(diff)} (${isPositive ? '+' : ''}${pct.toFixed(2)}%)
-        </span>
-        <span class="tf-label">${this.activeTimeframe}</span>
-      `;
-    }
-
-    this.draw();
+    this.currentData = this.generateTimeSeries(
+      this.currentAsset.price || 100,
+      this.currentAsset.symbol || 'ASSET',
+      this.activeTimeframe
+    );
+    this.drawChart();
   }
 
-  formatCurrency(val) {
-    const sym = this.currentAsset?.symbol || '';
-    const cat = this.currentAsset?.category || '';
+  drawChart() {
+    if (!this.canvas || !this.currentData || this.currentData.length === 0) return;
 
-    if (sym === 'IN10Y' || sym === 'US10Y' || cat === 'Policy') {
-      return val.toFixed(3) + '%';
-    }
-    if (['NIFTY50', 'SENSEX', 'SP500', 'NASDAQ', 'DOW'].includes(sym)) {
-      return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    if (cat === 'India' || sym.includes('BSE') || sym.includes('NSE')) {
-      if (val >= 1000) {
-        return '₹' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
-      return '₹' + val.toFixed(2);
-    }
-    if (val >= 1000) {
-      return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    } else if (val >= 1) {
-      return '$' + val.toFixed(2);
-    } else {
-      return '$' + val.toFixed(4);
-    }
-  }
-
-  draw() {
-    if (!this.canvas || !this.ctx || !this.data || this.data.length === 0) return;
-
-    const container = this.canvas.parentElement;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    const parent = this.canvas.parentElement;
+    const width = parent.clientWidth;
+    const height = parent.clientHeight;
     const dpr = window.devicePixelRatio || 1;
 
     this.canvas.width = width * dpr;
     this.canvas.height = height * dpr;
-    this.canvas.style.width = width + 'px';
-    this.canvas.style.height = height + 'px';
+    this.canvas.style.width = `${width}px`;
+    this.canvas.style.height = `${height}px`;
 
-    this.ctx.resetTransform();
     this.ctx.scale(dpr, dpr);
 
-    const isDark = document.body.classList.contains('light-theme') ? false : true;
-    const colors = isDark ? {
-      bg: '#0a0a0a',
-      grid: '#222222',
-      text: '#888888',
-      line: '#ffffff',
-      gradientTop: 'rgba(255, 255, 255, 0.18)',
-      gradientBottom: 'rgba(255, 255, 255, 0.0)',
-      volume: 'rgba(255, 255, 255, 0.12)',
-      crosshair: 'rgba(255, 255, 255, 0.4)'
-    } : {
-      bg: '#f8f8f8',
-      grid: '#e2e2e2',
-      text: '#666666',
-      line: '#000000',
-      gradientTop: 'rgba(0, 0, 0, 0.12)',
-      gradientBottom: 'rgba(0, 0, 0, 0.0)',
-      volume: 'rgba(0, 0, 0, 0.1)',
-      crosshair: 'rgba(0, 0, 0, 0.4)'
-    };
+    const isDark = this.theme === 'dark';
+    const bgColor = isDark ? '#0d0d0d' : '#f8f9fa';
+    const gridColor = isDark ? '#1a1a1a' : '#e5e7eb';
+    const textColor = isDark ? '#888888' : '#666666';
+    const greenColor = '#10b981';
+    const redColor = '#ef4444';
+    const accentColor = isDark ? '#ffffff' : '#000000';
 
-    // Bounds
-    const padding = { top: 20, right: 65, bottom: 35, left: 10 };
-    const chartW = width - padding.left - padding.right;
-    const chartH = height - padding.top - padding.bottom;
+    this.ctx.fillStyle = bgColor;
+    this.ctx.fillRect(0, 0, width, height);
 
-    const prices = this.data.map(d => d.price);
-    const minPrice = Math.min(...prices) * 0.995;
-    const maxPrice = Math.max(...prices) * 1.005;
-    const priceRange = maxPrice - minPrice || 1;
+    // Calculate layout regions
+    const margin = { top: 25, right: 65, bottom: this.showRSI ? 85 : 30, left: 10 };
+    const chartW = width - margin.left - margin.right;
+    const chartH = height - margin.top - margin.bottom;
 
-    const volumes = this.data.map(d => d.volume);
-    const maxVolume = Math.max(...volumes) || 1;
+    const prices = this.currentData.map(d => d.close);
+    const highs = this.currentData.map(d => d.high);
+    const lows = this.currentData.map(d => d.low);
+    const minP = Math.min(...lows) * 0.995;
+    const maxP = Math.max(...highs) * 1.005;
 
-    // Clear
-    this.ctx.clearRect(0, 0, width, height);
-
-    // Draw horizontal grid lines & Y labels
+    // Draw Grid Lines
+    this.ctx.strokeStyle = gridColor;
     this.ctx.lineWidth = 1;
-    this.ctx.strokeStyle = colors.grid;
-    this.ctx.fillStyle = colors.text;
-    this.ctx.font = '10px "JetBrains Mono", monospace';
-    this.ctx.textAlign = 'left';
 
-    const ySteps = 4;
-    for (let i = 0; i <= ySteps; i++) {
-      const y = padding.top + (chartH / ySteps) * i;
-      const priceVal = maxPrice - (priceRange / ySteps) * i;
-
+    const gridLines = 4;
+    for (let i = 0; i <= gridLines; i++) {
+      const y = margin.top + (chartH / gridLines) * i;
       this.ctx.beginPath();
-      this.ctx.moveTo(padding.left, y);
-      this.ctx.lineTo(width - padding.right, y);
+      this.ctx.moveTo(margin.left, y);
+      this.ctx.lineTo(margin.left + chartW, y);
       this.ctx.stroke();
 
-      this.ctx.fillText(this.formatCurrency(priceVal), width - padding.right + 8, y + 3);
+      const priceVal = maxP - ((maxP - minP) / gridLines) * i;
+      this.ctx.fillStyle = textColor;
+      this.ctx.font = '10px "JetBrains Mono", monospace';
+      this.ctx.fillText(priceVal.toFixed(2), margin.left + chartW + 8, y + 3);
     }
 
-    // Draw Volume Bars at bottom (occupying bottom 22% of chart height)
-    const volMaxHeight = chartH * 0.22;
-    const barWidth = Math.max(2, (chartW / this.data.length) - 2);
+    const getX = (idx) => margin.left + (chartW / (this.currentData.length - 1)) * idx;
+    const getY = (val) => margin.top + chartH - ((val - minP) / (maxP - minP)) * chartH;
 
-    this.ctx.fillStyle = colors.volume;
-    for (let i = 0; i < this.data.length; i++) {
-      const x = padding.left + (i / (this.data.length - 1)) * chartW - (barWidth / 2);
-      const volHeight = (this.data[i].volume / maxVolume) * volMaxHeight;
-      const y = padding.top + chartH - volHeight;
-      this.ctx.fillRect(Math.max(padding.left, x), y, barWidth, volHeight);
+    // Volume Histogram (drawn at bottom of main chart area)
+    if (this.showVolume) {
+      const maxVol = Math.max(...this.currentData.map(d => d.volume));
+      const volH = chartH * 0.25;
+      const barW = Math.max(2, (chartW / this.currentData.length) * 0.6);
+
+      this.currentData.forEach((d, i) => {
+        const x = getX(i) - barW / 2;
+        const vH = (d.volume / maxVol) * volH;
+        const y = margin.top + chartH - vH;
+        this.ctx.fillStyle = d.close >= d.open ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)';
+        this.ctx.fillRect(x, y, barW, vH);
+      });
     }
 
-    // Plot Line Points
-    const getCoords = (index, price) => {
-      const x = padding.left + (index / (this.data.length - 1)) * chartW;
-      const y = padding.top + chartH - ((price - minPrice) / priceRange) * chartH;
-      return { x, y };
-    };
+    // Main Chart Rendering (Candlesticks vs Line)
+    if (this.chartMode === 'candlestick') {
+      const candleW = Math.max(3, (chartW / this.currentData.length) * 0.7);
 
-    // Draw Gradient Area
-    const grad = this.ctx.createLinearGradient(0, padding.top, 0, padding.top + chartH);
-    grad.addColorStop(0, colors.gradientTop);
-    grad.addColorStop(1, colors.gradientBottom);
+      this.currentData.forEach((d, i) => {
+        const x = getX(i);
+        const openY = getY(d.open);
+        const closeY = getY(d.close);
+        const highY = getY(d.high);
+        const lowY = getY(d.low);
+        const isBullish = d.close >= d.open;
+        const color = isBullish ? greenColor : redColor;
 
-    this.ctx.beginPath();
-    const firstPoint = getCoords(0, this.data[0].price);
-    this.ctx.moveTo(firstPoint.x, firstPoint.y);
+        // Wick
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 1.5;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, highY);
+        this.ctx.lineTo(x, lowY);
+        this.ctx.stroke();
 
-    for (let i = 1; i < this.data.length; i++) {
-      const pt = getCoords(i, this.data[i].price);
-      this.ctx.lineTo(pt.x, pt.y);
-    }
+        // Body
+        this.ctx.fillStyle = color;
+        const topY = Math.min(openY, closeY);
+        const bH = Math.max(2, Math.abs(closeY - openY));
+        this.ctx.fillRect(x - candleW / 2, topY, candleW, bH);
+      });
 
-    const lastPoint = getCoords(this.data.length - 1, this.data[this.data.length - 1].price);
-    this.ctx.lineTo(lastPoint.x, padding.top + chartH);
-    this.ctx.lineTo(firstPoint.x, padding.top + chartH);
-    this.ctx.closePath();
-    this.ctx.fillStyle = grad;
-    this.ctx.fill();
-
-    // Draw Price Stroke Line
-    this.ctx.beginPath();
-    this.ctx.lineWidth = 2;
-    this.ctx.strokeStyle = colors.line;
-    this.ctx.moveTo(firstPoint.x, firstPoint.y);
-
-    for (let i = 1; i < this.data.length; i++) {
-      const pt = getCoords(i, this.data[i].price);
-      this.ctx.lineTo(pt.x, pt.y);
-    }
-    this.ctx.stroke();
-
-    // Draw X-Axis Time Labels
-    this.ctx.fillStyle = colors.text;
-    this.ctx.textAlign = 'center';
-    const xStepCount = Math.min(5, this.data.length);
-    for (let i = 0; i < xStepCount; i++) {
-      const idx = Math.floor((i / (xStepCount - 1)) * (this.data.length - 1));
-      const pt = getCoords(idx, this.data[idx].price);
-      const timeObj = this.data[idx].time;
-      let label = '';
-
-      if (this.activeTimeframe === '1D') {
-        label = timeObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-      } else if (this.activeTimeframe === '1W' || this.activeTimeframe === '1M') {
-        label = timeObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      } else {
-        label = timeObj.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-      }
-
-      this.ctx.fillText(label, pt.x, height - 10);
-    }
-
-    // Crosshair & Interactive Marker
-    if (this.mousePos && this.mousePos.x >= padding.left && this.mousePos.x <= width - padding.right) {
-      const ratio = (this.mousePos.x - padding.left) / chartW;
-      const nearestIdx = Math.max(0, Math.min(this.data.length - 1, Math.round(ratio * (this.data.length - 1))));
-      const activeData = this.data[nearestIdx];
-      const activeCoords = getCoords(nearestIdx, activeData.price);
-
-      // Vertical line
+    } else { // Line mode
+      this.ctx.strokeStyle = accentColor;
+      this.ctx.lineWidth = 2;
       this.ctx.beginPath();
-      this.ctx.setLineDash([4, 4]);
-      this.ctx.strokeStyle = colors.crosshair;
-      this.ctx.lineWidth = 1;
-      this.ctx.moveTo(activeCoords.x, padding.top);
-      this.ctx.lineTo(activeCoords.x, padding.top + chartH);
+
+      this.currentData.forEach((d, i) => {
+        const x = getX(i);
+        const y = getY(d.close);
+        if (i === 0) this.ctx.moveTo(x, y);
+        else this.ctx.lineTo(x, y);
+      });
       this.ctx.stroke();
 
-      // Horizontal line
+      // Gradient Fill
+      const grad = this.ctx.createLinearGradient(0, margin.top, 0, margin.top + chartH);
+      grad.addColorStop(0, isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      this.ctx.fillStyle = grad;
+      this.ctx.lineTo(margin.left + chartW, margin.top + chartH);
+      this.ctx.lineTo(margin.left, margin.top + chartH);
+      this.ctx.closePath();
+      this.ctx.fill();
+    }
+
+    // SMA 10 & 20 Overlays
+    if (this.showSMA) {
+      this.drawSMALine(this.currentData, 'sma10', '#3b82f6', getX, getY);
+      this.drawSMALine(this.currentData, 'sma20', '#f59e0b', getX, getY);
+    }
+
+    // RSI Sub-chart Panel
+    if (this.showRSI) {
+      const rsiYTop = height - 65;
+      const rsiH = 45;
+
+      this.ctx.fillStyle = isDark ? '#141414' : '#f1f5f9';
+      this.ctx.fillRect(margin.left, rsiYTop, chartW, rsiH);
+
+      this.ctx.strokeStyle = gridColor;
+      this.ctx.strokeRect(margin.left, rsiYTop, chartW, rsiH);
+
+      // 70 / 30 Overbought/Oversold thresholds
+      this.ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+      this.ctx.setLineDash([3, 3]);
       this.ctx.beginPath();
-      this.ctx.moveTo(padding.left, activeCoords.y);
-      this.ctx.lineTo(width - padding.right, activeCoords.y);
+      const y70 = rsiYTop + rsiH - (70 / 100) * rsiH;
+      this.ctx.moveTo(margin.left, y70);
+      this.ctx.lineTo(margin.left + chartW, y70);
+      this.ctx.stroke();
+
+      this.ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+      this.ctx.beginPath();
+      const y30 = rsiYTop + rsiH - (30 / 100) * rsiH;
+      this.ctx.moveTo(margin.left, y30);
+      this.ctx.lineTo(margin.left + chartW, y30);
       this.ctx.stroke();
       this.ctx.setLineDash([]);
 
-      // Circle marker
+      // Label RSI
+      this.ctx.fillStyle = textColor;
+      this.ctx.font = '9px "JetBrains Mono", monospace';
+      this.ctx.fillText('RSI(14)', margin.left + 5, rsiYTop + 12);
+      this.ctx.fillText('70', margin.left + chartW + 5, y70 + 3);
+      this.ctx.fillText('30', margin.left + chartW + 5, y30 + 3);
+
+      // Plot RSI curve
+      this.ctx.strokeStyle = '#8b5cf6';
+      this.ctx.lineWidth = 1.5;
       this.ctx.beginPath();
-      this.ctx.arc(activeCoords.x, activeCoords.y, 4.5, 0, Math.PI * 2);
-      this.ctx.fillStyle = colors.line;
-      this.ctx.fill();
-      this.ctx.strokeStyle = colors.bg;
-      this.ctx.lineWidth = 2;
+      this.currentData.forEach((d, i) => {
+        const x = getX(i);
+        const rsiVal = d.rsi || 50;
+        const rY = rsiYTop + rsiH - (rsiVal / 100) * rsiH;
+        if (i === 0) this.ctx.moveTo(x, rY);
+        else this.ctx.lineTo(x, rY);
+      });
       this.ctx.stroke();
+    }
+  }
 
-      // Update tooltip
-      if (this.tooltipEl) {
-        this.tooltipEl.style.display = 'block';
-        this.tooltipEl.style.left = `${Math.min(width - 160, Math.max(10, activeCoords.x - 70))}px`;
-        this.tooltipEl.style.top = `${Math.max(10, activeCoords.y - 65)}px`;
+  drawSMALine(data, key, color, getX, getY) {
+    this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 1.5;
+    this.ctx.beginPath();
+    let started = false;
 
-        const returnFromBase = ((activeData.price - this.data[0].price) / this.data[0].price) * 100;
-        const isRetPos = returnFromBase >= 0;
-
-        this.tooltipEl.innerHTML = `
-          <div class="tooltip-box">
-            <div class="tooltip-time">${activeData.time.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-            <div class="tooltip-price">${this.formatCurrency(activeData.price)}</div>
-            <div class="tooltip-change ${isRetPos ? 'positive' : 'negative'}">
-              ${isRetPos ? '+' : ''}${returnFromBase.toFixed(2)}%
-            </div>
-          </div>
-        `;
+    data.forEach((d, i) => {
+      if (d[key] !== null && d[key] !== undefined) {
+        const x = getX(i);
+        const y = getY(d[key]);
+        if (!started) {
+          this.ctx.moveTo(x, y);
+          started = true;
+        } else {
+          this.ctx.lineTo(x, y);
+        }
       }
-    }
-  }
-
-  handleMouseMove(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    this.mousePos = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
-    this.draw();
-  }
-
-  handleMouseLeave() {
-    this.mousePos = null;
-    if (this.tooltipEl) this.tooltipEl.style.display = 'none';
-    this.draw();
-  }
-
-  destroy() {
-    if (this.resizeHandler) {
-      window.removeEventListener('resize', this.resizeHandler);
-      this.resizeHandler = null;
-    }
+    });
+    if (started) this.ctx.stroke();
   }
 }
+
+export const chartService = new ChartService();

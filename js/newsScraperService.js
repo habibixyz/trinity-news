@@ -50,6 +50,26 @@ export const NEWS_CHANNELS = [
     avatar: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=120&auto=format&fit=crop&q=80',
     badgeClass: 'badge-coindesk',
     defaultCategory: 'Crypto & Digital Assets'
+  },
+  {
+    id: 'cointelegraph',
+    name: 'Cointelegraph',
+    tag: 'COINTELEGRAPH',
+    color: '#000000',
+    feedUrl: 'https://cointelegraph.com/rss',
+    avatar: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=120&auto=format&fit=crop&q=80',
+    badgeClass: 'badge-coindesk',
+    defaultCategory: 'Crypto & Digital Assets'
+  },
+  {
+    id: 'techcrunch-startups',
+    name: 'TechCrunch Startups',
+    tag: 'TECHCRUNCH',
+    color: '#000000',
+    feedUrl: 'https://techcrunch.com/category/startups/feed/',
+    avatar: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=120&auto=format&fit=crop&q=80',
+    badgeClass: 'badge-techcrunch',
+    defaultCategory: 'Private Equity & VC'
   }
 ];
 
@@ -133,7 +153,7 @@ export class NewsScraperService {
 
       // Sort by publication timestamp descending
       unique.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-      this.articles = unique.slice(0, 10);
+      this.articles = unique.slice(0, 50); // Increased from 10 to 50 for richer wire
       this.lastScrapedTime = new Date();
     }
 
@@ -180,7 +200,7 @@ export class NewsScraperService {
     try {
       const parser = new DOMParser();
       const doc = parser.parseFromString(xmlString, 'text/xml');
-      const items = Array.from(doc.querySelectorAll('item, entry')).slice(0, 3);
+      const items = Array.from(doc.querySelectorAll('item, entry')).slice(0, 5); // 5 items per channel
 
       return items.map((itemNode, idx) => {
         const title = this.getNodeText(itemNode, ['title']) || 'Financial Market Update';
