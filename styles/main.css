@@ -188,21 +188,35 @@ img {
 .topbar {
   position: fixed;
   top: 0;
-  left: 0;
+  left: var(--sidebar-w);
   right: 0;
   height: var(--topbar-h);
-  z-index: 600;
+  z-index: 550;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0 0.75rem 0 0;
+  padding: 0 0.75rem 0 0.5rem;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Hamburger — always visible, used to collapse/expand on desktop too */
-.topbar-hamburger {
+/* Hamburger & Brand inside topbar — only visible when sidebar is collapsed or on mobile */
+.topbar-hamburger,
+.topbar-brand {
+  display: none;
+}
+
+body.sidebar-collapsed .topbar {
+  left: 0;
+}
+
+body.sidebar-collapsed .topbar-hamburger,
+body.sidebar-collapsed .topbar-brand {
   display: flex;
+}
+
+.topbar-hamburger {
   align-items: center;
   justify-content: center;
   width: 38px;
@@ -221,7 +235,6 @@ img {
 }
 
 .topbar-brand {
-  display: flex;
   align-items: baseline;
   gap: 0.35rem;
   flex-shrink: 0;
@@ -317,11 +330,11 @@ img {
    ========================================================================== */
 .sidebar {
   position: fixed;
-  top: var(--topbar-h);
+  top: 0;
   left: 0;
   bottom: 0;
   width: var(--sidebar-w);
-  z-index: 550;
+  z-index: 600;
   background: var(--bg-primary);
   border-right: 1px solid var(--border-subtle);
   display: flex;
@@ -663,6 +676,8 @@ img {
   .topbar-brand-tag { display: none; }
 
   .sidebar {
+    top: 0;
+    z-index: 700;
     transform: translateX(-256px);
     width: 256px;
     box-shadow: none;
