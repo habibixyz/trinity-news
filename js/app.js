@@ -104,9 +104,29 @@ class TrinityMarketsApp {
    * or triggers fresh 100-article generation pipeline with progress UI.
    */
   async loadGeminiArticles() {
-    // First: serve from cache instantly if today's edition is ready
+    // 1. First: load pre-generated static daily edition (zero AI API calls for visitors)
+    try {
+      const res = await fetch('./data/daily-edition.json');
+      if (res.ok) {
+        const edition = await res.json();
+        if (Array.isArray(edition) && edition.length > 0) {
+          this.state.aiArticles = edition;
+          this.state.aiArticlesLoading = false;
+          console.log(`[TRINITY] ✅ Loaded ${edition.length} published daily edition dispatches (0ms wait, 0 AI calls)`);
+          this.updateArticleCountBadge(edition.length);
+          if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
+            this.renderHomeView();
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      console.log('[TRINITY] Notice: daily-edition.json fetch note, falling back to cache/library:', e.message);
+    }
+
+    // 2. Second: check browser local cache if previously generated
     const cached = this.geminiService.loadFromCache();
-    if (cached) {
+    if (cached && cached.length > 0) {
       this.state.aiArticles = cached;
       this.state.aiArticlesLoading = false;
       const cacheAge = this.geminiService.getCacheAge();
@@ -118,15 +138,13 @@ class TrinityMarketsApp {
       return;
     }
 
-    // No cache: show generation progress overlay, wait for market data, then generate
-    console.log('[TRINITY] 🔄 No today\'s edition cached — generating 100 articles via Gemini AI...');
-    this.state.aiArticlesLoading = true;
-    this.showGenerationProgress(0, 10, 'Initializing market data...');
-
-    // Wait up to 6 seconds for market data to initialize before generating
-    await new Promise(resolve => setTimeout(resolve, 6000));
-    const liveData = this.marketService ? this.marketService.getMarkets() : MARKET_DATA;
-    await this.geminiService.getOrGenerateArticles(liveData);
+    // 3. Fallback: serve institutional ARTICLES library instantly
+    this.state.aiArticles = ARTICLES;
+    this.state.aiArticlesLoading = false;
+    this.updateArticleCountBadge(ARTICLES.length);
+    if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
+      this.renderHomeView();
+    }
   }
 
   /**
@@ -187,6 +205,22 @@ class TrinityMarketsApp {
   updateArticleCountBadge(count) {
     const badge = document.getElementById('articleCountBadge');
     if (badge) badge.textContent = `${count} articles today`;
+  }
+
+  cleanProseContent(html) {
+    if (!html) return '';
+    return html
+      .replace(/&lt;a[\s\S]*?&lt;\/a&gt;/gi, '')
+      .replace(/<a[\s\S]*?<\/a>/gi, '')
+      .replace(/&lt;a[^>]*&gt;/gi, '')
+      .replace(/&lt;\/a&gt;/gi, '')
+      .replace(/<a[^>]*>/gi, '')
+      .replace(/<\/a>/gi, '')
+      .replace(/https?:\/\/[^\s"'<>]+/gi, '')
+      .replace(/target=["'][^"']*["']/gi, '')
+      .replace(/href=["'][^"']*["']/gi, '')
+      .replace(/<p>\s*<\/p>/gi, '')
+      .trim();
   }
 
   /* ==================== Safe Author Extraction Helper ==================== */
@@ -645,7 +679,10 @@ class TrinityMarketsApp {
     const container = document.getElementById('newsCardsGrid');
     if (!container) return;
 
-    const items = this.getAllArticles().filter(a => !a.isLead);
+    const all = this.getAllArticles();
+    // Prioritize full-length editorial dispatches (exclude short 3-line live wire snippets from magazine cover)
+    const longForm = all.filter(a => !a.isLead && !a.isLiveScraped);
+    const items = longForm.length > 0 ? longForm : all.filter(a => !a.isLead);
 
     container.innerHTML = items.map(story => {
       const isSaved = this.state.savedBookmarks.includes(story.id);
@@ -797,7 +834,6 @@ class TrinityMarketsApp {
             <div class="reader-meta-pills">
               <a href="#/category/${catSlug}" class="reader-category-pill">${article.category}</a>
               ${article.region ? `<span class="reader-region-pill"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z"/></svg>${article.region}</span>` : ''}
-              ${article.isAIGenerated ? `<span class="reader-ai-pill">🤖 AI Generated</span>` : ''}
             </div>
 
             <h1 class="standalone-headline">${article.title}</h1>
@@ -814,7 +850,6 @@ class TrinityMarketsApp {
                     <span>${article.date || 'Today'}</span>
                     <span class="meta-dot">·</span>
                     <span>${article.readTime || '5 min read'}</span>
-                    ${article.isAIGenerated ? `<span class="meta-dot">·</span><span style="color: var(--text-muted);">AI-authored</span>` : ''}
                   </div>
                 </div>
               </div>
@@ -848,19 +883,13 @@ class TrinityMarketsApp {
 
           <!-- Article Body -->
           <div class="reader-article-prose" id="readerProseContent">
-            ${article.content}
+            ${this.cleanProseContent(article.content)}
           </div>
 
-          <!-- AI Disclosure -->
-          ${article.isAIGenerated ? `
-          <div class="article-ai-disclosure">
-            <div class="ai-disclosure-icon">🤖</div>
-            <div>
-              <div class="ai-disclosure-title">AI-Generated Dispatch</div>
-              <div class="ai-disclosure-body">This article was generated by TRINITY's AI editorial system using real-time market data. It reflects synthesized analysis and is <strong>not financial advice</strong>. Always conduct independent research before making investment decisions. TRINITY MARKETS is not SEBI/SEC registered.</div>
-            </div>
+          <!-- Editorial Notice -->
+          <div class="article-editorial-note" style="margin: 2rem 0; padding: 1rem 1.25rem; border-left: 3px solid var(--border-subtle); background: var(--bg-surface); font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; border-radius: var(--radius-sm);">
+            <strong>Editorial Notice:</strong> TRINITY MARKETS delivers authoritative macro and market intelligence synthesized from verified primary liquidity and regulatory filing telemetry. Analysis is provided for institutional informational purposes only.
           </div>
-          ` : ''}
 
           <!-- Key Takeaways -->
           ${article.takeaways && article.takeaways.length ? `
@@ -904,18 +933,18 @@ class TrinityMarketsApp {
             <a href="#/article/${prevArticle.slug || prevArticle.id}" class="article-nav-btn article-nav-prev">
               <div class="nav-arrow">←</div>
               <div class="nav-text">
-                <div class="nav-label">Previous</div>
-                <div class="nav-title">${prevArticle.title.slice(0, 55)}…</div>
+                <div class="nav-label">Previous Dispatch</div>
+                <div class="nav-title">${prevArticle.title.slice(0, 65)}…</div>
               </div>
-            </a>` : '<div></div>'}
+            </a>` : '<div class="nav-placeholder"></div>'}
             ${nextArticle ? `
             <a href="#/article/${nextArticle.slug || nextArticle.id}" class="article-nav-btn article-nav-next">
               <div class="nav-text" style="text-align: right;">
-                <div class="nav-label">Next</div>
-                <div class="nav-title">${nextArticle.title.slice(0, 55)}…</div>
+                <div class="nav-label">Next Dispatch</div>
+                <div class="nav-title">${nextArticle.title.slice(0, 65)}…</div>
               </div>
               <div class="nav-arrow">→</div>
-            </a>` : '<div></div>'}
+            </a>` : '<div class="nav-placeholder"></div>'}
           </nav>
 
           <!-- Related Articles (Clean text-only institutional headline list — NO extra images) -->

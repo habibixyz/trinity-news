@@ -239,8 +239,11 @@ export class NewsScraperService {
             "Cross-market liquidity and pricing impact monitored continuously."
           ],
           content: `
+            <div style="padding: 0.75rem 1rem; border-left: 3px solid var(--text-primary); background: var(--bg-surface); margin-bottom: 1.5rem; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.05em; color: var(--text-secondary); text-transform: uppercase;">
+              ⚡ Live Wire Dispatch · Ingested via ${channel.name} Financial Wire
+            </div>
             <p class="lead-para">${this.cleanEntities(cleanDesc || title)}</p>
-            <p>This market dispatch was ingested in real time from the <strong>${channel.name}</strong> news wire. As part of our TRINITY Executive curation protocol, our analysts continuously monitor primary liquidity rails, corporate filings, and global regulatory mandates.</p>
+            <p>This market dispatch was ingested in real time as breaking telemetry from the <strong>${channel.name}</strong> news wire. As part of our TRINITY Executive curation protocol, our analysts continuously monitor primary liquidity rails, corporate filings, and global regulatory mandates.</p>
             <div class="scraped-source-callout">
               <span class="source-icon">📊</span>
               <div>

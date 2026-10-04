@@ -1,0 +1,21 @@
+{
+  "name": "trinity-markets",
+  "version": "2.0.0",
+  "description": "TRINITY MARKETS — Institutional Financial Intelligence Journal",
+  "type": "module",
+  "scripts": {
+    "generate-edition": "node scripts/generate-daily-edition.js",
+    "generate": "node scripts/generate-daily-edition.js",
+    "serve": "npx serve -l 5500",
+    "start": "npx serve -l 5500"
+  },
+  "keywords": [
+    "financial-news",
+    "institutional-journal",
+    "gemini-ai",
+    "finance",
+    "market-telemetry"
+  ],
+  "author": "TRINITY MARKETS",
+  "license": "MIT"
+}
