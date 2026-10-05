@@ -631,6 +631,8 @@ class TrinityMarketsApp {
     const allArticles = this.getAllArticles();
     const leadArticle = allArticles.find(a => a.isLead) || allArticles[0] || {};
     const leadSlug = `#/article/${leadArticle.slug || leadArticle.id || ''}`;
+    const auth = this.getSafeAuthor(leadArticle.author);
+    const leadImage = leadArticle.image || 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200&auto=format&fit=crop&q=85';
 
     const remaining = allArticles.filter(a => a.id !== leadArticle.id);
     const top5 = remaining.slice(0, 5);
@@ -644,6 +646,11 @@ class TrinityMarketsApp {
           </span>
           <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">${leadArticle.readTime || '5 min read'}</span>
         </div>
+
+        <a href="${leadSlug}" class="narrative-media-wrap">
+          <img src="${leadImage}" alt="${leadArticle.title || 'Market Narrative'}" loading="lazy">
+          <div class="narrative-media-badge">${leadArticle.category || 'Macro Intelligence'}</div>
+        </a>
 
         <h2 class="narrative-title">
           <a href="${leadSlug}">${leadArticle.title || 'The Synchronized Easing Wave: How Global Central Banks Are Repricing Sovereign Yields'}</a>
@@ -667,6 +674,17 @@ class TrinityMarketsApp {
           </ul>
         </div>
 
+        <div class="narrative-meta-bar">
+          <div class="author-chip">
+            <img src="${auth.avatar}" alt="${auth.name}">
+            <div class="author-info">
+              <div class="name">${auth.name}</div>
+              <div class="role">${auth.role}</div>
+            </div>
+          </div>
+          <a href="${leadSlug}" class="btn-scrape-now" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">Read Full Dispatch &rarr;</a>
+        </div>
+
         <div class="narrative-footer">
           <div class="narrative-tickers-wrap">
             <span style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted);">Impacted Assets:</span>
@@ -676,7 +694,9 @@ class TrinityMarketsApp {
             <a href="#/ticker/GOLD" class="narrative-ticker-chip">GOLD</a>
             <a href="#/ticker/DXY" class="narrative-ticker-chip">DXY</a>
           </div>
-          <a href="${leadSlug}" class="btn-scrape-now" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">Read Full Intelligence Dispatch &rarr;</a>
+          <button class="btn-explain-move compact" onclick="window.trinityApp.openExplainMove('SP500')" title="Explain why these assets are moving">
+            <span>⚡ Explain Move</span>
+          </button>
         </div>
       </div>
     `;
