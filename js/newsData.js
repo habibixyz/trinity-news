@@ -1430,11 +1430,17 @@ export const INSTITUTIONAL_RESEARCH_REPORTS = [
 export function findArticleBySlugOrId(slugOrId, scrapedArticles = [], aiArticles = []) {
   let storedAi = [];
   try {
-    storedAi = JSON.parse(localStorage.getItem('trinity_ai_articles') || '[]');
+    storedAi = JSON.parse(localStorage.getItem('trinity_ai_articles_v2') || localStorage.getItem('trinity_ai_articles') || '[]');
   } catch {}
   const all = [...aiArticles, ...storedAi, ...ARTICLES, ...scrapedArticles];
   const target = decodeURIComponent(slugOrId || '').toLowerCase().trim();
-  return all.find(a => (a.slug && a.slug.toLowerCase().trim() === target) || (a.id && a.id.toLowerCase().trim() === target));
+  const normTarget = target.replace(/[^a-z0-9]/g, '');
+  return all.find(a => 
+    (a.slug && a.slug.toLowerCase().trim() === target) || 
+    (a.id && a.id.toLowerCase().trim() === target) ||
+    (a.slug && a.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === normTarget) ||
+    (a.id && a.id.toLowerCase().replace(/[^a-z0-9]/g, '') === normTarget)
+  );
 }
 
 export function findArticlesByCategorySlug(catSlug, scrapedArticles = [], aiArticles = []) {

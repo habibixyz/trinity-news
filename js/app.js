@@ -74,7 +74,10 @@ class TrinityMarketsApp {
     this.updateBookmarkCount();
     this.setupEventListeners();
 
-    // Initialize Router immediately FIRST so all tabs and navigation work with 0 delay
+    // Kick off daily edition load immediately and retain promise for direct link resolvers
+    this.articlesLoadPromise = this.loadGeminiArticles().catch(err => console.warn('[TRINITY AI]', err));
+
+    // Initialize Router immediately so all tabs and navigation work
     window.addEventListener('hashchange', () => this.handleRouting());
     this.handleRouting();
 
@@ -94,9 +97,27 @@ class TrinityMarketsApp {
         console.warn('[TRINITY] Service Worker registration note:', err.message);
       });
     }
+  }
 
-    // Load AI articles in background
-    this.loadGeminiArticles().catch(err => console.warn('[TRINITY AI]', err));
+  /**
+   * Re-renders whatever view the user is currently on (Home, Article, Category, Trending)
+   * once the latest daily edition dispatches finish fetching.
+   */
+  reRenderCurrentRoute() {
+    const route = this.state.currentRoute || '';
+    if (route.startsWith('article/')) {
+      const slug = route.replace('article/', '').split('?')[0];
+      this.renderArticleView(slug);
+    } else if (route.startsWith('category/')) {
+      const cat = route.replace('category/', '').split('?')[0];
+      this.renderCategoryView(cat);
+    } else if (route === 'trending') {
+      this.renderCategoryView('trending');
+    } else if (route === 'briefing') {
+      this.renderBriefingView();
+    } else if (!route || route === '/' || route === 'home') {
+      this.renderHomeView();
+    }
   }
 
   /**
@@ -128,10 +149,7 @@ class TrinityMarketsApp {
           } catch {}
 
           this.startAutonomousLiveWatcher();
-
-          if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
-            this.renderHomeView();
-          }
+          this.reRenderCurrentRoute();
           return;
         }
       }
@@ -148,9 +166,7 @@ class TrinityMarketsApp {
       console.log(`[TRINITY] ✅ Loaded ${cached.length} AI articles from today's cache (${cacheAge})`);
       this.updateArticleCountBadge(cached.length);
       this.startAutonomousLiveWatcher();
-      if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
-        this.renderHomeView();
-      }
+      this.reRenderCurrentRoute();
       return;
     }
 
@@ -159,9 +175,7 @@ class TrinityMarketsApp {
     this.state.aiArticlesLoading = false;
     this.updateArticleCountBadge(ARTICLES.length);
     this.startAutonomousLiveWatcher();
-    if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
-      this.renderHomeView();
-    }
+    this.reRenderCurrentRoute();
   }
 
   /**
@@ -857,28 +871,71 @@ class TrinityMarketsApp {
   }
 
   /* ==================== PAGE VIEW 2: Dedicated Standalone Article Page ==================== */
-  renderArticleView(slug) {
+  async renderArticleView(slug) {
     const container = document.getElementById('standaloneArticleContainer');
     if (!container) return;
 
-    const targetSlug = decodeURIComponent(slug || '').toLowerCase().trim();
-    const all = this.getAllArticles();
-    
-    let article = all.find(a => 
-      (a.slug && a.slug.toLowerCase().trim() === targetSlug) || 
-      (a.id && a.id.toLowerCase().trim() === targetSlug)
-    );
+    const rawTarget = decodeURIComponent(slug || '').toLowerCase().trim();
+    const normTarget = rawTarget.replace(/[^a-z0-9]/g, '');
+
+    const findMatch = (list) => {
+      if (!Array.isArray(list)) return null;
+      return list.find(a => {
+        if (!a) return false;
+        const s = (a.slug || '').toLowerCase().trim();
+        const id = (a.id || '').toLowerCase().trim();
+        return (
+          s === rawTarget ||
+          id === rawTarget ||
+          s.replace(/[^a-z0-9]/g, '') === normTarget ||
+          id.replace(/[^a-z0-9]/g, '') === normTarget
+        );
+      });
+    };
+
+    let all = this.getAllArticles();
+    let article = findMatch(all);
 
     if (!article) {
       article = findArticleBySlugOrId(slug, this.scraperService ? this.scraperService.getArticles() : [], this.state.aiArticles || []);
+    }
+
+    // If still loading daily edition from disk/network, show elegant loader and await completion!
+    if (!article && this.state.aiArticlesLoading && this.articlesLoadPromise) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 6rem 1rem;">
+          <div style="width: 32px; height: 32px; border: 2px solid var(--border-subtle); border-top-color: var(--text-primary); border-radius: 50%; margin: 0 auto 1.5rem auto; animation: spin 0.8s linear infinite;"></div>
+          <div style="font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase;">Retrieving Institutional Dispatch...</div>
+        </div>
+      `;
+      try {
+        await this.articlesLoadPromise;
+        all = this.getAllArticles();
+        article = findMatch(all) || findArticleBySlugOrId(slug, this.scraperService ? this.scraperService.getArticles() : [], this.state.aiArticles || []);
+      } catch (e) {}
+    }
+
+    // Safety fallback: direct fetch of daily-edition.json
+    if (!article) {
+      try {
+        const res = await fetch('./data/daily-edition.json?_t=' + Date.now());
+        if (res.ok) {
+          const directList = await res.json();
+          article = findMatch(directList);
+          if (article && (!this.state.aiArticles || this.state.aiArticles.length === 0)) {
+            this.state.aiArticles = directList;
+            this.updateArticleCountBadge(directList.length);
+          }
+        }
+      } catch (e) {}
     }
 
     if (!article) {
       container.innerHTML = `
         <div style="text-align: center; padding: 6rem 1rem;">
           <div style="font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 1.5rem;">Dispatch Not Found</div>
-          <h2 style="font-family: var(--font-serif); font-size: 2.2rem; margin-bottom: 1rem;">The requested dispatch has expired or moved.</h2>
-          <p style="color: var(--text-secondary); margin-bottom: 2.5rem; max-width: 400px; margin-left: auto; margin-right: auto;">Our archive refreshes daily. Return to the cover for today's 100 dispatches.</p>
+          <h2 style="font-family: var(--font-serif); font-size: 2.2rem; margin-bottom: 1rem;">The requested dispatch could not be found.</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 2.5rem; max-width: 400px; margin-left: auto; margin-right: auto;">Explore today's verified executive dispatches on the main cover.</p>
           <a href="#/" class="btn-scrape-now" style="display: inline-flex;">← Return to Today's Cover</a>
         </div>
       `;
