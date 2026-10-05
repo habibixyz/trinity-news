@@ -34,10 +34,12 @@ class TrinityMarketsApp {
   constructor() {
     let savedTheme = 'dark';
     let savedBookmarks = [];
+    let savedWatchlist = ["BTC-USD", "NVDA", "NIFTY50", "GOLD"];
     try {
       if (typeof localStorage !== 'undefined') {
         savedTheme = localStorage.getItem('trinity_theme') || 'dark';
         savedBookmarks = JSON.parse(localStorage.getItem('trinity_bookmarks') || '[]');
+        savedWatchlist = JSON.parse(localStorage.getItem('trinity_watchlist') || '["BTC-USD", "NVDA", "NIFTY50", "GOLD"]');
       }
     } catch {}
 
@@ -47,6 +49,8 @@ class TrinityMarketsApp {
       terminalCategory: 'All',
       terminalSearchQuery: '',
       savedBookmarks: savedBookmarks,
+      watchlist: savedWatchlist,
+      terminalActiveSymbol: 'BTC-USD',
       activeArticle: null,
       fontSizeLevel: 1,
       isSpeaking: false,
@@ -200,7 +204,6 @@ class TrinityMarketsApp {
               this.state.lastEditionTimestamp = meta.generatedAt;
               this.state.aiArticles = freshArticles;
               this.updateArticleCountBadge(freshArticles.length);
-              this.showToast(`⚡ Synchronized ${freshArticles.length} fresh dispatches (${meta.trendingCount || 0} trending)`);
               if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
                 this.renderHomeView();
               } else if (this.state.currentRoute === 'trending') {
@@ -403,7 +406,9 @@ class TrinityMarketsApp {
       // Update active nav indicators (sidebar links)
       document.querySelectorAll('#categoryNavMenu .sidebar-link, #categoryNavMenu .nav-link-btn').forEach(btn => {
         const routeAttr = btn.dataset.route || '';
+        const isChartsMatch = (routeAttr === 'charts' || routeAttr === 'terminal') && (hash === 'charts' || hash.startsWith('charts') || hash.startsWith('terminal') || hash.startsWith('markets'));
         const isMatch = (routeAttr === 'home' && (!hash || hash === '/' || hash === 'home')) ||
+                        isChartsMatch ||
                         (routeAttr && hash === routeAttr) ||
                         (routeAttr && hash.startsWith(routeAttr));
         btn.classList.toggle('active', isMatch);
@@ -460,12 +465,12 @@ class TrinityMarketsApp {
           title: "Macro Economic Calendar & Earnings Matrix | TRINITY MARKETS",
           description: "Central Bank rate decisions, CPI releases, jobs reports, and quarterly earnings beat/miss track records."
         });
-      } else if (hash.startsWith('terminal')) {
+      } else if (hash === 'charts' || hash.startsWith('charts') || hash.startsWith('terminal') || hash.startsWith('markets')) {
         this.showView('viewTerminal');
         this.renderTerminalView();
         this.updateSEO({
-          title: "Institutional Market Terminal | TRINITY MARKETS",
-          description: "Interactive market telemetry terminal for financial analysts, wealth managers, and institutional funds."
+          title: "Institutional Pro Charts & Market Screener | TRINITY MARKETS",
+          description: "Live interactive candlestick & line charting studio with technical indicators, multi-asset screener, and 7-day sparklines."
         });
       } else if (hash.startsWith('ticker/')) {
         const symbol = hash.replace('ticker/', '').split('?')[0];
@@ -558,11 +563,96 @@ class TrinityMarketsApp {
   /* ==================== PAGE VIEW 1: Home Cover View ==================== */
   renderHomeView() {
     this.renderMarketPulseBarometer();
+    this.renderMarketsSparklineRadar();
     this.renderHeroAndWire();
     this.renderTrendingFilterBar();
     this.renderDaily10Cards();
     this.renderMacroRadar();
     this.renderPerspectivesList();
+  }
+
+  renderTrendBadge(changeVal, isPositive = null, extraClass = '') {
+    if (changeVal === null || changeVal === undefined || changeVal === '') {
+      return `<span class="trend-badge neutral ${extraClass}"><span class="trend-num">0.00%</span></span>`;
+    }
+
+    const str = String(changeVal).trim();
+    // Clean out existing +, -, ▲, ▼ and spaces
+    const cleanNum = str.replace(/^[+\-▲▼\s]+/, '').trim();
+
+    // 1. Strict zero check
+    const numOnly = parseFloat(cleanNum);
+    if (!isNaN(numOnly) && Math.abs(numOnly) < 0.00001) {
+      return `<span class="trend-badge neutral ${extraClass}"><span class="trend-num">${cleanNum.includes('%') ? cleanNum : cleanNum + '%'}</span></span>`;
+    }
+
+    // 2. Strict sign detection (leading '-' or '▼' overrides anything else)
+    let positive = isPositive;
+    if (str.startsWith('-') || str.includes('▼') || (!isNaN(numOnly) && numOnly < 0)) {
+      positive = false;
+    } else if (str.startsWith('+') || str.includes('▲') || (!isNaN(numOnly) && numOnly > 0)) {
+      positive = true;
+    } else if (positive === null) {
+      positive = true;
+    }
+
+    if (positive) {
+      return `<span class="trend-badge pos ${extraClass}"><svg class="trend-caret" width="8" height="7" viewBox="0 0 8 7" fill="none" aria-hidden="true"><path d="M4 0.5L7.5 6.5H0.5L4 0.5Z" fill="currentColor"/></svg><span class="trend-num">${cleanNum}</span></span>`;
+    } else {
+      return `<span class="trend-badge neg ${extraClass}"><svg class="trend-caret" width="8" height="7" viewBox="0 0 8 7" fill="none" aria-hidden="true"><path d="M4 6.5L0.5 0.5H7.5L4 6.5Z" fill="currentColor"/></svg><span class="trend-num">${cleanNum}</span></span>`;
+    }
+  }
+
+  formatMarketCapDisplay(val) {
+    if (!val || val === '--') return '--';
+    const str = String(val).trim();
+    // Cleanly stack strings like "₹20.4 Lakh Cr ($245B)"
+    const match = str.match(/^(.*?)\s*\((.*?)\)$/);
+    if (match) {
+      const main = match[1].replace('Lakh Cr', 'L Cr').trim();
+      const sub = match[2].trim();
+      return `<div class="screener-cap-main">${main}</div><div class="screener-cap-sub">${sub}</div>`;
+    }
+    return `<div class="screener-cap-main">${str}</div>`;
+  }
+
+  renderMarketsSparklineRadar() {
+    const container = document.getElementById('marketsSparklineRadarStrip');
+    if (!container) return;
+
+    const rawData = this.marketService ? this.marketService.getMarkets() : MARKET_DATA;
+    // Featured top assets across Crypto, US Tech, Indian Bluechips, and Commodities
+    const featuredSymbols = ['BTC-USD', 'ETH-USD', 'NVDA', 'NIFTY50', 'GOLD', 'SOL-USD'];
+    const radarAssets = featuredSymbols
+      .map(sym => rawData.find(m => m.symbol === sym))
+      .filter(Boolean);
+
+    container.innerHTML = `
+      <div style="grid-column: 1/-1; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase;">
+          <span style="color: #ef4444; font-size: 0.8rem;">🔥</span> LIVE MARKETS &amp; 7-DAY SPARKLINES
+        </div>
+        <a href="#/charts" style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none;">
+          Open Pro Charts &amp; Screener &rarr;
+        </a>
+      </div>
+      ${radarAssets.map(m => {
+        const sparklineSvg = this.chartService ? this.chartService.generateSvgSparkline(m.value, m.symbol, m.positive, 160, 38) : '';
+
+        return `
+          <div class="sparkline-radar-card" onclick="window.trinityApp.selectAssetAndGoToCharts('${m.symbol}')" title="Analyze ${m.name || m.symbol} in Pro Chart Studio">
+            <div class="radar-card-top">
+              <span class="radar-card-sym">${m.symbol}</span>
+              ${this.renderTrendBadge(m.change, m.positive)}
+            </div>
+            <div class="radar-card-price">${m.value}</div>
+            <div class="sparkline-container" style="width: 100%; height: 38px;">
+              ${sparklineSvg}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    `;
   }
 
   renderMarketPulseBarometer() {
@@ -575,7 +665,7 @@ class TrinityMarketsApp {
           <div class="pulse-kpi-card" onclick="window.trinityApp.navigate('data')">
             <div class="pulse-kpi-top">
               <span class="pulse-kpi-label">${kpi.icon || ''} ${kpi.label}</span>
-              ${kpi.change ? `<span class="pulse-kpi-change ${kpi.positive ? 'pos' : 'neg'}">${kpi.positive ? '▲' : '▼'} ${kpi.change}</span>` : ''}
+              ${kpi.change ? this.renderTrendBadge(kpi.change, kpi.positive) : ''}
             </div>
             <div class="pulse-kpi-value">${kpi.value}</div>
             <div class="pulse-kpi-subtext">${kpi.subtext || kpi.sublabel || ''}</div>
@@ -1342,65 +1432,370 @@ class TrinityMarketsApp {
     `;
   }
 
-  /* ==================== PAGE VIEW 4: Dedicated Market Terminal ==================== */
+  /* ==================== PAGE VIEW 4: Dedicated Market Terminal & Pro Charts Workstation ==================== */
   renderTerminalView() {
-    const grid = document.getElementById('terminalGrid');
-    if (!grid) return;
+    const container = document.getElementById('terminalPageContainer');
+    if (!container) return;
 
     const rawData = this.marketService ? this.marketService.getMarkets() : MARKET_DATA;
-    const cat = this.state.terminalCategory;
+    const cat = this.state.terminalCategory || 'All';
     const query = (this.state.terminalSearchQuery || '').toLowerCase().trim();
+    const watchlist = this.state.watchlist || [];
 
-    const filtered = rawData.filter(item => {
-      const matchCat = (cat === 'All' || item.category === cat);
+    // Filter assets
+    let filtered = rawData.filter(item => {
+      let matchCat = true;
+      if (cat === 'Watchlist') {
+        matchCat = watchlist.includes(item.symbol);
+      } else if (cat === 'Gainers') {
+        matchCat = item.positive === true;
+      } else if (cat !== 'All') {
+        matchCat = (item.category === cat);
+      }
+
       const matchQuery = !query || 
         item.symbol.toLowerCase().includes(query) || 
         (item.name && item.name.toLowerCase().includes(query)) ||
         item.category.toLowerCase().includes(query);
+
       return matchCat && matchQuery;
     });
 
-    if (filtered.length === 0) {
-      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No financial assets match query.</div>`;
-      return;
+    if (cat === 'Gainers') {
+      filtered.sort((a, b) => {
+        const aVal = parseFloat(String(a.change).replace(/[^0-9.-]+/g, '')) || 0;
+        const bVal = parseFloat(String(b.change).replace(/[^0-9.-]+/g, '')) || 0;
+        return bVal - aVal;
+      });
     }
 
-    grid.innerHTML = filtered.map(m => {
-      const arrow = m.positive ? '▲' : '▼';
-      const posClass = m.positive ? 'pos' : 'neg';
+    // Active Asset for Pro Chart Workstation
+    let activeSymbol = this.state.terminalActiveSymbol || 'BTC-USD';
+    let activeAsset = rawData.find(m => m.symbol === activeSymbol) || filtered[0] || rawData[0];
+    if (activeAsset) this.state.terminalActiveSymbol = activeAsset.symbol;
 
-      return `
-        <div class="market-card" onclick="window.trinityApp.navigate('ticker/${m.symbol}')">
-          <div class="market-card-top">
-            <div>
-              <span class="market-badge-type">${m.category}</span>
-              <div class="market-card-symbol">${m.symbol}</div>
-              <div class="market-card-name">${m.name || m.symbol}</div>
+    // Calculate 24h range needle position (0% - 100%)
+    let rangePct = 50;
+    if (activeAsset && activeAsset.low24h && activeAsset.high24h) {
+      const lowNum = parseFloat(String(activeAsset.low24h).replace(/[^0-9.-]+/g, '')) || 0;
+      const highNum = parseFloat(String(activeAsset.high24h).replace(/[^0-9.-]+/g, '')) || 0;
+      const curNum = parseFloat(String(activeAsset.value).replace(/[^0-9.-]+/g, '')) || 0;
+      if (highNum > lowNum && curNum >= lowNum) {
+        rangePct = Math.min(100, Math.max(0, ((curNum - lowNum) / (highNum - lowNum)) * 100));
+      }
+    }
+
+    const isStarred = watchlist.includes(activeAsset?.symbol);
+
+    container.innerHTML = `
+      <!-- Global Market Telemetry Strip -->
+      <div class="global-market-telemetry-bar">
+        <div class="global-stat-item">
+          <span class="global-stat-label">Assets Monitored:</span>
+          <span class="global-stat-value">${rawData.length} Primary Feeds</span>
+        </div>
+        <div class="global-stat-item">
+          <span class="global-stat-label">Total Global Cap:</span>
+          <span class="global-stat-value">$3.48T</span>
+          ${this.renderTrendBadge('1.92%', true)}
+        </div>
+        <div class="global-stat-item">
+          <span class="global-stat-label">24h Global Vol:</span>
+          <span class="global-stat-value">$142.8B</span>
+          ${this.renderTrendBadge('8.4%', true)}
+        </div>
+        <div class="global-stat-item">
+          <span class="global-stat-label">BTC Dominance:</span>
+          <span class="global-stat-value">57.4%</span>
+        </div>
+        <div class="global-stat-item">
+          <span class="global-stat-label">ETH Gas:</span>
+          <span class="global-stat-value">12 Gwei</span>
+        </div>
+        <div class="global-stat-item">
+          <span class="global-stat-label">Fear &amp; Greed:</span>
+          <span class="stat-pill-badge greed">76 • Extreme Greed</span>
+        </div>
+        <div class="global-stat-item">
+          <span class="global-stat-label">VIX Volatility:</span>
+          <span class="global-stat-value">14.82</span>
+          ${this.renderTrendBadge('3.4%', false)}
+        </div>
+      </div>
+
+      <!-- Section Title -->
+      <div class="section-head" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem;">
+        <div>
+          <h1 class="section-title">Institutional Pro Charts &amp; Screener</h1>
+          <p class="section-subtitle">Real-Time Financial Telemetry: Candlestick Studio, 7-Day Sparklines &amp; Multi-Asset Screener</p>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 0.72rem; color: #10b981; display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.25rem 0.6rem; border-radius: 4px; background: rgba(16, 185, 129, 0.05);">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+          <span>STREAMING QUOTES ACTIVE</span>
+        </div>
+      </div>
+
+      <!-- Pro Chart Workstation Studio -->
+      <div class="pro-chart-workstation" id="proChartStudioBox">
+        <div class="pro-chart-header">
+          <div class="pro-chart-asset-info">
+            <div class="screener-asset-icon" style="width: 44px; height: 44px; font-size: 1rem; border-color: rgba(255,255,255,0.2);">
+              ${(activeAsset?.symbol || 'A').slice(0, 3)}
             </div>
-            <div style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700;" class="${posClass}">
-              ${arrow} ${m.change}
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span class="pro-chart-symbol-badge">${activeAsset?.symbol || 'BTC-USD'}</span>
+                <span class="pro-chart-category-tag">${activeAsset?.category || 'Market'} • ${activeAsset?.exchange || 'EXCHANGE'}</span>
+                <span style="color: var(--text-muted); font-size: 0.72rem; font-family: var(--font-mono);">Rank #${activeAsset?.rank || 1}</span>
+              </div>
+              <div class="pro-chart-name">${activeAsset?.name || activeAsset?.symbol}</div>
             </div>
           </div>
 
-          <div class="market-card-price">${m.value}</div>
-
-          <div class="market-card-metrics">
-            <div>
-              <span class="metric-lbl">24h High</span>
-              <span class="metric-val">${m.high24h || '--'}</span>
+          <div class="pro-chart-price-block">
+            <div style="display: flex; align-items: baseline; gap: 0.75rem;">
+              <span class="pro-chart-big-price" id="proChartPriceDisplay">${activeAsset?.value}</span>
+              <span id="proChartTrendBadgeWrap">${this.renderTrendBadge(activeAsset?.change, activeAsset?.positive, 'pro-chart-badge-style')}</span>
             </div>
-            <div>
-              <span class="metric-lbl">24h Low</span>
-              <span class="metric-val">${m.low24h || '--'}</span>
-            </div>
-            <div>
-              <span class="metric-lbl">View Quote</span>
-              <span class="metric-val" style="text-decoration: underline;">Page →</span>
+            <div class="pro-chart-range-bar-wrap">
+              <span>Low: ${activeAsset?.low24h || '--'}</span>
+              <div class="pro-chart-range-track" title="24h Price Range: ${activeAsset?.low24h} - ${activeAsset?.high24h}">
+                <div class="pro-chart-range-fill" style="width: 100%;"></div>
+                <div class="pro-chart-range-needle" style="left: ${rangePct}%;"></div>
+              </div>
+              <span>High: ${activeAsset?.high24h || '--'}</span>
             </div>
           </div>
         </div>
-      `;
-    }).join('');
+
+        <!-- Embedded Interactive Canvas Engine -->
+        <div id="terminalProChartCanvasBox"></div>
+
+        <!-- Secondary Meta & Action Row -->
+        <div class="pro-chart-meta-row">
+          <div style="display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;">
+            <div class="pro-chart-meta-pill">
+              <span>Market Cap:</span> <strong>${activeAsset?.marketCap || 'Institutional Asset'}</strong>
+            </div>
+            <div class="pro-chart-meta-pill">
+              <span>24h Volume:</span> <strong>${activeAsset?.volume || '$14.2B'}</strong>
+            </div>
+            <div class="pro-chart-meta-pill">
+              <span>All-Time High:</span> <strong>${activeAsset?.ath || '--'}</strong>
+            </div>
+            <div class="pro-chart-meta-pill">
+              <span>Circulating:</span> <strong>${activeAsset?.circulating || 'Global'}</strong>
+            </div>
+          </div>
+
+          <div class="pro-chart-actions-group">
+            <button class="btn-chart-action ${isStarred ? 'starred' : ''}" onclick="window.trinityApp.toggleWatchlist('${activeAsset?.symbol}', event)">
+              <span>${isStarred ? '★' : '☆'}</span>
+              <span>${isStarred ? 'Saved to Watchlist' : 'Add to Watchlist'}</span>
+            </button>
+            <button class="btn-chart-action" onclick="window.trinityApp.copyPrice('${activeAsset?.symbol}', '${activeAsset?.value}', event)">
+              <span>📋</span>
+              <span>Copy Price</span>
+            </button>
+            <a href="#/ticker/${activeAsset?.symbol}" class="btn-chart-action">
+              <span>Quote Detail &rarr;</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- CoinGecko / CoinMarketCap Style Ranking Screener Table Section -->
+      <div class="screener-section-wrap">
+        <div class="screener-filter-bar">
+          <div class="screener-tabs-list" id="screenerTabsList">
+            <button class="screener-tab-btn ${cat === 'All' ? 'active' : ''}" data-cat="All">All Assets (${rawData.length})</button>
+            <button class="screener-tab-btn ${cat === 'Watchlist' ? 'active' : ''}" data-cat="Watchlist">
+              <span style="color: #f59e0b;">★</span> Watchlist (${watchlist.length})
+            </button>
+            <button class="screener-tab-btn ${cat === 'Gainers' ? 'active' : ''}" data-cat="Gainers">🔥 Top Gainers</button>
+            <button class="screener-tab-btn ${cat === 'Crypto' ? 'active' : ''}" data-cat="Crypto">🪙 Crypto &amp; Digital</button>
+            <button class="screener-tab-btn ${cat === 'Stocks' ? 'active' : ''}" data-cat="Stocks">🇺🇸 US Tech &amp; Equities</button>
+            <button class="screener-tab-btn ${cat === 'India' ? 'active' : ''}" data-cat="India">🇮🇳 Indian Bluechips</button>
+            <button class="screener-tab-btn ${cat === 'Macro' || cat === 'Forex' || cat === 'Real Estate' ? 'active' : ''}" data-cat="Macro">🥇 Commodities &amp; Macro</button>
+          </div>
+
+          <input type="text" class="screener-search-input" id="screenerSearchInput" placeholder="🔍 Search asset, symbol, ticker..." value="${this.state.terminalSearchQuery || ''}">
+        </div>
+
+        <div class="screener-table-wrap">
+          <table class="screener-table">
+            <colgroup>
+              <col style="width: 50px;">
+              <col style="width: 250px;">
+              <col style="width: 120px;">
+              <col style="width: 85px;">
+              <col style="width: 85px;">
+              <col style="width: 85px;">
+              <col style="width: 120px;">
+              <col style="width: 140px;">
+              <col style="width: 170px;">
+            </colgroup>
+            <thead>
+              <tr>
+                <th style="text-align: center;">#</th>
+                <th style="text-align: left; padding-left: 0.5rem;">Asset</th>
+                <th style="text-align: right; padding-right: 1.25rem;">Price</th>
+                <th style="text-align: right;">1h %</th>
+                <th style="text-align: right;">24h %</th>
+                <th style="text-align: right;">7d %</th>
+                <th style="text-align: right; padding-right: 0.75rem;">24h Volume</th>
+                <th style="text-align: right; padding-right: 1.25rem;">Market Cap</th>
+                <th style="text-align: right; padding-right: 1.75rem;">Last 7 Days</th>
+              </tr>
+            </thead>
+            <tbody id="screenerTableBody">
+              ${filtered.length === 0 ? `
+                <tr>
+                  <td colspan="9" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    ${cat === 'Watchlist' ? 'No assets in your Watchlist yet. Click the star ★ next to any asset to save it here!' : 'No assets match your search criteria.'}
+                  </td>
+                </tr>
+              ` : filtered.map(m => {
+                const isSelected = m.symbol === activeAsset?.symbol;
+                const starActive = watchlist.includes(m.symbol);
+                const isPos1h = (m.change1h || '').startsWith('+');
+                const isPos7d = (m.change7d || '').startsWith('+');
+
+                const displayPrice = m.value.startsWith('$') || m.value.startsWith('₹') 
+                  ? m.value 
+                  : (m.category === 'India' || m.symbol.includes('INR') ? `₹${m.value}` : `$${m.value}`);
+
+                const sparklineSvg = this.chartService ? this.chartService.generateSvgSparkline(m.value, m.symbol, m.positive, 120, 36) : '';
+
+                return `
+                  <tr class="screener-row ${isSelected ? 'active-chart-row' : ''}" onclick="window.trinityApp.selectAssetForProChart('${m.symbol}')" title="Click to view interactive chart for ${m.name || m.symbol}">
+                    <td class="screener-rank-cell">
+                      <div class="screener-rank-wrap">
+                        <button class="screener-star-btn ${starActive ? 'starred' : ''}" onclick="window.trinityApp.toggleWatchlist('${m.symbol}', event)" title="Toggle Watchlist">
+                          ${starActive ? '★' : '☆'}
+                        </button>
+                        <span class="rank-num">${m.rank || '--'}</span>
+                      </div>
+                    </td>
+                    <td style="padding-left: 0.5rem;">
+                      <div class="screener-asset-cell">
+                        <div class="screener-asset-icon">${m.symbol.slice(0, 3)}</div>
+                        <div class="screener-asset-info">
+                          <span class="screener-asset-sym">${m.symbol}</span>
+                          <span class="screener-asset-name" title="${m.name || m.symbol}">${m.name || m.symbol}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td style="text-align: right; padding-right: 1.25rem;" class="screener-price-cell" id="screener-price-${m.symbol}">
+                      ${displayPrice}
+                    </td>
+                    <td style="text-align: right;">
+                      ${this.renderTrendBadge(m.change1h, isPos1h)}
+                    </td>
+                    <td style="text-align: right;">
+                      ${this.renderTrendBadge(m.change, m.positive)}
+                    </td>
+                    <td style="text-align: right;">
+                      ${this.renderTrendBadge(m.change7d, isPos7d)}
+                    </td>
+                    <td style="text-align: right; padding-right: 0.75rem; color: var(--text-secondary); font-size: 0.8rem;">
+                      ${m.volume || '--'}
+                    </td>
+                    <td style="text-align: right; padding-right: 1.25rem;">
+                      ${this.formatMarketCapDisplay(m.marketCap)}
+                    </td>
+                    <td style="text-align: right; padding-right: 1.75rem;">
+                      <div class="sparkline-container">
+                        ${sparklineSvg}
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    // Mount the interactive Pro Chart Canvas inside #terminalProChartCanvasBox
+    setTimeout(() => {
+      if (this.chartService && activeAsset) {
+        this.chartService.mount('terminalProChartCanvasBox', activeAsset, this.chartService.activeTimeframe || '1M');
+      }
+    }, 40);
+
+    // Attach Screener Tab Filter Listeners
+    document.querySelectorAll('#screenerTabsList .screener-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#screenerTabsList .screener-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.state.terminalCategory = btn.dataset.cat;
+        this.renderTerminalView();
+      });
+    });
+
+    // Attach Search Filter Listener
+    const searchInput = document.getElementById('screenerSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.state.terminalSearchQuery = e.target.value;
+        this.renderTerminalView();
+        const reInput = document.getElementById('screenerSearchInput');
+        if (reInput) {
+          reInput.focus();
+          reInput.setSelectionRange(reInput.value.length, reInput.value.length);
+        }
+      });
+    }
+  }
+
+  selectAssetForProChart(symbol) {
+    this.state.terminalActiveSymbol = symbol;
+    this.renderTerminalView();
+    const studio = document.getElementById('proChartStudioBox');
+    if (studio) {
+      studio.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  selectAssetAndGoToCharts(symbol) {
+    this.state.terminalActiveSymbol = symbol;
+    this.navigate('charts');
+  }
+
+  toggleWatchlist(symbol, event) {
+    if (event) event.stopPropagation();
+    let list = this.state.watchlist || [];
+    if (list.includes(symbol)) {
+      list = list.filter(s => s !== symbol);
+      this.showToast(`Removed ${symbol} from Watchlist`);
+    } else {
+      list.push(symbol);
+      this.showToast(`★ Added ${symbol} to Watchlist`);
+    }
+    this.state.watchlist = list;
+    try {
+      localStorage.setItem('trinity_watchlist', JSON.stringify(list));
+    } catch {}
+
+    if (this.state.currentRoute === 'terminal' || this.state.currentRoute === 'charts' || this.state.currentRoute === 'markets') {
+      this.renderTerminalView();
+    }
+  }
+
+  copyPrice(symbol, price, event) {
+    if (event) event.stopPropagation();
+    const text = `${symbol}: ${price} via TRINITY MARKETS (https://trinity-news.vercel.app/#/ticker/${symbol})`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.showToast(`✓ Copied ${symbol} quote: ${price}`);
+      }).catch(() => {
+        this.showToast(`Quote: ${price}`);
+      });
+    } else {
+      this.showToast(`Quote: ${price}`);
+    }
   }
 
   /* ==================== PAGE VIEW 5: Dedicated Single Ticker Page ==================== */
@@ -1411,9 +1806,6 @@ class TrinityMarketsApp {
     const ticker = findTickerBySymbol(symbol);
     document.title = `${ticker.symbol} Quote & Financial Telemetry | TRINITY MARKETS`;
 
-    const arrow = ticker.positive ? '▲' : '▼';
-    const posClass = ticker.positive ? 'pos' : 'neg';
-
     // Related sector news
     const relatedNews = this.getAllArticles().slice(0, 3);
 
@@ -1421,7 +1813,7 @@ class TrinityMarketsApp {
       <nav class="article-breadcrumb">
         <a href="#/">Cover</a>
         <span>/</span>
-        <a href="#/terminal">Market Terminal</a>
+        <a href="#/charts">Pro Charts &amp; Screener</a>
         <span>/</span>
         <span>${ticker.symbol}</span>
       </nav>
@@ -1434,10 +1826,11 @@ class TrinityMarketsApp {
             <p style="color: var(--text-secondary); font-size: 1.1rem;">${ticker.name}</p>
           </div>
           <div style="text-align: right;">
-            <div style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 800;" class="${posClass}">
-              ${arrow} ${ticker.change} (${ticker.changeVal ? (ticker.changeVal > 0 ? `+${ticker.changeVal}` : ticker.changeVal) : ''})
+            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.4rem;">
+              ${this.renderTrendBadge(ticker.change, ticker.positive, 'pro-chart-badge-style')}
+              ${ticker.changeVal ? `<span style="font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono); font-variant-numeric: tabular-nums;">(${ticker.changeVal > 0 ? `+${ticker.changeVal}` : ticker.changeVal})</span>` : ''}
             </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">LAST SYNC: ${this.marketService ? this.marketService.getLastUpdatedTime() : 'LIVE'}</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 0.25rem;">REAL-TIME QUOTE &bull; ${this.marketService ? this.marketService.getLastUpdatedTime() : 'LIVE'}</div>
           </div>
         </div>
 
@@ -1477,7 +1870,7 @@ class TrinityMarketsApp {
           <h2 class="section-title">Related Market Dispatches</h2>
           <p class="section-subtitle">Intelligence Relevant to ${ticker.symbol}</p>
         </div>
-        <a href="#/terminal" class="btn-scrape-now">← Back to All Assets</a>
+        <a href="#/charts" class="btn-scrape-now">← Back to Screener &amp; Charts</a>
       </div>
 
       <div class="news-cards-grid">
@@ -1513,13 +1906,13 @@ class TrinityMarketsApp {
     container.innerHTML = `
       <div class="section-head">
         <div>
-          <h1 class="section-title">Live Telemetry Radar Wire</h1>
+          <h1 class="section-title">Live Financial Wire</h1>
           <p class="section-subtitle">Real-Time Macro, Wall Street & Cryptographic Dispatches 24/7</p>
         </div>
-        <button class="btn-scrape-now" onclick="window.trinityApp.scraperService.scrapeAllChannels(); window.trinityApp.showToast('✓ Wires Synchronized');">
-          <span>🔄</span>
-          <span>Sync Live Wires</span>
-        </button>
+        <div style="font-family: var(--font-mono); font-size: 0.72rem; color: #10b981; display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.25rem 0.6rem; border-radius: 4px; background: rgba(16, 185, 129, 0.05);">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+          <span>STREAMING 24/7</span>
+        </div>
       </div>
 
       <div style="margin-top: 2rem;">
@@ -1639,14 +2032,14 @@ class TrinityMarketsApp {
     container.innerHTML = `
       <div class="sector-hero-banner" style="text-align: center;">
         <div class="sector-meta-badge">DAILY 06:00 GMT EXECUTIVE INTELLIGENCE</div>
-        <h1 class="sector-title">The Morning Markets Dispatch</h1>
-        <p class="sector-tagline" style="margin: 0 auto 1.5rem;">${dateStr} • Curated 10 Core Financial Dispatches for Global Allocators</p>
+        <h1 class="sector-title">The Daily Executive Briefing</h1>
+        <p class="sector-tagline" style="margin: 0 auto 1.5rem;">${dateStr} • Top 10 Curated Market Dispatches for Global Allocators</p>
       </div>
 
       <div class="section-head">
         <div>
-          <h2 class="section-title">Today's 10 Briefing Items</h2>
-          <p class="section-subtitle">Verified Institutional Summaries</p>
+          <h2 class="section-title">Today's 10 Core Briefing Items</h2>
+          <p class="section-subtitle">Verified Institutional Intelligence Summaries</p>
         </div>
       </div>
 
@@ -1720,7 +2113,7 @@ class TrinityMarketsApp {
           <div style="font-size: 2.5rem; margin-bottom: 1rem;">🔖</div>
           <h3 style="font-family: var(--font-display); font-size: 1.5rem; color: var(--text-primary); margin-bottom: 0.5rem;">Your Portfolio is Empty</h3>
           <p>Bookmark any article using the 🔖 button across the journal to save it for offline review.</p>
-          <a href="#/" class="btn-scrape-now" style="display: inline-flex; margin-top: 1.5rem;">Explore The Daily 10 Cover →</a>
+          <a href="#/" class="btn-scrape-now" style="display: inline-flex; margin-top: 1.5rem;">Explore Today's Cover →</a>
         </div>
       `;
       return;
@@ -1814,11 +2207,9 @@ class TrinityMarketsApp {
           <h1 class="section-title">Institutional Data & ETF Inflow Dashboard</h1>
           <p class="section-subtitle">Real-Time Global ETF Capital Flows, Derivatives Open Interest, Sovereign Spreads & Dalal Street Inflows</p>
         </div>
-        <div style="display: flex; gap: 0.5rem;">
-          <button class="btn-scrape-now" onclick="window.trinityApp.renderDataDashboardView(); window.trinityApp.showToast('✓ Data Telemetry Synced')">
-            <span>🔄</span>
-            <span>Refresh Telemetry</span>
-          </button>
+        <div style="font-family: var(--font-mono); font-size: 0.72rem; color: #10b981; display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.25rem 0.6rem; border-radius: 4px; background: rgba(16, 185, 129, 0.05);">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+          <span>LIVE INFLOW DESK</span>
         </div>
       </div>
 
@@ -1829,7 +2220,7 @@ class TrinityMarketsApp {
             <div class="pulse-kpi-card">
               <div class="pulse-kpi-top">
                 <span class="pulse-kpi-label">${kpi.icon || ''} ${kpi.label}</span>
-                ${kpi.change ? `<span class="pulse-kpi-change ${kpi.positive ? 'pos' : 'neg'}">${kpi.positive ? '▲' : '▼'} ${kpi.change}</span>` : ''}
+                ${kpi.change ? this.renderTrendBadge(kpi.change, kpi.positive) : ''}
               </div>
               <div class="pulse-kpi-value">${kpi.value}</div>
               <div class="pulse-kpi-subtext">${kpi.subtext || kpi.sublabel || ''}</div>
@@ -2058,11 +2449,11 @@ class TrinityMarketsApp {
 
         <div class="settings-row">
           <div>
-            <div style="font-weight: 700; color: var(--text-primary);">Market Telemetry Sync</div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary);">Real-time exchange quote refresh frequency</div>
+            <div style="font-weight: 700; color: var(--text-primary);">Market Data Streaming</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Real-time financial quote frequency</div>
           </div>
           <span style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-primary); display: inline-flex; align-items: center; gap: 0.4rem;">
-            <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span> 60s Live Feed
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span> Continuous Live Stream
           </span>
         </div>
 
@@ -2445,11 +2836,38 @@ class TrinityMarketsApp {
   onMarketUpdate(data, meta = {}) {
     this.renderMarketTickerBar(data);
     const timeTag = document.getElementById('marketsTimeTag');
-    if (timeTag) {
-      timeTag.textContent = meta.isSyncing ? 'SYNCING...' : `LIVE ${this.marketService.getLastUpdatedTime()}`;
+    if (timeTag && this.marketService) {
+      timeTag.textContent = `LIVE ${this.marketService.getLastUpdatedTime()}`;
     }
-    if (this.state.currentRoute === 'terminal') {
-      this.renderTerminalView();
+
+    const route = this.state.currentRoute || '';
+    if (route === 'terminal' || route === 'charts' || route === 'markets') {
+      const activeSym = this.state.terminalActiveSymbol || 'BTC-USD';
+      const updatedAsset = data.find(m => m.symbol === activeSym);
+      if (updatedAsset) {
+        const priceEl = document.getElementById('proChartPriceDisplay');
+        if (priceEl && priceEl.textContent !== updatedAsset.value) {
+          priceEl.textContent = updatedAsset.value;
+          priceEl.classList.remove('price-flash-up', 'price-flash-down');
+          void priceEl.offsetWidth; // trigger reflow
+          priceEl.classList.add(updatedAsset.positive ? 'price-flash-up' : 'price-flash-down');
+        }
+        const badgeWrap = document.getElementById('proChartTrendBadgeWrap');
+        if (badgeWrap) {
+          badgeWrap.innerHTML = this.renderTrendBadge(updatedAsset.change, updatedAsset.positive, 'pro-chart-badge-style');
+        }
+      }
+
+      // Update individual row prices in the Screener table
+      data.forEach(m => {
+        const cell = document.getElementById(`screener-price-${m.symbol}`);
+        if (cell && cell.textContent.trim() !== m.value) {
+          cell.textContent = m.value;
+          cell.classList.remove('price-flash-up', 'price-flash-down');
+          void cell.offsetWidth;
+          cell.classList.add(m.positive ? 'price-flash-up' : 'price-flash-down');
+        }
+      });
     }
   }
 
@@ -2459,14 +2877,12 @@ class TrinityMarketsApp {
     const data = customData || (this.marketService ? this.marketService.getMarkets() : MARKET_DATA);
 
     const itemsHtml = data.map(m => {
-      const arrow = m.positive ? '▲' : '▼';
-      const posClass = m.positive ? 'pos' : 'neg';
       return `
         <a href="#/ticker/${m.symbol}" class="market-item" title="View ${m.name || m.symbol} dedicated quote page">
           <span class="market-category-tag">${m.category}</span>
           <span class="market-sym">${m.symbol}</span>
           <span class="market-val">${m.value}</span>
-          <span class="market-chg ${posClass}">${arrow} ${m.change}</span>
+          ${this.renderTrendBadge(m.change, m.positive)}
         </a>
       `;
     }).join('');
@@ -2475,21 +2891,6 @@ class TrinityMarketsApp {
   }
 
   onScraperUpdate(articles, meta = {}) {
-    const btnText = document.getElementById('scrapeNowText');
-    const scrapeBtn = document.getElementById('scrapeNowBtn');
-
-    if (meta.isScraping) {
-      if (btnText) btnText.textContent = 'Syncing Wires...';
-      if (scrapeBtn) scrapeBtn.style.opacity = '0.6';
-    } else {
-      if (btnText) btnText.textContent = 'Sync Primary Feeds';
-      if (scrapeBtn) scrapeBtn.style.opacity = '1';
-
-      if (meta.newItemsCount && meta.newItemsCount > 0 && !meta.isBackground) {
-        this.showToast(`✓ Synchronized ${meta.newItemsCount} live dispatches`);
-      }
-    }
-
     if (!this.state.currentRoute || this.state.currentRoute === 'home' || this.state.currentRoute === '/') {
       this.renderHomeView();
     }
@@ -2510,12 +2911,7 @@ class TrinityMarketsApp {
     // Update article count badge
     this.updateArticleCountBadge(articles.length);
 
-    // Show completion toast only when fully done (not on partial deliveries)
-    if (!meta.fromCache && !meta.partial) {
-      this.showToast(`✓ ${articles.length} Fresh AI Dispatches Ready — Today's Edition`);
-    }
-
-    // Re-render current page if on home or briefing
+    // Re-render current page if on home or briefing silently
     const route = this.state.currentRoute;
     if (!route || route === '/' || route === 'home' || route === '') {
       this.renderHomeView();
@@ -2535,7 +2931,6 @@ class TrinityMarketsApp {
     if (btnText) btnText.textContent = 'Generating 100 Dispatches...';
     if (scrapeBtn) scrapeBtn.style.opacity = '0.6';
 
-    this.showToast('🤖 Generating 100 fresh articles across 10 sections...');
     this.showGenerationProgress(0, 10, 'Starting full regeneration...');
 
     const liveData = this.marketService ? this.marketService.getMarkets() : MARKET_DATA;
@@ -2856,7 +3251,7 @@ class TrinityMarketsApp {
       }
     });
 
-    // Sync Button in Header and in Hamburger Menu
+    // Sync Handler (Background automated)
     const handleSyncFeeds = async () => {
       // Close mobile sidebar
       const sidebar = document.getElementById('mainSidebar');
@@ -2868,7 +3263,6 @@ class TrinityMarketsApp {
       if (this.scraperService) {
         this.scraperService.scrapeAllChannels(true);
       }
-      this.showToast('✓ Primary financial feeds synchronized');
     };
     document.getElementById('scrapeNowBtn')?.addEventListener('click', handleSyncFeeds);
     document.getElementById('menuSyncBtn')?.addEventListener('click', handleSyncFeeds);
@@ -2878,7 +3272,6 @@ class TrinityMarketsApp {
       if (this.marketService) {
         await this.marketService.fetchLivePrices();
         this.renderTerminalView();
-        this.showToast('✓ Terminal quotes synchronized');
       }
     });
 

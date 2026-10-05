@@ -4159,3 +4159,613 @@ body.sidebar-collapsed .topbar-brand {
   margin-bottom: 0.3rem;
 }
 
+/* ==========================================================================
+   COINGECKO / COINMARKETCAP STYLE PRO CHARTS & SCREENER SUITE
+   ========================================================================== */
+
+/* 1. Global Market Telemetry Strip */
+.global-market-telemetry-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.4rem;
+  padding: 0.85rem 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+.global-stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.global-stat-label {
+  color: var(--text-muted);
+}
+.global-stat-value {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.global-stat-change.pos {
+  color: #10b981;
+}
+.global-stat-change.neg {
+  color: #ef4444;
+}
+.stat-pill-badge {
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+.stat-pill-badge.greed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* 2. Interactive Pro Chart Workstation Studio */
+.pro-chart-workstation {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-md);
+  position: relative;
+}
+.pro-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 1.25rem;
+}
+.pro-chart-asset-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.pro-chart-symbol-badge {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+.pro-chart-name {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-top: 0.1rem;
+}
+.pro-chart-category-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+.pro-chart-price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+.pro-chart-big-price {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  transition: color 0.3s ease;
+}
+.pro-chart-change-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+}
+.pro-chart-change-badge.pos {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.pro-chart-change-badge.neg {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* 24h High/Low Range Bar */
+.pro-chart-range-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+.pro-chart-range-track {
+  width: 140px;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  position: relative;
+  overflow: visible;
+  border: 1px solid var(--border-subtle);
+}
+.pro-chart-range-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #10b981 100%);
+}
+.pro-chart-range-needle {
+  position: absolute;
+  top: -3px;
+  width: 12px;
+  height: 12px;
+  background: var(--text-primary);
+  border: 2px solid var(--bg-primary);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+/* Chart Canvas Controls Bar */
+.chart-control-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.timeframe-selector,
+.chart-mode-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-tertiary);
+  padding: 0.2rem 0.35rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+.tf-btn, .mode-btn, .indicator-btn {
+  background: transparent;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 0.3rem 0.65rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.tf-btn:hover, .mode-btn:hover, .indicator-btn:hover {
+  color: var(--text-primary);
+}
+.tf-btn.active, .mode-btn.active, .indicator-btn.active {
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+
+/* Secondary Quick Metrics Row */
+.pro-chart-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+.pro-chart-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.pro-chart-meta-pill span {
+  color: var(--text-muted);
+}
+.pro-chart-meta-pill strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.pro-chart-actions-group {
+  display: flex;
+  gap: 0.5rem;
+}
+.btn-chart-action {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all var(--transition-fast);
+}
+.btn-chart-action:hover {
+  background: var(--text-primary);
+  color: var(--text-inverse);
+}
+.btn-chart-action.starred {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+}
+
+/* 3. CoinGecko / CoinMarketCap Style Ranking Screener Table */
+.screener-section-wrap {
+  margin-top: 2rem;
+}
+.screener-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.screener-tabs-list {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.screener-tab-btn {
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.screener-tab-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-active);
+}
+.screener-tab-btn.active {
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: var(--text-primary);
+}
+.screener-search-input {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.95rem;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  outline: none;
+  min-width: 250px;
+  transition: border-color var(--transition-fast);
+}
+.screener-search-input:focus {
+  border-color: var(--text-primary);
+}
+
+/* Table Container */
+.screener-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  -webkit-overflow-scrolling: touch;
+}
+.screener-table {
+  width: 100%;
+  min-width: 1120px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  text-align: left;
+  white-space: nowrap;
+}
+.screener-table th {
+  padding: 0.85rem 1rem;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.screener-table td {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  vertical-align: middle;
+  transition: background-color var(--transition-fast);
+}
+.screener-table tr.screener-row {
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+.screener-table tr.screener-row:hover td {
+  background: rgba(255, 255, 255, 0.035);
+}
+.screener-table tr.screener-row.active-chart-row td {
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+.screener-table tr.screener-row.active-chart-row td:first-child {
+  border-left: 3px solid #10b981;
+}
+
+.screener-table td.screener-rank-cell {
+  text-align: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.screener-rank-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.screener-rank-wrap .rank-num {
+  min-width: 18px;
+  text-align: center;
+}
+.screener-star-btn {
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0 0.15rem;
+  transition: color var(--transition-fast);
+  line-height: 1;
+}
+.screener-star-btn:hover,
+.screener-star-btn.starred {
+  color: #f59e0b;
+}
+
+.screener-asset-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 250px;
+}
+.screener-asset-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.7rem;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.screener-asset-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  overflow: hidden;
+}
+.screener-asset-sym {
+  font-weight: 800;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.screener-asset-name {
+  font-family: var(--font-sans);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+.screener-price-cell {
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Institutional Up/Down Trend Badge & SVG Caret (CoinGecko / CoinMarketCap Style) */
+.trend-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.28rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 1;
+  vertical-align: middle;
+}
+.trend-badge.pos {
+  color: #10b981;
+}
+.trend-badge.neg {
+  color: #ef4444;
+}
+.trend-badge.neutral {
+  color: var(--text-muted);
+}
+.trend-caret {
+  width: 7.5px;
+  height: 6.5px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+.trend-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.trend-badge.pro-chart-badge-style {
+  font-size: 0.88rem;
+  font-weight: 800;
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+}
+.trend-badge.pro-chart-badge-style.pos {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.trend-badge.pro-chart-badge-style.neg {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Market Cap & Volume Stack */
+.screener-cap-main {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.screener-cap-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
+.screener-trend-val {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.screener-trend-val.pos {
+  color: #10b981;
+}
+.screener-trend-val.neg {
+  color: #ef4444;
+}
+
+/* 4. SVG Sparkline Container */
+.sparkline-container {
+  width: 120px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+.trinity-sparkline-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 5. Home Cover Sparklines Radar Strip */
+.markets-sparkline-radar-strip {
+  margin: 1.25rem 0 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+}
+.sparkline-radar-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+.sparkline-radar-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--text-primary);
+}
+.radar-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.4rem;
+  font-family: var(--font-mono);
+}
+.radar-card-sym {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+.radar-card-price {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+}
+
+/* Real-Time Price Micro-Tick Animation */
+@keyframes priceTickUp {
+  0% { background: rgba(16, 185, 129, 0.4); color: #10b981; }
+  100% { background: transparent; }
+}
+@keyframes priceTickDown {
+  0% { background: rgba(239, 68, 68, 0.4); color: #ef4444; }
+  100% { background: transparent; }
+}
+.price-flash-up {
+  animation: priceTickUp 0.8s ease-out;
+}
+.price-flash-down {
+  animation: priceTickDown 0.8s ease-out;
+}
+

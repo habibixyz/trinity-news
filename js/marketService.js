@@ -82,7 +82,7 @@ export class MarketService {
   /* ==================== SOURCE 1: CoinGecko Crypto (No Key Required) ==================== */
   async fetchCryptoFromCoinGecko() {
     try {
-      const ids = 'bitcoin,ethereum,solana';
+      const ids = 'bitcoin,ethereum,solana,binancecoin,ripple,dogecoin';
       const url = `${CONFIG.COINGECKO_BASE}/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&price_change_percentage=24h&sparkline=false`;
 
       const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
@@ -93,7 +93,10 @@ export class MarketService {
       const geckoToSymbol = {
         bitcoin: 'BTC-USD',
         ethereum: 'ETH-USD',
-        solana: 'SOL-USD'
+        solana: 'SOL-USD',
+        binancecoin: 'BNB-USD',
+        ripple: 'XRP-USD',
+        dogecoin: 'DOGE-USD'
       };
 
       coins.forEach(coin => {
