@@ -142,6 +142,9 @@ class TrinityMarketsApp {
           this.state.aiArticlesLoading = false;
           console.log(`[TRINITY] ✅ Loaded ${edition.length} published daily edition dispatches (0ms wait, 0 AI calls)`);
           this.updateArticleCountBadge(edition.length);
+          try {
+            localStorage.setItem('trinity_ai_articles_v3', JSON.stringify(edition));
+          } catch {}
 
           // Ingest metadata if available
           try {
@@ -297,12 +300,34 @@ class TrinityMarketsApp {
       .trim();
   }
 
-  /* ==================== Safe Author Extraction Helper ==================== */
+  /* ==================== Safe Author & Article Extraction Helpers ==================== */
   getSafeAuthor(author) {
     return {
       name: 'TRINITY Editorial Desk',
       role: (author && typeof author === 'object' && author.role && !author.role.includes('Correspondent') ? author.role : 'Institutional Financial Intelligence'),
       avatar: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=80'
+    };
+  }
+
+  getSafeArticle(art) {
+    if (!art || typeof art !== 'object') {
+      return {
+        id: 'dispatch-fallback',
+        title: 'Institutional Alternative Asset Dispatch',
+        subtitle: 'Comprehensive market intelligence on global capital flows and allocations.',
+        category: 'Private Markets',
+        readTime: '5 min read',
+        image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=900&auto=format&fit=crop&q=85',
+        author: { name: 'Claire Moreau', role: 'Managing Director, Private Capital', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' }
+      };
+    }
+    return {
+      ...art,
+      title: art.title || 'Market Dispatch',
+      subtitle: art.subtitle || art.description || '',
+      category: art.category || 'Private Markets',
+      image: art.image || 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=900&auto=format&fit=crop&q=85',
+      author: this.getSafeAuthor(art.author)
     };
   }
 
@@ -1608,12 +1633,15 @@ class TrinityMarketsApp {
 
     container.innerHTML = `
       <div class="sector-hero-banner">
-        <div class="sector-meta-badge">${catData.icon} SECTOR INTELLIGENCE HUB</div>
-        <h1 class="sector-title">${catData.name}</h1>
-        <p class="sector-tagline">${catData.tagline}</p>
+        <div class="sector-hero-content">
+          <div class="sector-meta-badge">${catData.icon ? catData.icon + ' ' : ''}SECTOR INTELLIGENCE HUB</div>
+          <h1 class="sector-title">${catData.name}</h1>
+          <p class="sector-tagline">${catData.tagline}</p>
+        </div>
         <div class="sector-ticker-pill">
-          <span>● LIVE BENCHMARK:</span>
-          <span>${catData.leadTicker}</span>
+          <span style="color: #10b981;">●</span>
+          <span>LIVE BENCHMARK:</span>
+          <strong style="color: var(--text-primary);">${catData.leadTicker}</strong>
         </div>
       </div>
 
@@ -2338,10 +2366,12 @@ class TrinityMarketsApp {
     const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     container.innerHTML = `
-      <div class="sector-hero-banner" style="text-align: center;">
-        <div class="sector-meta-badge">DAILY 06:00 GMT EXECUTIVE INTELLIGENCE</div>
-        <h1 class="sector-title">The Daily Executive Briefing</h1>
-        <p class="sector-tagline" style="margin: 0 auto 1.5rem;">${dateStr} • Top 10 Curated Market Dispatches for Global Allocators</p>
+      <div class="sector-hero-banner">
+        <div class="sector-hero-content">
+          <div class="sector-meta-badge">DAILY 06:00 GMT EXECUTIVE INTELLIGENCE</div>
+          <h1 class="sector-title">The Daily Executive Briefing</h1>
+          <p class="sector-tagline">${dateStr} • Top 10 Curated Market Dispatches for Global Allocators</p>
+        </div>
       </div>
 
       <div class="section-head">
@@ -2474,24 +2504,31 @@ class TrinityMarketsApp {
             const auth = this.getSafeAuthor(safeArt.author);
             return `
               <article class="story-card">
-                <a href="${slug}" class="story-card-img-wrap">
+                <a href="${slug}" class="story-media">
                   <img src="${safeArt.image}" alt="${safeArt.title}" loading="lazy">
-                  <span class="story-card-cat-badge">${safeArt.category}</span>
-                </a>
-                <div class="story-card-body">
-                  <div class="story-card-meta">
-                    <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">${safeArt.readTime || '5 min read'}</span>
+                  <div class="story-tags-overlay">
+                    <span class="story-category-tag">${safeArt.category}</span>
                   </div>
-                  <h3 class="story-card-title">
+                </a>
+                <div class="story-content">
+                  <div class="story-meta">
+                    <span>${safeArt.date || 'Today'}</span> • <span>${safeArt.readTime || '5 min read'}</span>
+                  </div>
+                  <h3 class="story-title">
                     <a href="${slug}">${safeArt.title}</a>
                   </h3>
-                  <p class="story-card-excerpt">${safeArt.description || safeArt.subtitle || ''}</p>
-                  <div class="story-card-footer" style="margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
-                    <div class="author-chip small">
+                  <p class="story-excerpt">${safeArt.subtitle}</p>
+                  <div class="story-footer">
+                    <div class="author-chip">
                       <img src="${auth.avatar}" alt="${auth.name}">
-                      <span>${auth.name}</span>
+                      <div class="author-info">
+                        <div class="name">${auth.name}</div>
+                        <div class="role">${auth.role}</div>
+                      </div>
                     </div>
-                    <a href="${slug}" style="font-family: var(--font-mono); font-size: 0.75rem; color: #10b981; text-decoration: none;">Dispatch &rarr;</a>
+                    <div class="card-actions">
+                      <button class="action-btn" onclick="window.trinityApp.toggleBookmark('${safeArt.id}', event)" title="Save Dispatch">Save</button>
+                    </div>
                   </div>
                 </div>
               </article>
@@ -3354,8 +3391,8 @@ class TrinityMarketsApp {
     const aiArticles = this.state.aiArticles || [];
     let storedAi = [];
     try {
-      // Use new v2 cache key for 100-article daily edition
-      storedAi = JSON.parse(localStorage.getItem('trinity_ai_articles_v2') || '[]');
+      // Use new v3 cache key with 100% unique curated high-res images
+      storedAi = JSON.parse(localStorage.getItem('trinity_ai_articles_v3') || '[]');
     } catch {}
     const scraped = this.scraperService ? this.scraperService.getArticles() : [];
 

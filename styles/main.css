@@ -1969,57 +1969,70 @@ body.sidebar-collapsed .topbar-brand {
    PAGE VIEW 3: Dedicated Category / Sector Hub Page
    ========================================================================== */
 .category-page-container {
-  padding: 1rem 0 4rem;
+  padding: 0.5rem 0 3rem;
 }
 
 .sector-hero-banner {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-active);
-  border-radius: var(--radius-md);
-  padding: 3rem 2.5rem;
-  margin-bottom: 3.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.sector-hero-content {
+  flex: 1;
+  min-width: 260px;
 }
 
 .sector-meta-badge {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.62rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-  margin-bottom: 0.5rem;
+  letter-spacing: 0.08em;
+  color: #10b981;
+  margin-bottom: 0.2rem;
 }
 
 .sector-title {
   font-family: var(--font-display);
-  font-size: 2.6rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   color: var(--text-primary);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.2rem;
+  line-height: 1.2;
 }
 
 .sector-tagline {
   font-family: var(--font-serif);
-  font-size: 1.15rem;
+  font-size: 0.88rem;
   font-style: italic;
   color: var(--text-secondary);
-  max-width: 750px;
-  line-height: 1.55;
-  margin-bottom: 1.5rem;
+  line-height: 1.4;
+  margin: 0;
+  max-width: 700px;
 }
 
 .sector-ticker-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
-  background: var(--bg-tertiary);
+  gap: 0.5rem;
+  background: var(--bg-primary);
   border: 1px solid var(--border-subtle);
-  padding: 0.4rem 0.95rem;
-  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.75rem;
+  border-radius: 3px;
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
+  color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 /* ==========================================================================

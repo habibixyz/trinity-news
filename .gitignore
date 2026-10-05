@@ -31,3 +31,17 @@ dist/
 build/
 scratch/
 .system_generated/
+
+# Binary Media Files (All Images & Media Hosted on High-Speed External CDNs)
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.ico
+*.mp4
+*.mov
+media/
+images/
+assets/images/
+img/
