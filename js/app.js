@@ -29,6 +29,7 @@ import { ChartService } from './chartService.js';
 import { audioService } from './audioService.js';
 import { aiCopilotService } from './aiCopilotService.js';
 import { calendarService } from './calendarService.js';
+import { ExplainMoveService } from './explainMoveService.js';
 
 class TrinityMarketsApp {
   constructor() {
@@ -66,6 +67,7 @@ class TrinityMarketsApp {
       (sectionName, count, total) => this.onGeminiProgress(sectionName, count, total)
     );
     this.chartService = new ChartService();
+    this.explainMoveService = new ExplainMoveService(this.marketService);
     if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       this.init();
     }
@@ -607,6 +609,12 @@ class TrinityMarketsApp {
               <div class="snapshot-price" id="snapshot-price-${m.symbol}">${m.value}</div>
               <div class="snapshot-sparkline">
                 ${sparklineSvg}
+              </div>
+              <div style="margin-top: 0.4rem; padding-top: 0.35rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end;">
+                <button class="btn-explain-move compact" onclick="event.stopPropagation(); window.trinityApp.openExplainMove('${m.symbol}')" title="Explain why ${m.symbol} is moving today">
+                  <span>⚡</span>
+                  <span>Why Move?</span>
+                </button>
               </div>
             </div>
           `;
@@ -1805,6 +1813,10 @@ class TrinityMarketsApp {
               <span>${isStarred ? '★' : '☆'}</span>
               <span>${isStarred ? 'Saved to Watchlist' : 'Add to Watchlist'}</span>
             </button>
+            <button class="btn-chart-action btn-explain-move" onclick="window.trinityApp.openExplainMove('${activeAsset?.symbol}')" style="background: rgba(16, 185, 129, 0.12); color: #10b981; border-color: rgba(16, 185, 129, 0.4);">
+              <span>⚡</span>
+              <span>Why is this moving?</span>
+            </button>
             <button class="btn-chart-action" onclick="window.trinityApp.copyPrice('${activeAsset?.symbol}', '${activeAsset?.value}', event)">
               <span>📋</span>
               <span>Copy Price</span>
@@ -1896,6 +1908,9 @@ class TrinityMarketsApp {
                           <span class="screener-asset-sym">${m.symbol}</span>
                           <span class="screener-asset-name" title="${m.name || m.symbol}">${m.name || m.symbol}</span>
                         </div>
+                        <button class="btn-explain-move compact" onclick="event.stopPropagation(); window.trinityApp.openExplainMove('${m.symbol}')" title="Explain why ${m.symbol} is moving" style="margin-left: 0.35rem;">
+                          <span>⚡</span>
+                        </button>
                       </div>
                     </td>
                     <td style="text-align: right; padding-right: 1.25rem;" class="screener-price-cell" id="screener-price-${m.symbol}">
@@ -2075,6 +2090,67 @@ class TrinityMarketsApp {
 
         <!-- Interactive Institutional Chart Engine -->
         <div id="tickerChartContainer" style="margin-top: 1.5rem;"></div>
+
+        <!-- Signature Intelligence: Explain This Move Inline Section (Section 5 of Brief) -->
+        ${(() => {
+          const exp = this.explainMoveService ? this.explainMoveService.explainMove(ticker.symbol, this.getAllArticles()) : null;
+          if (!exp) return '';
+          return `
+            <div style="margin-top: 2rem; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 4px; padding: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 800; color: #10b981; letter-spacing: 0.06em; text-transform: uppercase; display: flex; align-items: center; gap: 0.4rem;">
+                  <span>⚡</span>
+                  <span>WHY IS ${ticker.symbol} MOVING TODAY? &bull; MACRO &amp; MICRO BREAKDOWN</span>
+                </div>
+                <button class="btn-explain-move" onclick="window.trinityApp.openExplainMove('${ticker.symbol}')">
+                  <span>Inspect Full Telemetry &rarr;</span>
+                </button>
+              </div>
+
+              <!-- Lead Thesis -->
+              <div class="explain-thesis-box" style="margin-bottom: 1.25rem;">
+                <div class="explain-thesis-label">Primary Market Thesis</div>
+                <p class="explain-thesis-text">${exp.leadThesis}</p>
+              </div>
+
+              <!-- Drivers Grid -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+                ${exp.drivers.map(drv => `
+                  <div class="explain-driver-card" style="margin-bottom: 0;">
+                    <div class="driver-card-top">
+                      <span class="driver-title">${drv.title}</span>
+                      <div class="driver-badges-wrap">
+                        <span class="driver-weight-badge">${drv.weight}</span>
+                        <span class="driver-bias-badge ${drv.bias.toLowerCase()}">${drv.bias}</span>
+                      </div>
+                    </div>
+                    <div class="driver-summary">${drv.summary}</div>
+                    <div class="driver-metric-row">
+                      <span>● Telemetry Metric:</span>
+                      <strong>${drv.metric}</strong>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+
+              <!-- Evidence Layer (Section 8: FACT vs DATA vs AI INTERPRETATION) -->
+              <div class="explain-evidence-card" style="margin-bottom: 0;">
+                <div class="evidence-row">
+                  <span class="evidence-badge fact">FACT</span>
+                  <div class="evidence-content">${exp.evidenceLayer.fact}</div>
+                </div>
+                <div class="evidence-row">
+                  <span class="evidence-badge data">DATA</span>
+                  <div class="evidence-content">${exp.evidenceLayer.data}</div>
+                </div>
+                <div class="evidence-row">
+                  <span class="evidence-badge interpretation">INTERPRETATION</span>
+                  <div class="evidence-content">${exp.evidenceLayer.interpretation}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        })()}
       </div>
 
       <div class="section-head">
@@ -3550,8 +3626,157 @@ class TrinityMarketsApp {
       }
     });
 
+    // Explain This Move Drawer Listeners
+    document.getElementById('explainMoveBackdrop')?.addEventListener('click', () => this.closeExplainMove());
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.closeExplainMove();
+      }
+    });
+
     // Setup Audio and AI Copilot Listeners
     this.setupAudioAndCopilot();
+  }
+
+  /* ==================== Signature Feature: Explain This Move Drawer ==================== */
+  openExplainMove(symbol) {
+    if (!this.explainMoveService) {
+      this.explainMoveService = new ExplainMoveService(this.marketService);
+    }
+    const data = this.explainMoveService.explainMove(symbol, this.getAllArticles());
+    this.renderExplainMoveDrawer(data);
+  }
+
+  closeExplainMove() {
+    const drawer = document.getElementById('explainMoveDrawer');
+    const backdrop = document.getElementById('explainMoveBackdrop');
+    if (drawer) drawer.classList.add('hidden');
+    if (backdrop) backdrop.classList.add('hidden');
+  }
+
+  renderExplainMoveDrawer(d) {
+    const drawer = document.getElementById('explainMoveDrawer');
+    const backdrop = document.getElementById('explainMoveBackdrop');
+    if (!drawer || !backdrop) return;
+
+    drawer.innerHTML = `
+      <div class="explain-drawer-header">
+        <div>
+          <div class="explain-drawer-badge">
+            <span>⚡</span>
+            <span>SIGNATURE INTELLIGENCE &bull; EXPLAIN THIS MOVE</span>
+          </div>
+          <h2 class="explain-drawer-title">Why is ${d.symbol} Moving Today?</h2>
+        </div>
+        <button class="explain-close-btn" onclick="window.trinityApp.closeExplainMove()" title="Close">&times;</button>
+      </div>
+
+      <div class="explain-asset-bar">
+        <div class="explain-asset-left">
+          <div class="screener-asset-icon" style="width: 38px; height: 38px; font-size: 0.85rem;">${d.symbol.slice(0, 3)}</div>
+          <div>
+            <div class="explain-asset-sym">${d.symbol}</div>
+            <div class="explain-asset-name">${d.name} &bull; ${d.category}</div>
+          </div>
+        </div>
+        <div class="explain-asset-right">
+          <div class="explain-asset-price">${d.value}</div>
+          ${this.renderTrendBadge(d.change, d.positive)}
+        </div>
+      </div>
+
+      <!-- Lead Thesis -->
+      <div class="explain-thesis-box">
+        <div class="explain-thesis-label">Primary Market Thesis</div>
+        <p class="explain-thesis-text">${d.leadThesis}</p>
+      </div>
+
+      <!-- Primary Drivers & Macro Mechanics -->
+      <div class="explain-section-heading">
+        <span>📊</span>
+        <span>PRIMARY DRIVERS &amp; MACRO MECHANICS</span>
+      </div>
+      <div class="explain-drivers-list">
+        ${d.drivers.map(drv => `
+          <div class="explain-driver-card">
+            <div class="driver-card-top">
+              <span class="driver-title">${drv.title}</span>
+              <div class="driver-badges-wrap">
+                <span class="driver-weight-badge">${drv.weight}</span>
+                <span class="driver-bias-badge ${drv.bias.toLowerCase()}">${drv.bias}</span>
+              </div>
+            </div>
+            <div class="driver-summary">${drv.summary}</div>
+            <div class="driver-metric-row">
+              <span>● Telemetry Metric:</span>
+              <strong>${drv.metric}</strong>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Cross-Asset Ripple Effect -->
+      <div class="explain-section-heading">
+        <span>🌐</span>
+        <span>CROSS-MARKET RIPPLE EFFECT</span>
+      </div>
+      <div class="explain-cross-asset-list">
+        ${d.crossAssetImpact.map(c => `
+          <div class="cross-asset-item">
+            <span class="cross-asset-sym"><a href="#/ticker/${c.symbol}" onclick="window.trinityApp.closeExplainMove()">${c.symbol}</a></span>
+            <span class="cross-asset-corr">${c.correlation}</span>
+            <span class="cross-asset-impact">${c.impact}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Three-Layer Evidence Layer (Section 8 of Brief) -->
+      <div class="explain-section-heading">
+        <span>🔍</span>
+        <span>EVIDENCE LAYER (FACT vs DATA vs INTERPRETATION)</span>
+      </div>
+      <div class="explain-evidence-card">
+        <div class="evidence-row">
+          <span class="evidence-badge fact">FACT</span>
+          <div class="evidence-content">${d.evidenceLayer.fact}</div>
+        </div>
+        <div class="evidence-row">
+          <span class="evidence-badge data">DATA</span>
+          <div class="evidence-content">${d.evidenceLayer.data}</div>
+        </div>
+        <div class="evidence-row">
+          <span class="evidence-badge interpretation">INTERPRETATION</span>
+          <div class="evidence-content">${d.evidenceLayer.interpretation}</div>
+        </div>
+
+        ${d.evidenceLayer.citations && d.evidenceLayer.citations.length > 0 ? `
+          <div class="explain-citations-list">
+            <div style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase;">Supporting Journal Dispatches:</div>
+            ${d.evidenceLayer.citations.map(art => `
+              <a href="#/article/${art.slug || art.id}" class="citation-link" onclick="window.trinityApp.closeExplainMove()">
+                <span>📄</span>
+                <span>${art.title}</span>
+              </a>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- What to Watch Next (Catalysts & Triggers) -->
+      <div class="explain-catalysts-box">
+        <div class="explain-catalysts-title">⚡ WHAT TO WATCH NEXT (CATALYSTS &amp; TRIGGERS)</div>
+        <ul class="explain-catalysts-list">
+          ${d.whatToWatch.map(w => `<li>${w}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+        <a href="#/ticker/${d.symbol}" class="btn-scrape-now" onclick="window.trinityApp.closeExplainMove()" style="flex: 1; text-align: center; justify-content: center;">Open Full ${d.symbol} Terminal Quote &rarr;</a>
+      </div>
+    `;
+
+    drawer.classList.remove('hidden');
+    backdrop.classList.remove('hidden');
   }
 }
 
