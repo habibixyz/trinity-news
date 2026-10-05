@@ -682,21 +682,24 @@ class TrinityMarketsApp {
               <div class="role">${auth.role}</div>
             </div>
           </div>
-          <a href="${leadSlug}" class="btn-scrape-now" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">Read Full Dispatch &rarr;</a>
+          <span style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted);">Updated Today 06:00 UTC</span>
         </div>
 
         <div class="narrative-footer">
           <div class="narrative-tickers-wrap">
-            <span style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted);">Impacted Assets:</span>
+            <span style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); font-weight: 700;">Impacted Assets:</span>
             <a href="#/ticker/SP500" class="narrative-ticker-chip">SP500</a>
             <a href="#/ticker/US10Y" class="narrative-ticker-chip">US10Y</a>
             <a href="#/ticker/BTC-USD" class="narrative-ticker-chip">BTC-USD</a>
             <a href="#/ticker/GOLD" class="narrative-ticker-chip">GOLD</a>
             <a href="#/ticker/DXY" class="narrative-ticker-chip">DXY</a>
           </div>
-          <button class="btn-explain-move compact" onclick="window.trinityApp.openExplainMove('SP500')" title="Explain why these assets are moving">
-            <span>⚡ Explain Move</span>
-          </button>
+          <div class="narrative-actions-wrap">
+            <button class="btn-explain-move compact" onclick="window.trinityApp.openExplainMove('SP500')" title="Explain why these assets are moving">
+              <span>⚡ Explain Move</span>
+            </button>
+            <a href="${leadSlug}" class="btn-scrape-now" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">Read Full Dispatch &rarr;</a>
+          </div>
         </div>
       </div>
     `;
@@ -716,7 +719,6 @@ class TrinityMarketsApp {
             const num = String(idx + 1).padStart(2, '0');
             const isHigh = idx < 3 || item.isTrending;
             const itemSlug = `#/article/${item.slug || item.id}`;
-            const tags = (item.tags && item.tags.length > 0) ? item.tags.slice(0, 3) : [item.category || 'Macro'];
 
             return `
               <div class="what-matters-item">
@@ -724,13 +726,10 @@ class TrinityMarketsApp {
                 <div class="what-matters-body">
                   <div class="what-matters-meta-row">
                     <span class="what-matters-impact-badge ${isHigh ? 'high' : 'medium'}">${isHigh ? 'HIGH IMPACT' : 'SECTOR PIVOT'}</span>
-                    <span class="what-matters-category">${item.category || 'Financial Markets'}</span>
+                    <span class="what-matters-category">${item.category || 'Macro Intelligence'}</span>
+                    <span class="what-matters-time">${item.readTime || '3 min read'}</span>
                   </div>
                   <a href="${itemSlug}" class="what-matters-headline">${item.title}</a>
-                  <div class="what-matters-takeaway">${item.subtitle ? item.subtitle.slice(0, 115) + (item.subtitle.length > 115 ? '...' : '') : ''}</div>
-                  <div class="what-matters-tickers">
-                    ${tags.map(t => `<span class="what-matters-ticker-pill">${t}</span>`).join('')}
-                  </div>
                 </div>
               </div>
             `;
