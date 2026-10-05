@@ -1267,64 +1267,89 @@ export const EDITORIAL_OPINIONS = [
   }
 ];
 
-export const FINANCIAL_BUREAUS = [
+export const PRIVATE_MARKETS_METRICS = [
+  { label: "Global PE Dry Powder", value: "$2.49T", change: "+4.2% YoY", subtext: "Uncalled institutional commitments" },
+  { label: "Private Credit AUM", value: "$1.72T", change: "+14.8% YoY", subtext: "Senior secured & unitranche loans" },
+  { label: "Median LBO Multiple", value: "11.6x", change: "-0.8x YoY", subtext: "EV / EBITDA acquisition multiple" },
+  { label: "Secondary Market Run-Rate", value: "$142B", change: "+22.5% YoY", subtext: "LP portfolio secondary volume" }
+];
+
+export const PRIVATE_MARKETS_DEALS = [
   {
-    city: "Mumbai",
-    desk: "Dalal Street & Indian Subcontinent Markets",
-    address: "Bandra Kurla Complex (BKC) & Dalal St, Mumbai, India",
-    lead: "Aarav Singhania",
-    status: "OPEN • LIVE TRADING (NSE/BSE)",
-    focus: "NIFTY/SENSEX Telemetry, RBI MPC Trajectory, FII Flows & Rupee Liquidity"
+    id: "pm-1",
+    vehicle: "ADIA & Blackstone Sovereign Compute Fabric",
+    sponsor: "Abu Dhabi Investment Authority / Blackstone",
+    allocation: "$10.0B",
+    strategy: "Sovereign Infrastructure",
+    focus: "Gigawatt AI Data Centers, Sovereign Fiber & Nuclear PPAs",
+    status: "FINAL CLOSE",
+    date: "Oct 2026",
+    geo: "US / Gulf",
+    impact: "HIGH IMPACT"
   },
   {
-    city: "New York",
-    desk: "Wall Street & North American Markets",
-    address: "280 Park Avenue, Manhattan, NY",
-    lead: "Marcus Vance",
-    status: "OPEN • LIVE TRADING",
-    focus: "Equities, Private Debt, Derivatives & Macro"
+    id: "pm-2",
+    vehicle: "Brookfield Global Transition Infrastructure III",
+    sponsor: "Brookfield Asset Management",
+    allocation: "$15.0B",
+    strategy: "Clean Power & Compute",
+    focus: "Baseload nuclear assets and hyperscale utility off-takes",
+    status: "DEPLOYING",
+    date: "Sep 2026",
+    geo: "North America & Europe",
+    impact: "MEGA ALLOCATION"
   },
   {
-    city: "London",
-    desk: "European Banking & Prime Real Estate",
-    address: "100 Bishopsgate, City of London, UK",
-    lead: "Claire Moreau",
-    status: "OPEN • LIVE TRADING",
-    focus: "Trophy Commercial Real Estate, Cross-Border M&A & Sovereign Wealth"
+    id: "pm-3",
+    vehicle: "Apollo European Direct Lending Syndicate V",
+    sponsor: "Apollo Global Management",
+    allocation: "$6.5B",
+    strategy: "Private Debt & Credit",
+    focus: "Senior secured lending to upper middle-market corporate borrowers",
+    status: "FUNDRAISING",
+    date: "Oct 2026",
+    geo: "Western Europe",
+    impact: "CREDIT PIVOT"
   },
   {
-    city: "Singapore",
-    desk: "Asia-Pacific Wealth & Digital Asset Hub",
-    address: "Marina Bay Financial Centre, Singapore",
-    lead: "Arthur Pendelton",
-    status: "AFTER HOURS TELEMETRY",
-    focus: "Layer-1 Infrastructure, Tokenized Treasuries & Trade Settlement"
+    id: "pm-4",
+    vehicle: "EQT / Silver Lake Enterprise AI Platform Buyout",
+    sponsor: "EQT Partners & Silver Lake",
+    allocation: "$12.4B",
+    strategy: "Take-Private LBO",
+    focus: "Full acquisition and restructuring of enterprise cloud stack",
+    status: "DEFINITIVE AGREEMENT",
+    date: "Oct 2026",
+    geo: "Global / Cross-Border",
+    impact: "MEGA BUYOUT"
   },
   {
-    city: "Dubai",
-    desk: "Gulf Sovereign Capital & Energy Infrastructure",
-    address: "DIFC Gate Precinct 4, Dubai, UAE",
-    lead: "Victoria Stirling",
-    status: "OPEN • LIVE TRADING",
-    focus: "Sovereign Compute Vehicles, Hydrogen Infrastructure & Family Offices"
+    id: "pm-5",
+    vehicle: "a16z Growth & Frontier Compute Fund IV",
+    sponsor: "Andreessen Horowitz",
+    allocation: "$7.2B",
+    strategy: "Venture & Growth",
+    focus: "Frontier Foundation Models, ASIC fabrication & Autonomous Systems",
+    status: "DEPLOYING",
+    date: "Aug 2026",
+    geo: "Silicon Valley & Global",
+    impact: "TECH EXPANSION"
   },
   {
-    city: "Tokyo",
-    desk: "Asia Equities & Quantitative Architecture",
-    address: "Otemachi Financial City, Tokyo, Japan",
-    lead: "Kenji Takahashi",
-    status: "CLOSED • RE-OPENING 09:00 JST",
-    focus: "Semiconductor Memory, Robotics & Central Bank FX Telemetry"
-  },
-  {
-    city: "Frankfurt",
-    desk: "European Central Bank & Industrial Power",
-    address: "Taunusanlage 8, Frankfurt am Main, Germany",
-    lead: "Erich von Weber",
-    status: "OPEN • LIVE TRADING",
-    focus: "Eurozone Liquidity, Nuclear Energy PPAs & Industrial Debt"
+    id: "pm-6",
+    vehicle: "Goldman Sachs Alternatives Secondary Partners IX",
+    sponsor: "Goldman Sachs Asset Management",
+    allocation: "$14.2B",
+    strategy: "Secondaries Liquidity",
+    focus: "LP-led secondary liquidity discounts & GP continuation vehicles",
+    status: "FINAL CLOSE",
+    date: "Jul 2026",
+    geo: "Global",
+    impact: "LIQUIDITY CATALYST"
   }
 ];
+
+export const FINANCIAL_BUREAUS = [];
 
 // The Block-Style Institutional Market Pulse & Barometer KPIs
 export const MARKET_PULSE_KPIS = [

@@ -11,7 +11,8 @@ import {
   LIVE_WIRE,
   ARTICLES,
   EDITORIAL_OPINIONS,
-  FINANCIAL_BUREAUS,
+  PRIVATE_MARKETS_METRICS,
+  PRIVATE_MARKETS_DEALS,
   RATE_CUT_TRACKER,
   UPCOMING_FINANCIAL_EVENTS,
   MARKET_PULSE_KPIS,
@@ -503,12 +504,12 @@ class TrinityMarketsApp {
           title: "Daily Executive 10 Briefing | TRINITY MARKETS",
           description: "Curated daily executive 10 briefing summarizing market movers, rate decisions, and capital flows."
         });
-      } else if (hash.startsWith('bureaus')) {
-        this.showView('viewBureaus');
-        this.renderBureausView();
+      } else if (hash.startsWith('private-markets') || hash.startsWith('bureaus')) {
+        this.showView('viewPrivateMarkets');
+        this.renderPrivateMarketsView();
         this.updateSEO({
-          title: "Global Financial Bureaus | TRINITY MARKETS",
-          description: "Global dispatch hubs across New York, London, Tokyo, Mumbai, and Singapore."
+          title: "Private Markets & Alternatives | TRINITY MARKETS",
+          description: "Institutional intelligence across Private Equity, Venture Capital, Private Credit, and Sovereign Wealth Allocations."
         });
       } else if (hash.startsWith('saved')) {
         this.showView('viewSaved');
@@ -2372,36 +2373,131 @@ class TrinityMarketsApp {
     `;
   }
 
-  /* ==================== PAGE VIEW 10: Dedicated Financial Bureaus Page ==================== */
-  renderBureausView() {
-    const container = document.getElementById('bureausPageContainer');
+  /* ==================== PAGE VIEW 10: Dedicated Private Markets Intelligence ==================== */
+  renderPrivateMarketsView() {
+    const container = document.getElementById('privateMarketsContainer') || document.getElementById('bureausPageContainer');
     if (!container) return;
 
+    const allArticles = this.getAllArticles();
+    const pmArticles = allArticles.filter(a => 
+      (a.category || '').toLowerCase().includes('private') || 
+      (a.category || '').toLowerCase().includes('real estate') || 
+      (a.tags || []).some(t => t.toLowerCase().includes('pe') || t.toLowerCase().includes('vc') || t.toLowerCase().includes('buyout') || t.toLowerCase().includes('credit'))
+    );
+
+    const displayArticles = pmArticles.length > 0 ? pmArticles : allArticles.slice(0, 6);
+
     container.innerHTML = `
-      <div class="section-head">
+      <div class="section-head" style="margin-bottom: 2rem;">
         <div>
-          <h1 class="section-title">Global Financial Bureaus</h1>
-          <p class="section-subtitle">TRINITY Editorial Desks & Regulatory Telemetry Hubs</p>
+          <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
+            <span class="narrative-badge">ALTERNATIVE ASSETS &amp; SOVEREIGN CAPITAL</span>
+            <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">Q3/Q4 2026 RUN-RATE</span>
+          </div>
+          <h1 class="section-title">Private Markets Intelligence</h1>
+          <p class="section-subtitle">Institutional tracking of Global Dry Powder, Sovereign Wealth Allocations, Private Debt &amp; Secondary Liquidity</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <a href="#/terminal?q=Analyze+Private+Markets+Dry+Powder+and+LBO+Valuations" class="btn-scrape-now" style="font-size: 0.78rem;">
+            Ask AI Terminal &rarr;
+          </a>
         </div>
       </div>
 
-      <div class="bureau-grid" style="margin-top: 2rem;">
-        ${FINANCIAL_BUREAUS.map(b => `
-          <div class="bureau-card">
-            <div class="bureau-status-live">${b.status}</div>
-            <h2 class="bureau-city-title">${b.city}</h2>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; font-weight: 600;">${b.desk}</p>
-            <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-              📍 ${b.address}
-            </div>
-            <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-primary); margin-bottom: 0.75rem;">
-              👤 Bureau Chief: <strong>${b.lead}</strong>
-            </div>
-            <div style="font-size: 0.82rem; color: var(--text-secondary); border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
-              Key Coverage: ${b.focus}
+      <!-- 1. Key Metrics Strip -->
+      <div class="pm-metrics-grid">
+        ${(PRIVATE_MARKETS_METRICS || []).map(m => `
+          <div class="pm-metric-card">
+            <div class="pm-metric-label">${m.label}</div>
+            <div class="pm-metric-val">${m.value}</div>
+            <div class="pm-metric-sub">
+              <span class="pm-metric-chip ${m.change.startsWith('+') ? 'up' : 'down'}">${m.change}</span>
+              <span>${m.subtext}</span>
             </div>
           </div>
         `).join('')}
+      </div>
+
+      <!-- 2. Active Vehicles & Sovereign Allocation Deals -->
+      <div class="pm-section-block">
+        <div class="pm-block-header">
+          <div class="pm-block-title">
+            <span>🏛️</span>
+            <span>ACTIVE VEHICLES &amp; SOVEREIGN ALLOCATIONS</span>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);">Updated Today • 6 Major Vehicles Tracked</span>
+        </div>
+
+        <div class="pm-deals-grid">
+          ${(PRIVATE_MARKETS_DEALS || []).map(d => `
+            <div class="pm-deal-card">
+              <div class="pm-deal-top">
+                <span class="pm-deal-badge">${d.impact}</span>
+                <span class="pm-deal-status">${d.status}</span>
+              </div>
+              <h3 class="pm-deal-name">${d.vehicle}</h3>
+              <div class="pm-deal-sponsor">Lead Sponsor: <strong>${d.sponsor}</strong></div>
+              <div class="pm-deal-row">
+                <div class="pm-deal-stat">
+                  <span class="stat-label">Target Allocation</span>
+                  <span class="stat-val highlight">${d.allocation}</span>
+                </div>
+                <div class="pm-deal-stat">
+                  <span class="stat-label">Strategy</span>
+                  <span class="stat-val">${d.strategy}</span>
+                </div>
+                <div class="pm-deal-stat">
+                  <span class="stat-label">Geography</span>
+                  <span class="stat-val">${d.geo}</span>
+                </div>
+              </div>
+              <p class="pm-deal-focus">${d.focus}</p>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- 3. In-Depth Alternative Asset Dispatches -->
+      <div class="pm-section-block" style="margin-top: 2.5rem;">
+        <div class="pm-block-header">
+          <div class="pm-block-title">
+            <span>📄</span>
+            <span>PRIVATE CAPITAL DISPATCHES &amp; SECTOR RESEARCH</span>
+          </div>
+          <span style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);">Institutional Reports</span>
+        </div>
+
+        <div class="news-cards-grid" style="margin-top: 1.25rem;">
+          ${displayArticles.map(art => {
+            const safeArt = this.getSafeArticle(art);
+            const slug = `#/article/${safeArt.slug || safeArt.id}`;
+            const auth = this.getSafeAuthor(safeArt.author);
+            return `
+              <article class="story-card">
+                <a href="${slug}" class="story-card-img-wrap">
+                  <img src="${safeArt.image}" alt="${safeArt.title}" loading="lazy">
+                  <span class="story-card-cat-badge">${safeArt.category}</span>
+                </a>
+                <div class="story-card-body">
+                  <div class="story-card-meta">
+                    <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">${safeArt.readTime || '5 min read'}</span>
+                  </div>
+                  <h3 class="story-card-title">
+                    <a href="${slug}">${safeArt.title}</a>
+                  </h3>
+                  <p class="story-card-excerpt">${safeArt.description || safeArt.subtitle || ''}</p>
+                  <div class="story-card-footer" style="margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+                    <div class="author-chip small">
+                      <img src="${auth.avatar}" alt="${auth.name}">
+                      <span>${auth.name}</span>
+                    </div>
+                    <a href="${slug}" style="font-family: var(--font-mono); font-size: 0.75rem; color: #10b981; text-decoration: none;">Dispatch &rarr;</a>
+                  </div>
+                </div>
+              </article>
+            `;
+          }).join('')}
+        </div>
       </div>
     `;
   }
