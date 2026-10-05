@@ -300,6 +300,16 @@ class TrinityMarketsApp {
       .trim();
   }
 
+  escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   /* ==================== Safe Author & Article Extraction Helpers ==================== */
   getSafeAuthor(author) {
     return {
@@ -3757,14 +3767,14 @@ Adopt a barbell capital allocation: 60% high-cash-flow enterprise technology and
       // Update individual row prices in the Screener table and Market Snapshot
       data.forEach(m => {
         const cell = document.getElementById(`screener-price-${m.symbol}`);
-        if (cell && cell.textContent.trim() !== m.value) {
+        if (cell && cell.textContent && cell.textContent.trim() !== m.value) {
           cell.textContent = m.value;
           cell.classList.remove('price-flash-up', 'price-flash-down');
           void cell.offsetWidth;
           cell.classList.add(m.positive ? 'price-flash-up' : 'price-flash-down');
         }
         const snapCell = document.getElementById(`snapshot-price-${m.symbol}`);
-        if (snapCell && snapCell.textContent.trim() !== m.value) {
+        if (snapCell && snapCell.textContent && snapCell.textContent.trim() !== m.value) {
           snapCell.textContent = m.value;
           snapCell.classList.remove('price-flash-up', 'price-flash-down');
           void snapCell.offsetWidth;
