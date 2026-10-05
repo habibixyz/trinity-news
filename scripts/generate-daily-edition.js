@@ -737,7 +737,11 @@ async function main() {
         category: desk.name,
         categorySlug: desk.slug,
         region: desk.region,
-        author: desk.author,
+        author: {
+          name: 'TRINITY Editorial Desk',
+          role: `${desk.name} Bureau`,
+          avatar: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=80'
+        },
         date: todayStr,
         readTime: synthesized.readTime || '5 min read',
         image: img,

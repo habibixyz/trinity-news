@@ -220,9 +220,9 @@ export class NewsScraperService {
           category: category,
           region: 'Institutional Wire',
           author: {
-            name: `${channel.name} Wire`,
-            role: 'Financial Correspondent',
-            avatar: channel.avatar
+            name: 'TRINITY Editorial Desk',
+            role: `${channel.name} Wire Correspondent`,
+            avatar: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=80'
           },
           date: this.formatTimeAgo(pubDate),
           timestamp: pubDate.getTime(),

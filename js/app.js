@@ -279,24 +279,10 @@ class TrinityMarketsApp {
 
   /* ==================== Safe Author Extraction Helper ==================== */
   getSafeAuthor(author) {
-    if (author && typeof author === 'object') {
-      return {
-        name: author.name || 'TRINITY Desk',
-        role: author.role || 'Financial Analyst',
-        avatar: author.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-      };
-    }
-    if (typeof author === 'string' && author.trim()) {
-      return {
-        name: author,
-        role: 'Financial Analyst',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-      };
-    }
     return {
-      name: 'TRINITY Desk',
-      role: 'Financial Analyst',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+      name: 'TRINITY Editorial Desk',
+      role: (author && typeof author === 'object' && author.role && !author.role.includes('Correspondent') ? author.role : 'Institutional Financial Intelligence'),
+      avatar: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=150&auto=format&fit=crop&q=80'
     };
   }
 
