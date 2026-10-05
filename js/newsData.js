@@ -46,6 +46,36 @@ export const CATEGORY_MAP = {
     icon: "",
     leadTicker: "US 10Y: 4.182% (+0.034)"
   },
+  "trending": {
+    name: "Trending & Market Movers",
+    tagline: "High-Velocity Capital Inflows, Breaking Catalysts & Real-Time Momentum",
+    icon: "🔥",
+    leadTicker: "Live Momentum: High-Beta Outliers Active"
+  },
+  "ai-and-frontier-tech": {
+    name: "AI & Frontier Tech",
+    tagline: "Sovereign AI Compute Fabric, Semiconductor Monopolies & Enterprise Automation",
+    icon: "🤖",
+    leadTicker: "NVDA: $212.17 (+0.57%)"
+  },
+  "energy-and-commodities": {
+    name: "Energy & Commodities",
+    tagline: "Brent Crude, Uranium, Copper Supply Deficits & Critical Minerals",
+    icon: "⚡",
+    leadTicker: "Brent Crude: $84.60 (+1.1%)"
+  },
+  "global-trade": {
+    name: "Global Trade & Geopolitics",
+    tagline: "Tariff Architectures, Cross-Border Supply Chains & Sovereign Sanctions",
+    icon: "🌐",
+    leadTicker: "Global Supply Chain Index: 104.2"
+  },
+  "banking-and-fintech": {
+    name: "Banking & Global Fintech",
+    tagline: "Tier-1 Syndicates, Interbank Liquidity, Basel III & Tokenized Rails",
+    icon: "🏦",
+    leadTicker: "JPMorgan: $228.40 (+0.4%)"
+  },
   // URL Aliases & Fallbacks
   "india": {
     name: "Indian Markets & Dalal St",

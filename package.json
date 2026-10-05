@@ -6,8 +6,11 @@
   "scripts": {
     "generate-edition": "node scripts/generate-daily-edition.js",
     "generate": "node scripts/generate-daily-edition.js",
-    "serve": "npx serve -l 5500",
-    "start": "npx serve -l 5500"
+    "generate:trending": "node scripts/generate-daily-edition.js --trending-only",
+    "daemon": "node scripts/autonomous-daemon.js",
+    "schedule": "node scripts/autonomous-daemon.js",
+    "serve": "node server.js",
+    "start": "node server.js"
   },
   "keywords": [
     "financial-news",

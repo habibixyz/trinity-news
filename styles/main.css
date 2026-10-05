@@ -1157,6 +1157,91 @@ body.sidebar-collapsed .topbar-brand {
   border-radius: 2px;
 }
 
+.story-trending-tag {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.65rem;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.45);
+  animation: trendingGlow 2.5s infinite alternate ease-in-out;
+}
+
+.trending-velocity-tag {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+@keyframes trendingGlow {
+  0% { box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); }
+  100% { box-shadow: 0 3px 14px rgba(249, 115, 22, 0.6); }
+}
+
+/* Trending Filter Bar */
+.trending-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.75rem 0 1.25rem 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  scrollbar-width: none;
+}
+.trending-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.trending-pill-btn {
+  white-space: nowrap;
+  padding: 0.4rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 20px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.trending-pill-btn:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+.trending-pill-btn.active {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
+  font-weight: 800;
+}
+.trending-pill-btn.pill-trending.active {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.35);
+}
+
 .story-content {
   padding: 1.25rem;
   display: flex;

@@ -1,10 +1,19 @@
-name: Generate Daily News Edition
+name: Autonomous Daily News & Trending Generation
 
 on:
   schedule:
-    # Runs at 06:00 UTC every day
-    - cron: '0 6 * * *'
+    # Runs autonomously 4 times a day (every 6 hours) at global market opens: 00:00, 06:00, 12:00, 18:00 UTC
+    - cron: '0 0,6,12,18 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub UI
+    inputs:
+      trending_only:
+        description: 'Update Trending desk only'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
 
 jobs:
   generate:
@@ -12,21 +21,28 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Generate Today's Edition with Gemini
+      - name: Generate Fresh News Edition & Ingest Trending Telemetry
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          node scripts/generate-daily-edition.js
+          if [ "${{ inputs.trending_only }}" = "true" ]; then
+            node scripts/generate-daily-edition.js --trending-only
+          else
+            node scripts/generate-daily-edition.js
+          fi
 
       - name: Commit & Push Daily Edition
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add data/daily-edition.json data/daily-edition-meta.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore(daily): publish fresh daily news edition [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git pull --rebase origin main && git commit -m "chore(daily): publish fresh trending market edition [skip ci]" && git push)

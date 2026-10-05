@@ -106,7 +106,7 @@ class TrinityMarketsApp {
   async loadGeminiArticles() {
     // 1. First: load pre-generated static daily edition (zero AI API calls for visitors)
     try {
-      const res = await fetch('./data/daily-edition.json');
+      const res = await fetch('./data/daily-edition.json?_t=' + Date.now());
       if (res.ok) {
         const edition = await res.json();
         if (Array.isArray(edition) && edition.length > 0) {
@@ -114,6 +114,21 @@ class TrinityMarketsApp {
           this.state.aiArticlesLoading = false;
           console.log(`[TRINITY] ✅ Loaded ${edition.length} published daily edition dispatches (0ms wait, 0 AI calls)`);
           this.updateArticleCountBadge(edition.length);
+
+          // Ingest metadata if available
+          try {
+            const metaRes = await fetch('./data/daily-edition-meta.json?_t=' + Date.now());
+            if (metaRes.ok) {
+              const meta = await metaRes.json();
+              this.state.lastEditionTimestamp = meta.generatedAt || null;
+              if (meta.trendingCount) {
+                console.log(`[TRINITY] 🔥 ${meta.trendingCount} trending high-velocity dispatches active`);
+              }
+            }
+          } catch {}
+
+          this.startAutonomousLiveWatcher();
+
           if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
             this.renderHomeView();
           }
@@ -132,6 +147,7 @@ class TrinityMarketsApp {
       const cacheAge = this.geminiService.getCacheAge();
       console.log(`[TRINITY] ✅ Loaded ${cached.length} AI articles from today's cache (${cacheAge})`);
       this.updateArticleCountBadge(cached.length);
+      this.startAutonomousLiveWatcher();
       if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
         this.renderHomeView();
       }
@@ -142,9 +158,47 @@ class TrinityMarketsApp {
     this.state.aiArticles = ARTICLES;
     this.state.aiArticlesLoading = false;
     this.updateArticleCountBadge(ARTICLES.length);
+    this.startAutonomousLiveWatcher();
     if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
       this.renderHomeView();
     }
+  }
+
+  /**
+   * Autonomous Background Watcher:
+   * Periodically checks data/daily-edition-meta.json.
+   * If a newly generated edition arrives (via GitHub Actions, daemon, or server cron),
+   * it hot-reloads the articles and updates the UI seamlessly without a full page reload!
+   */
+  startAutonomousLiveWatcher() {
+    if (this._editionWatcherInterval) return;
+    this._editionWatcherInterval = setInterval(async () => {
+      try {
+        const metaRes = await fetch(`./data/daily-edition-meta.json?_t=${Date.now()}`);
+        if (!metaRes.ok) return;
+        const meta = await metaRes.json();
+        if (meta.generatedAt && meta.generatedAt !== this.state.lastEditionTimestamp) {
+          console.log('[TRINITY AUTONOMOUS] ⚡ Newer edition detected:', meta.generatedAt);
+          const dataRes = await fetch(`./data/daily-edition.json?_t=${Date.now()}`);
+          if (dataRes.ok) {
+            const freshArticles = await dataRes.json();
+            if (Array.isArray(freshArticles) && freshArticles.length > 0) {
+              this.state.lastEditionTimestamp = meta.generatedAt;
+              this.state.aiArticles = freshArticles;
+              this.updateArticleCountBadge(freshArticles.length);
+              this.showToast(`⚡ Synchronized ${freshArticles.length} fresh dispatches (${meta.trendingCount || 0} trending)`);
+              if (!this.state.currentRoute || this.state.currentRoute === '/' || this.state.currentRoute === 'home') {
+                this.renderHomeView();
+              } else if (this.state.currentRoute === 'trending') {
+                this.renderCategoryView('trending');
+              }
+            }
+          }
+        }
+      } catch (err) {
+        // Silent catch for background polling
+      }
+    }, 180000); // Check every 3 minutes
   }
 
   /**
@@ -371,6 +425,13 @@ class TrinityMarketsApp {
         const catSlug = hash.replace('category/', '').split('?')[0];
         this.showView('viewCategory');
         this.renderCategoryView(catSlug);
+      } else if (hash === 'trending' || hash.startsWith('trending')) {
+        this.showView('viewCategory');
+        this.renderCategoryView('trending');
+        this.updateSEO({
+          title: "Trending Market Movers & High-Velocity Telemetry | TRINITY MARKETS",
+          description: "Real-time trending market dispatches, volume anomalies, volatility breakouts, and high-beta catalysts."
+        });
       } else if (hash === 'data' || hash.startsWith('data')) {
         this.showView('viewData');
         this.renderDataDashboardView();
@@ -498,6 +559,7 @@ class TrinityMarketsApp {
   renderHomeView() {
     this.renderMarketPulseBarometer();
     this.renderHeroAndWire();
+    this.renderTrendingFilterBar();
     this.renderDaily10Cards();
     this.renderMacroRadar();
     this.renderPerspectivesList();
@@ -675,25 +737,80 @@ class TrinityMarketsApp {
     heroSection.innerHTML = leadHtml + wireHtml;
   }
 
-  renderDaily10Cards() {
-    const container = document.getElementById('newsCardsGrid');
+  renderTrendingFilterBar() {
+    const container = document.getElementById('trendingFilterBar');
     if (!container) return;
 
     const all = this.getAllArticles();
+    const trendingCount = all.filter(a => a.isTrending || a.categorySlug === 'trending').length;
+
+    const filterOptions = [
+      { id: 'all', label: `All Dispatches (${all.length})` },
+      { id: 'trending', label: `🔥 Trending Now (${trendingCount})`, isTrending: true },
+      { id: 'ai-and-frontier-tech', label: 'AI & Frontier Tech' },
+      { id: 'stocks-and-equities', label: 'Stocks & Equities' },
+      { id: 'macro-and-banking', label: 'Macro & Banking' },
+      { id: 'indian-markets', label: 'Indian Markets & Dalal St' },
+      { id: 'crypto-and-digital-assets', label: 'Crypto & Digital' },
+      { id: 'energy-and-commodities', label: 'Energy & Commodities' },
+      { id: 'global-trade', label: 'Global Trade & Policy' },
+      { id: 'banking-and-fintech', label: 'Banking & Fintech' },
+      { id: 'private-equity-and-vc', label: 'PE & VC' },
+      { id: 'commercial-real-estate', label: 'Real Estate' }
+    ];
+
+    const currentFilter = this.state.homeCategoryFilter || 'all';
+
+    container.innerHTML = filterOptions.map(opt => `
+      <button class="trending-pill-btn ${opt.isTrending ? 'pill-trending' : ''} ${currentFilter === opt.id ? 'active' : ''}" onclick="window.trinityApp.filterHomeArticles('${opt.id}')">
+        ${opt.label}
+      </button>
+    `).join('');
+  }
+
+  filterHomeArticles(filterId) {
+    this.state.homeCategoryFilter = filterId;
+    this.renderTrendingFilterBar();
+    this.renderDaily10Cards(filterId);
+  }
+
+  renderDaily10Cards(filterCategory = null) {
+    const container = document.getElementById('newsCardsGrid');
+    if (!container) return;
+
+    const activeFilter = filterCategory || this.state.homeCategoryFilter || 'all';
+    const all = this.getAllArticles();
     // Prioritize full-length editorial dispatches (exclude short 3-line live wire snippets from magazine cover)
     const longForm = all.filter(a => !a.isLead && !a.isLiveScraped);
-    const items = longForm.length > 0 ? longForm : all.filter(a => !a.isLead);
+    let items = longForm.length > 0 ? longForm : all.filter(a => !a.isLead);
+
+    if (activeFilter === 'trending') {
+      items = items.filter(a => a.isTrending || a.categorySlug === 'trending' || (a.tags && a.tags.some(t => t.toLowerCase().includes('trending'))));
+    } else if (activeFilter !== 'all') {
+      items = items.filter(a => a.categorySlug === activeFilter || (a.category && a.category.toLowerCase().includes(activeFilter.replace(/-/g, ' '))));
+    }
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-family: var(--font-mono); font-size: 0.88rem;">
+          No dispatches found in this category for today's edition.
+        </div>
+      `;
+      return;
+    }
 
     container.innerHTML = items.map(story => {
       const isSaved = this.state.savedBookmarks.includes(story.id);
       const slugLink = `#/article/${story.slug || story.id}`;
       const auth = this.getSafeAuthor(story.author);
+      const isTrending = story.isTrending || story.categorySlug === 'trending';
 
       return `
         <article class="story-card" data-article-id="${story.id}">
           <a href="${slugLink}" class="story-media">
             <img src="${story.image || 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=900&auto=format&fit=crop&q=85'}" alt="${story.title}" loading="lazy">
             <div class="story-tags-overlay">
+              ${isTrending ? `<span class="story-trending-tag">🔥 TRENDING</span>` : ''}
               <span class="story-category-tag">${story.category}</span>
             </div>
           </a>
@@ -704,6 +821,7 @@ class TrinityMarketsApp {
               <span>${story.date || 'Today'}</span>
               <span>•</span>
               <span>${story.readTime || '5 min read'}</span>
+              ${story.trendingVelocity ? `<span class="trending-velocity-tag">${story.trendingVelocity}</span>` : ''}
             </div>
             <h3 class="story-title">
               <a href="${slugLink}">${story.title}</a>
@@ -1052,6 +1170,8 @@ class TrinityMarketsApp {
 
     const cleanCatSlug = (catSlug || '').toLowerCase().trim();
     const slugAliases = {
+      'trending': 'trending',
+      'trending-news': 'trending',
       'india': 'indian-markets',
       'dalal-street': 'indian-markets',
       'policy': 'policy-and-ratecuts',
@@ -1063,7 +1183,14 @@ class TrinityMarketsApp {
       'pe-vc': 'private-equity-and-vc',
       'private-equity': 'private-equity-and-vc',
       'macro': 'macro-and-banking',
-      'banking': 'macro-and-banking'
+      'banking': 'banking-and-fintech',
+      'fintech': 'banking-and-fintech',
+      'ai': 'ai-and-frontier-tech',
+      'tech': 'ai-and-frontier-tech',
+      'energy': 'energy-and-commodities',
+      'commodities': 'energy-and-commodities',
+      'trade': 'global-trade',
+      'geopolitics': 'global-trade'
     };
     const resolvedSlug = slugAliases[cleanCatSlug] || cleanCatSlug;
 
@@ -1091,6 +1218,11 @@ class TrinityMarketsApp {
         aSlug === resolvedSlug ||
         aSlug === cleanCatSlug ||
         aCat === targetCatName ||
+        (resolvedSlug === 'trending' && (a.isTrending || aSlug.includes('trending') || aCat.includes('trending') || (a.tags && a.tags.some(t => t.toLowerCase().includes('trending'))))) ||
+        (resolvedSlug === 'ai-and-frontier-tech' && (aCat.includes('ai') || aCat.includes('frontier') || aSlug.includes('ai') || (a.tags && a.tags.some(t => t.toLowerCase().includes('ai') || t.toLowerCase().includes('semiconductor'))))) ||
+        (resolvedSlug === 'energy-and-commodities' && (aCat.includes('energy') || aCat.includes('commodit') || aSlug.includes('energy') || (a.tags && a.tags.some(t => t.toLowerCase().includes('oil') || t.toLowerCase().includes('energy') || t.toLowerCase().includes('commodit'))))) ||
+        (resolvedSlug === 'global-trade' && (aCat.includes('trade') || aCat.includes('geopolitic') || aSlug.includes('trade') || (a.tags && a.tags.some(t => t.toLowerCase().includes('trade') || t.toLowerCase().includes('tariff') || t.toLowerCase().includes('geopolitic'))))) ||
+        (resolvedSlug === 'banking-and-fintech' && (aCat.includes('fintech') || aCat.includes('banking') || aSlug.includes('banking') || (a.tags && a.tags.some(t => t.toLowerCase().includes('bank') || t.toLowerCase().includes('fintech'))))) ||
         (resolvedSlug === 'indian-markets' && (aCat.includes('india') || aSlug.includes('india') || (a.tags && a.tags.some(t => t.toLowerCase().includes('india') || t.toLowerCase().includes('rbi'))))) ||
         (resolvedSlug === 'policy-and-ratecuts' && (aCat.includes('policy') || aCat.includes('rate') || aSlug.includes('policy') || (a.tags && a.tags.some(t => t.toLowerCase().includes('rate') || t.toLowerCase().includes('policy') || t.toLowerCase().includes('fed') || t.toLowerCase().includes('rbi'))))) ||
         (resolvedSlug === 'stocks-and-equities' && (aCat.includes('stock') || aCat.includes('equit') || aSlug.includes('stock') || (a.tags && a.tags.some(t => t.toLowerCase().includes('stock') || t.toLowerCase().includes('equity') || t.toLowerCase().includes('semiconductor'))))) ||
