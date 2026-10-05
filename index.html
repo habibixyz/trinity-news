@@ -52,7 +52,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;0,800;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&amp;display=swap" rel="stylesheet">
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles/main.css?v=12.4">
+  <link rel="stylesheet" href="styles/main.css?v=13.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><polygon points=%2250,5 95,85 5,85%22 fill=%22%23ffffff%22/><circle cx=%2250%22 cy=%2255%22 r=%2215%22 fill=%22%23000000%22/></svg>">
 </head>
 <body class="theme-dark">
@@ -127,8 +127,10 @@
 
     <!-- Main nav links -->
     <nav class="sidebar-nav" id="categoryNavMenu">
+    <!-- Main nav links (5-Pillar Architecture from Brief) -->
+    <nav class="sidebar-nav" id="categoryNavMenu">
       <div class="sidebar-nav-group">
-        <div class="sidebar-nav-label">Home</div>
+        <div class="sidebar-nav-label">1. Briefing</div>
         <a href="#/" class="sidebar-link" data-route="home">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Cover
@@ -144,7 +146,7 @@
       </div>
 
       <div class="sidebar-nav-group">
-        <div class="sidebar-nav-label">Markets</div>
+        <div class="sidebar-nav-label">2. Markets</div>
         <a href="#/category/stocks-and-equities" class="sidebar-link" data-route="category/stocks-and-equities">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
           Stocks &amp; Equities
@@ -161,6 +163,10 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2"/></svg>
           Policy &amp; Rates
         </a>
+        <a href="#/category/energy-and-critical-commodities" class="sidebar-link" data-route="category/energy-and-critical-commodities">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Commodities &amp; Energy
+        </a>
         <a href="#/category/private-equity-and-vc" class="sidebar-link" data-route="category/private-equity-and-vc">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           PE &amp; VC
@@ -172,11 +178,11 @@
       </div>
 
       <div class="sidebar-nav-group">
-        <div class="sidebar-nav-label">Markets & Intelligence</div>
+        <div class="sidebar-nav-label">3. Intelligence</div>
         <a href="#/charts" class="sidebar-link" data-route="charts" style="display: flex; align-items: center; justify-content: space-between;">
           <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-            Pro Charts &amp; Screener
+            Pro Screener &amp; Charts
           </span>
           <span style="font-family: var(--font-mono); font-size: 0.58rem; font-weight: 800; background: #10b981; color: #000; padding: 0.1rem 0.35rem; border-radius: 3px; letter-spacing: 0.05em;">LIVE</span>
         </a>
@@ -186,27 +192,43 @@
         </a>
         <a href="#/data" class="sidebar-link" data-route="data">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-          Data &amp; ETFs
+          Market Data &amp; ETFs
         </a>
         <a href="#/calendar" class="sidebar-link" data-route="calendar">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Macro Calendar
         </a>
+      </div>
+
+      <div class="sidebar-nav-group">
+        <div class="sidebar-nav-label">4. Research</div>
         <a href="#/research" class="sidebar-link" data-route="research">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Research
+          Deep Research
         </a>
         <a href="#/perspectives" class="sidebar-link" data-route="perspectives">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           Perspectives
         </a>
+        <a href="#/bureaus" class="sidebar-link" data-route="bureaus">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Financial Bureaus
+        </a>
       </div>
 
       <div class="sidebar-nav-group">
-        <div class="sidebar-nav-label">Account</div>
+        <div class="sidebar-nav-label">5. Terminal</div>
+        <a href="#/terminal" class="sidebar-link" data-route="terminal">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          Ask Trinity AI
+        </a>
+        <a href="#/search" class="sidebar-link" data-route="search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          Intelligence Search
+        </a>
         <a href="#/saved" class="sidebar-link" data-route="saved">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-          Saved
+          Watchlist &amp; Saved
         </a>
         <a href="#/settings" class="sidebar-link" data-route="settings">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -237,32 +259,33 @@
           <div class="dateline-left">
             <span class="dateline-date" id="currentDynamicDate">Wednesday, Sept 16, 2026</span>
             <span class="dateline-sep">&bull;</span>
-            <span class="dateline-edition">GLOBAL FINANCIAL MARKETS EDITION</span>
+            <span class="dateline-edition">MORNING FINANCIAL INTELLIGENCE BRIEFING</span>
             <span class="dateline-sep">&bull;</span>
             <span class="dateline-status">LIVE EDITION</span>
           </div>
           <div class="dateline-right">
             <a href="#/data" class="dateline-link">DATA</a>
-            <a href="#/briefing" class="dateline-link">DAILY BRIEFING &rarr;</a>
+            <a href="#/calendar" class="dateline-link">CALENDAR</a>
+            <a href="#/briefing" class="dateline-link">EXECUTIVE BRIEFING &rarr;</a>
           </div>
         </div>
 
-        <!-- Market Pulse KPI Barometer -->
-        <div class="market-pulse-barometer" id="marketPulseBarometer">
+        <!-- 1. Core 8-Asset Market Snapshot Bar (S&P 500, NASDAQ, BTC, ETH, Gold, Oil, DXY, 10Y Yield) -->
+        <div class="briefing-snapshot-wrap" id="briefingSnapshotContainer">
           <!-- Injected by JS -->
         </div>
 
-        <!-- Live Markets & 7D Sparklines Radar Strip (CoinGecko Style) -->
-        <div class="markets-sparkline-radar-strip" id="marketsSparklineRadarStrip">
+        <!-- 2. Daily Briefing Hero: "Why It Matters" (Narrative Synthesis) + "What Matters" (Top 5 Developments) -->
+        <div class="briefing-hero-grid" id="briefingHeroGrid">
           <!-- Injected by JS -->
         </div>
 
-        <!-- Cover Story & Wire -->
-        <div class="hero-editorial-layout" id="heroSection">
+        <!-- 3. Today's Macro & Economic Calendar Widget (High/Med/Low Importance) -->
+        <div class="briefing-calendar-widget" id="briefingCalendarWidget">
           <!-- Injected by JS -->
         </div>
 
-        <!-- Daily Executive Dispatches & Trending Radar -->
+        <!-- 4. Daily Executive Dispatches & Trending Radar (12 Global Desks) -->
         <div class="news-feed-section">
           <div class="section-head" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 0.75rem;">
             <div>

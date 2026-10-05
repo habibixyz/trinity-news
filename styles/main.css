@@ -4769,3 +4769,465 @@ body.sidebar-collapsed .topbar-brand {
   animation: priceTickDown 0.8s ease-out;
 }
 
+/* ==========================================================================
+   PHASE 1: DAILY BRIEFING HOMEPAGE HERO (Section 4 of Upgrade Brief)
+   ========================================================================== */
+
+/* 1. Core 8-Asset Snapshot Strip */
+.briefing-snapshot-wrap {
+  margin: 1.25rem 0 2rem;
+}
+.briefing-snapshot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.briefing-snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(130px, 1fr));
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+.briefing-snapshot-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+  min-width: 125px;
+}
+.briefing-snapshot-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--text-primary);
+}
+.snapshot-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.25rem;
+}
+.snapshot-sym {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.snapshot-name {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.35rem;
+}
+.snapshot-price {
+  font-family: var(--font-mono);
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin-bottom: 0.35rem;
+}
+.snapshot-sparkline {
+  height: 28px;
+  width: 100%;
+  margin-top: auto;
+}
+
+/* 2. Executive Hero: Why It Matters & What Matters (Top 5) */
+.briefing-hero-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 1.75rem;
+  margin-bottom: 2.75rem;
+  align-items: stretch;
+}
+@media (max-width: 1024px) {
+  .briefing-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* Left Column: Why It Matters */
+.briefing-narrative-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+}
+.narrative-tag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.narrative-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 0.2rem 0.55rem;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.narrative-title {
+  font-family: var(--font-serif);
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.22;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+.narrative-title a {
+  color: inherit;
+  text-decoration: none;
+}
+.narrative-title a:hover {
+  text-decoration: underline;
+}
+.narrative-lead {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+}
+.narrative-takeaways {
+  background: var(--bg-primary);
+  border-left: 3px solid #10b981;
+  padding: 0.95rem 1.15rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0 4px 4px 0;
+}
+.narrative-takeaways-title {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.narrative-takeaways-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.narrative-takeaways-list li {
+  margin-bottom: 0.35rem;
+}
+.narrative-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.narrative-tickers-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.narrative-ticker-chip {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.narrative-ticker-chip:hover {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+/* Right Column: What Matters (Top 5) */
+.briefing-what-matters-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+.what-matters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.75rem;
+}
+.what-matters-title {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.what-matters-sub {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+.what-matters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.what-matters-item {
+  display: flex;
+  gap: 0.95rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.what-matters-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.what-matters-num {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #ef4444;
+  width: 24px;
+  flex-shrink: 0;
+  line-height: 1.15;
+}
+.what-matters-body {
+  flex: 1;
+}
+.what-matters-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+}
+.what-matters-impact-badge {
+  font-weight: 800;
+  padding: 0.1rem 0.35rem;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+}
+.what-matters-impact-badge.high {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.what-matters-impact-badge.medium {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.what-matters-category {
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.what-matters-headline {
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin-bottom: 0.25rem;
+  text-decoration: none;
+  display: block;
+}
+.what-matters-headline:hover {
+  color: #10b981;
+}
+.what-matters-takeaway {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin-bottom: 0.35rem;
+}
+.what-matters-tickers {
+  display: flex;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+}
+.what-matters-ticker-pill {
+  color: var(--text-muted);
+  background: var(--bg-primary);
+  padding: 0.1rem 0.3rem;
+  border-radius: 2px;
+}
+
+/* 3. Today's Macro Calendar Widget */
+.briefing-calendar-widget {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2.75rem;
+}
+.briefing-calendar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.75rem;
+}
+.briefing-calendar-title {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.calendar-filters-group {
+  display: flex;
+  gap: 0.4rem;
+}
+.calendar-filter-pill {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 0.2rem 0.55rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.calendar-filter-pill:hover,
+.calendar-filter-pill.active {
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  border-color: var(--text-primary);
+}
+.calendar-table-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.calendar-event-row {
+  display: grid;
+  grid-template-columns: 100px 1.5fr 90px 140px 1fr;
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.65rem 0.85rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  font-size: 0.82rem;
+  transition: border-color var(--transition-fast);
+}
+@media (max-width: 850px) {
+  .calendar-event-row {
+    grid-template-columns: 80px 1fr 80px;
+    gap: 0.5rem;
+  }
+  .calendar-col-consensus,
+  .calendar-col-details {
+    display: none;
+  }
+}
+.calendar-event-row:hover {
+  border-color: var(--text-muted);
+}
+.calendar-col-time {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.calendar-col-event {
+  display: flex;
+  flex-direction: column;
+}
+.calendar-event-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+}
+.calendar-event-region {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+.calendar-col-importance {
+  text-align: center;
+}
+.importance-badge {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  display: inline-block;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.importance-badge.high {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.importance-badge.medium {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.importance-badge.low {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+.calendar-col-consensus {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+.calendar-col-details {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

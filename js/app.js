@@ -560,15 +560,227 @@ class TrinityMarketsApp {
     }
   }
 
-  /* ==================== PAGE VIEW 1: Home Cover View ==================== */
+  /* ==================== PAGE VIEW 1: Home Cover View (Morning Briefing per Upgrade Brief) ==================== */
   renderHomeView() {
-    this.renderMarketPulseBarometer();
-    this.renderMarketsSparklineRadar();
-    this.renderHeroAndWire();
+    this.renderMarketSnapshot();
+    this.renderBriefingHero();
+    this.renderBriefingCalendar();
     this.renderTrendingFilterBar();
     this.renderDaily10Cards();
     this.renderMacroRadar();
     this.renderPerspectivesList();
+  }
+
+  /* 1. Core 8-Asset Snapshot: S&P 500, NASDAQ, BTC, ETH, Gold, Oil, DXY, 10Y Yield */
+  renderMarketSnapshot() {
+    const container = document.getElementById('briefingSnapshotContainer');
+    if (!container) return;
+
+    const rawData = this.marketService ? this.marketService.getMarkets() : MARKET_DATA;
+    const snapshotSymbols = ['SP500', 'NASDAQ', 'BTC-USD', 'ETH-USD', 'GOLD', 'BRENT', 'DXY', 'US10Y'];
+    const snapshotAssets = snapshotSymbols.map(sym => {
+      const found = rawData.find(m => m.symbol === sym);
+      if (found) return found;
+      return { symbol: sym, name: sym, value: '--', change: '0.00%', positive: true };
+    });
+
+    container.innerHTML = `
+      <div class="briefing-snapshot-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="color: #ef4444; font-size: 0.8rem;">●</span>
+          <span>MARKET SNAPSHOT &bull; 8 CORE BENCHMARKS</span>
+        </div>
+        <a href="#/charts" style="color: #10b981; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;">
+          Open Pro Screener &rarr;
+        </a>
+      </div>
+      <div class="briefing-snapshot-grid">
+        ${snapshotAssets.map(m => {
+          const sparklineSvg = this.chartService ? this.chartService.generateSvgSparkline(m.value, m.symbol, m.positive, 125, 28) : '';
+          return `
+            <div class="briefing-snapshot-card" onclick="window.trinityApp.selectAssetAndGoToCharts('${m.symbol}')" title="Analyze ${m.name || m.symbol} in Pro Chart Studio">
+              <div class="snapshot-card-top">
+                <span class="snapshot-sym">${m.symbol}</span>
+                ${this.renderTrendBadge(m.change, m.positive)}
+              </div>
+              <div class="snapshot-name" title="${m.name || m.symbol}">${m.name || m.symbol}</div>
+              <div class="snapshot-price" id="snapshot-price-${m.symbol}">${m.value}</div>
+              <div class="snapshot-sparkline">
+                ${sparklineSvg}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  /* 2. Morning Briefing Hero: "Why It Matters" (Narrative) + "What Matters" (Top 5) */
+  renderBriefingHero() {
+    const container = document.getElementById('briefingHeroGrid');
+    if (!container) return;
+
+    const allArticles = this.getAllArticles();
+    const leadArticle = allArticles.find(a => a.isLead) || allArticles[0] || {};
+    const leadSlug = `#/article/${leadArticle.slug || leadArticle.id || ''}`;
+
+    const remaining = allArticles.filter(a => a.id !== leadArticle.id);
+    const top5 = remaining.slice(0, 5);
+
+    const narrativeHtml = `
+      <div class="briefing-narrative-card">
+        <div class="narrative-tag-row">
+          <span class="narrative-badge">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+            <span>WHY IT MATTERS &bull; MACRO NARRATIVE SYNTHESIS</span>
+          </span>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">${leadArticle.readTime || '5 min read'}</span>
+        </div>
+
+        <h2 class="narrative-title">
+          <a href="${leadSlug}">${leadArticle.title || 'The Synchronized Easing Wave: How Global Central Banks Are Repricing Sovereign Yields'}</a>
+        </h2>
+
+        <p class="narrative-lead">
+          ${leadArticle.subtitle || 'With terminal policy rates normalizing between 3.0% and 4.25%, global institutional allocators are executing the largest liquidity rotation in four years.'}
+        </p>
+
+        <div class="narrative-takeaways">
+          <div class="narrative-takeaways-title">Executive Takeaways & Direct Market Impact</div>
+          <ul class="narrative-takeaways-list">
+            ${leadArticle.takeaways && leadArticle.takeaways.length > 0 
+              ? leadArticle.takeaways.slice(0, 3).map(t => `<li>${t}</li>`).join('') 
+              : `
+                <li><strong>Liquidity Expansion:</strong> Global M2 money supply accelerates past $108T as Fed, ECB, and RBI ease reserves simultaneously.</li>
+                <li><strong>Duration Compression:</strong> 10-Year sovereign yields reflect declining risk-free hurdle rates, forcing treasuries into high-dividend equities.</li>
+                <li><strong>Hard Asset Premium:</strong> Physical gold spot ($4,360+) and programmatic digital bearer assets command sovereign reserve inflows.</li>
+              `
+            }
+          </ul>
+        </div>
+
+        <div class="narrative-footer">
+          <div class="narrative-tickers-wrap">
+            <span style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted);">Impacted Assets:</span>
+            <a href="#/ticker/SP500" class="narrative-ticker-chip">SP500</a>
+            <a href="#/ticker/US10Y" class="narrative-ticker-chip">US10Y</a>
+            <a href="#/ticker/BTC-USD" class="narrative-ticker-chip">BTC-USD</a>
+            <a href="#/ticker/GOLD" class="narrative-ticker-chip">GOLD</a>
+            <a href="#/ticker/DXY" class="narrative-ticker-chip">DXY</a>
+          </div>
+          <a href="${leadSlug}" class="btn-scrape-now" style="font-size: 0.78rem; padding: 0.35rem 0.75rem;">Read Full Intelligence Dispatch &rarr;</a>
+        </div>
+      </div>
+    `;
+
+    const whatMattersHtml = `
+      <div class="briefing-what-matters-box">
+        <div class="what-matters-header">
+          <div class="what-matters-title">
+            <span style="color: #ef4444;">⚡</span>
+            <span>WHAT MATTERS TODAY &bull; TOP 5 DEVELOPMENTS</span>
+          </div>
+          <span class="what-matters-sub">Prioritized by Impact</span>
+        </div>
+
+        <div class="what-matters-list">
+          ${top5.map((item, idx) => {
+            const num = String(idx + 1).padStart(2, '0');
+            const isHigh = idx < 3 || item.isTrending;
+            const itemSlug = `#/article/${item.slug || item.id}`;
+            const tags = (item.tags && item.tags.length > 0) ? item.tags.slice(0, 3) : [item.category || 'Macro'];
+
+            return `
+              <div class="what-matters-item">
+                <div class="what-matters-num">${num}</div>
+                <div class="what-matters-body">
+                  <div class="what-matters-meta-row">
+                    <span class="what-matters-impact-badge ${isHigh ? 'high' : 'medium'}">${isHigh ? 'HIGH IMPACT' : 'SECTOR PIVOT'}</span>
+                    <span class="what-matters-category">${item.category || 'Financial Markets'}</span>
+                  </div>
+                  <a href="${itemSlug}" class="what-matters-headline">${item.title}</a>
+                  <div class="what-matters-takeaway">${item.subtitle ? item.subtitle.slice(0, 115) + (item.subtitle.length > 115 ? '...' : '') : ''}</div>
+                  <div class="what-matters-tickers">
+                    ${tags.map(t => `<span class="what-matters-ticker-pill">${t}</span>`).join('')}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = narrativeHtml + whatMattersHtml;
+  }
+
+  /* 3. Today's Macro Calendar Widget */
+  renderBriefingCalendar(filter = 'ALL') {
+    const container = document.getElementById('briefingCalendarWidget');
+    if (!container) return;
+
+    this.state.briefingCalendarFilter = filter;
+    let events = UPCOMING_FINANCIAL_EVENTS || [];
+
+    if (filter === 'HIGH') {
+      events = events.filter(e => e.impact === 'CRITICAL' || e.impact === 'HIGH');
+    } else if (filter === 'CENTRAL_BANKS') {
+      events = events.filter(e => (e.category || '').toLowerCase().includes('central bank') || (e.category || '').toLowerCase().includes('fomc') || (e.category || '').toLowerCase().includes('policy'));
+    } else if (filter === 'INFLATION') {
+      events = events.filter(e => (e.category || '').toLowerCase().includes('inflation') || (e.category || '').toLowerCase().includes('cpi') || (e.category || '').toLowerCase().includes('gdp'));
+    }
+
+    container.innerHTML = `
+      <div class="briefing-calendar-head">
+        <div class="briefing-calendar-title">
+          <span>📅</span>
+          <span>TODAY'S MACRO &amp; ECONOMIC CALENDAR</span>
+        </div>
+        <div class="calendar-filters-group">
+          <button class="calendar-filter-pill ${filter === 'ALL' ? 'active' : ''}" onclick="window.trinityApp.filterBriefingCalendar('ALL')">All Events (${UPCOMING_FINANCIAL_EVENTS.length})</button>
+          <button class="calendar-filter-pill ${filter === 'HIGH' ? 'active' : ''}" onclick="window.trinityApp.filterBriefingCalendar('HIGH')">High Impact Only</button>
+          <button class="calendar-filter-pill ${filter === 'CENTRAL_BANKS' ? 'active' : ''}" onclick="window.trinityApp.filterBriefingCalendar('CENTRAL_BANKS')">Central Banks &amp; Rates</button>
+          <button class="calendar-filter-pill ${filter === 'INFLATION' ? 'active' : ''}" onclick="window.trinityApp.filterBriefingCalendar('INFLATION')">Inflation &amp; Growth</button>
+        </div>
+      </div>
+
+      <div class="calendar-table-rows">
+        ${events.map(evt => {
+          const impactLevel = evt.impact === 'CRITICAL' || evt.impact === 'HIGH' ? 'high' : (evt.impact === 'MEDIUM' ? 'medium' : 'low');
+          const impactLabel = evt.impact === 'CRITICAL' ? 'HIGH IMPACT' : (evt.impact || 'MEDIUM');
+
+          return `
+            <div class="calendar-event-row">
+              <div class="calendar-col-time">${evt.time || '14:00 EST'}</div>
+              <div class="calendar-col-event">
+                <span class="calendar-event-name">${evt.event}</span>
+                <span class="calendar-event-region">📍 ${evt.region || 'Global'} &bull; ${evt.category || 'Macro'}</span>
+              </div>
+              <div class="calendar-col-importance">
+                <span class="importance-badge ${impactLevel}">${impactLabel}</span>
+              </div>
+              <div class="calendar-col-consensus">
+                <span style="color: var(--text-muted); font-size: 0.68rem; display: block;">Consensus:</span>
+                ${evt.consensus || 'Neutral'}
+              </div>
+              <div class="calendar-col-details" title="${evt.details || ''}">
+                ${evt.details || ''}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+        <a href="#/calendar" style="font-family: var(--font-mono); font-size: 0.72rem; color: #10b981; text-decoration: none; font-weight: 700;">
+          Open Complete Macro &amp; Rate Calendar &rarr;
+        </a>
+      </div>
+    `;
+  }
+
+  filterBriefingCalendar(filter) {
+    this.renderBriefingCalendar(filter);
   }
 
   renderTrendBadge(changeVal, isPositive = null, extraClass = '') {
@@ -2858,7 +3070,7 @@ class TrinityMarketsApp {
         }
       }
 
-      // Update individual row prices in the Screener table
+      // Update individual row prices in the Screener table and Market Snapshot
       data.forEach(m => {
         const cell = document.getElementById(`screener-price-${m.symbol}`);
         if (cell && cell.textContent.trim() !== m.value) {
@@ -2866,6 +3078,13 @@ class TrinityMarketsApp {
           cell.classList.remove('price-flash-up', 'price-flash-down');
           void cell.offsetWidth;
           cell.classList.add(m.positive ? 'price-flash-up' : 'price-flash-down');
+        }
+        const snapCell = document.getElementById(`snapshot-price-${m.symbol}`);
+        if (snapCell && snapCell.textContent.trim() !== m.value) {
+          snapCell.textContent = m.value;
+          snapCell.classList.remove('price-flash-up', 'price-flash-down');
+          void snapCell.offsetWidth;
+          snapCell.classList.add(m.positive ? 'price-flash-up' : 'price-flash-down');
         }
       });
     }
