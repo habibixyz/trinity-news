@@ -3806,124 +3806,192 @@ class TrinityMarketsApp {
     if (backdrop) backdrop.classList.add('hidden');
   }
 
+  switchExplainTab(tabId) {
+    const drawer = document.getElementById('explainMoveDrawer');
+    if (!drawer) return;
+    const tabs = drawer.querySelectorAll('.explain-tab-btn');
+    const panels = drawer.querySelectorAll('.explain-tab-panel');
+    tabs.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabId);
+    });
+    panels.forEach(p => {
+      p.classList.toggle('active', p.id === `tab-panel-${tabId}`);
+    });
+  }
+
   renderExplainMoveDrawer(d) {
     const drawer = document.getElementById('explainMoveDrawer');
     const backdrop = document.getElementById('explainMoveBackdrop');
     if (!drawer || !backdrop) return;
 
     drawer.innerHTML = `
-      <div class="explain-drawer-header">
-        <div>
+      <!-- Fixed Modal Header -->
+      <div class="explain-modal-header">
+        <div class="explain-modal-header-top">
           <div class="explain-drawer-badge">
             <span>⚡</span>
-            <span>SIGNATURE INTELLIGENCE &bull; EXPLAIN THIS MOVE</span>
+            <span>TRINITY SIGNATURE INTELLIGENCE &bull; MARKET DYNAMICS</span>
           </div>
-          <h2 class="explain-drawer-title">Why is ${d.symbol} Moving Today?</h2>
+          <button class="explain-close-btn" onclick="window.trinityApp.closeExplainMove()" title="Close (Esc)">&times;</button>
         </div>
-        <button class="explain-close-btn" onclick="window.trinityApp.closeExplainMove()" title="Close">&times;</button>
-      </div>
 
-      <div class="explain-asset-bar">
-        <div class="explain-asset-left">
-          <div class="screener-asset-icon" style="width: 38px; height: 38px; font-size: 0.85rem;">${d.symbol.slice(0, 3)}</div>
-          <div>
-            <div class="explain-asset-sym">${d.symbol}</div>
-            <div class="explain-asset-name">${d.name} &bull; ${d.category}</div>
+        <div class="explain-asset-bar">
+          <div class="explain-asset-left">
+            <div class="screener-asset-icon" style="width: 36px; height: 36px; font-size: 0.82rem;">${d.symbol.slice(0, 3)}</div>
+            <div>
+              <div class="explain-asset-sym">${d.symbol}</div>
+              <div class="explain-asset-name">${d.name} &bull; <span class="explain-cat-badge">${d.category}</span></div>
+            </div>
+          </div>
+          <div class="explain-asset-right">
+            <div class="explain-asset-price">${d.value}</div>
+            ${this.renderTrendBadge(d.change, d.positive)}
           </div>
         </div>
-        <div class="explain-asset-right">
-          <div class="explain-asset-price">${d.value}</div>
-          ${this.renderTrendBadge(d.change, d.positive)}
+
+        <!-- Executive Summary Thesis Banner -->
+        <div class="explain-thesis-box">
+          <div class="explain-thesis-label">EXECUTIVE SUMMARY / MARKET THESIS</div>
+          <p class="explain-thesis-text">${d.leadThesis}</p>
+        </div>
+
+        <!-- Segmented Tab Navigation -->
+        <div class="explain-tabs-nav" role="tablist">
+          <button class="explain-tab-btn active" data-tab="drivers" onclick="window.trinityApp.switchExplainTab('drivers')">
+            <span>⚡</span> Key Drivers <span class="tab-count-pill">${d.drivers ? d.drivers.length : 3}</span>
+          </button>
+          <button class="explain-tab-btn" data-tab="ripple" onclick="window.trinityApp.switchExplainTab('ripple')">
+            <span>🌐</span> Cross-Asset Ripple <span class="tab-count-pill">${d.crossAssetImpact ? d.crossAssetImpact.length : 3}</span>
+          </button>
+          <button class="explain-tab-btn" data-tab="evidence" onclick="window.trinityApp.switchExplainTab('evidence')">
+            <span>🔍</span> Evidence &amp; Sources
+          </button>
+          <button class="explain-tab-btn" data-tab="catalysts" onclick="window.trinityApp.switchExplainTab('catalysts')">
+            <span>⏱</span> Catalysts to Watch
+          </button>
         </div>
       </div>
 
-      <!-- Lead Thesis -->
-      <div class="explain-thesis-box">
-        <div class="explain-thesis-label">Primary Market Thesis</div>
-        <p class="explain-thesis-text">${d.leadThesis}</p>
-      </div>
-
-      <!-- Primary Drivers & Macro Mechanics -->
-      <div class="explain-section-heading">
-        <span>📊</span>
-        <span>PRIMARY DRIVERS &amp; MACRO MECHANICS</span>
-      </div>
-      <div class="explain-drivers-list">
-        ${d.drivers.map(drv => `
-          <div class="explain-driver-card">
-            <div class="driver-card-top">
-              <span class="driver-title">${drv.title}</span>
-              <div class="driver-badges-wrap">
-                <span class="driver-weight-badge">${drv.weight}</span>
-                <span class="driver-bias-badge ${drv.bias.toLowerCase()}">${drv.bias}</span>
+      <!-- Scrollable Tab Body Panels -->
+      <div class="explain-modal-body">
+        <!-- TAB 1: DRIVERS -->
+        <div class="explain-tab-panel active" id="tab-panel-drivers">
+          <div class="explain-panel-intro">Primary macro and micro drivers contributing to today's price action:</div>
+          <div class="explain-drivers-list">
+            ${d.drivers.map((drv, idx) => `
+              <div class="explain-driver-card">
+                <div class="driver-card-top">
+                  <div class="driver-title-wrap">
+                    <span class="driver-index-pill">#${idx + 1}</span>
+                    <span class="driver-title">${drv.title}</span>
+                  </div>
+                  <div class="driver-badges-wrap">
+                    <span class="driver-weight-badge">${drv.weight}</span>
+                    <span class="driver-bias-badge ${drv.bias.toLowerCase()}">${drv.bias}</span>
+                  </div>
+                </div>
+                <div class="driver-summary">${drv.summary}</div>
+                <div class="driver-metric-row">
+                  <span class="metric-dot">●</span>
+                  <span class="metric-label">Telemetry Metric:</span>
+                  <strong class="metric-val">${drv.metric}</strong>
+                </div>
               </div>
-            </div>
-            <div class="driver-summary">${drv.summary}</div>
-            <div class="driver-metric-row">
-              <span>● Telemetry Metric:</span>
-              <strong>${drv.metric}</strong>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-
-      <!-- Cross-Asset Ripple Effect -->
-      <div class="explain-section-heading">
-        <span>🌐</span>
-        <span>CROSS-MARKET RIPPLE EFFECT</span>
-      </div>
-      <div class="explain-cross-asset-list">
-        ${d.crossAssetImpact.map(c => `
-          <div class="cross-asset-item">
-            <span class="cross-asset-sym"><a href="#/ticker/${c.symbol}" onclick="window.trinityApp.closeExplainMove()">${c.symbol}</a></span>
-            <span class="cross-asset-corr">${c.correlation}</span>
-            <span class="cross-asset-impact">${c.impact}</span>
-          </div>
-        `).join('')}
-      </div>
-
-      <!-- Three-Layer Evidence Layer (Section 8 of Brief) -->
-      <div class="explain-section-heading">
-        <span>🔍</span>
-        <span>EVIDENCE LAYER (FACT vs DATA vs INTERPRETATION)</span>
-      </div>
-      <div class="explain-evidence-card">
-        <div class="evidence-row">
-          <span class="evidence-badge fact">FACT</span>
-          <div class="evidence-content">${d.evidenceLayer.fact}</div>
-        </div>
-        <div class="evidence-row">
-          <span class="evidence-badge data">DATA</span>
-          <div class="evidence-content">${d.evidenceLayer.data}</div>
-        </div>
-        <div class="evidence-row">
-          <span class="evidence-badge interpretation">INTERPRETATION</span>
-          <div class="evidence-content">${d.evidenceLayer.interpretation}</div>
-        </div>
-
-        ${d.evidenceLayer.citations && d.evidenceLayer.citations.length > 0 ? `
-          <div class="explain-citations-list">
-            <div style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase;">Supporting Journal Dispatches:</div>
-            ${d.evidenceLayer.citations.map(art => `
-              <a href="#/article/${art.slug || art.id}" class="citation-link" onclick="window.trinityApp.closeExplainMove()">
-                <span>📄</span>
-                <span>${art.title}</span>
-              </a>
             `).join('')}
           </div>
-        ` : ''}
+        </div>
+
+        <!-- TAB 2: CROSS-ASSET RIPPLE -->
+        <div class="explain-tab-panel" id="tab-panel-ripple">
+          <div class="explain-panel-intro">Directional transmission and correlation impacts across correlated global markets:</div>
+          <div class="explain-cross-asset-list">
+            ${d.crossAssetImpact.map(c => `
+              <div class="cross-asset-card">
+                <div class="cross-asset-header">
+                  <a href="#/ticker/${c.symbol}" class="cross-asset-link-pill" onclick="window.trinityApp.closeExplainMove()">
+                    <span>${c.symbol}</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </a>
+                  <span class="cross-asset-corr-badge">${c.correlation}</span>
+                </div>
+                <div class="cross-asset-desc">${c.impact}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- TAB 3: EVIDENCE LAYER -->
+        <div class="explain-tab-panel" id="tab-panel-evidence">
+          <div class="explain-panel-intro">Institutional verification framework distinguishing verified filings from telemetry and quantitative models:</div>
+          <div class="explain-evidence-grid">
+            <div class="evidence-block fact-block">
+              <div class="evidence-block-head">
+                <span class="evidence-badge fact">FACT</span>
+                <span class="evidence-head-title">Regulatory &amp; Verified Filings</span>
+              </div>
+              <div class="evidence-block-body">${d.evidenceLayer.fact}</div>
+            </div>
+
+            <div class="evidence-block data-block">
+              <div class="evidence-block-head">
+                <span class="evidence-badge data">DATA</span>
+                <span class="evidence-head-title">Order Book &amp; Telemetry Depth</span>
+              </div>
+              <div class="evidence-block-body">${d.evidenceLayer.data}</div>
+            </div>
+
+            <div class="evidence-block interpretation-block">
+              <div class="evidence-block-head">
+                <span class="evidence-badge interpretation">INTERPRETATION</span>
+                <span class="evidence-head-title">Quantitative Desk Evaluation</span>
+              </div>
+              <div class="evidence-block-body">${d.evidenceLayer.interpretation}</div>
+            </div>
+          </div>
+
+          ${d.evidenceLayer.citations && d.evidenceLayer.citations.length > 0 ? `
+            <div class="explain-citations-section">
+              <div class="citations-heading">SUPPORTING EDITORIAL DISPATCHES</div>
+              <div class="citations-grid">
+                ${d.evidenceLayer.citations.map(art => `
+                  <a href="#/article/${art.slug || art.id}" class="citation-article-pill" onclick="window.trinityApp.closeExplainMove()">
+                    <span class="citation-icon">📄</span>
+                    <span class="citation-title">${art.title}</span>
+                    <span class="citation-arrow">&rarr;</span>
+                  </a>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- TAB 4: CATALYSTS -->
+        <div class="explain-tab-panel" id="tab-panel-catalysts">
+          <div class="explain-panel-intro">Forward-looking inflection points, macroeconomic prints, and trigger thresholds:</div>
+          <div class="explain-catalysts-container">
+            ${d.whatToWatch.map((w, idx) => `
+              <div class="catalyst-card">
+                <div class="catalyst-num">0${idx + 1}</div>
+                <div class="catalyst-text">${w}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
       </div>
 
-      <!-- What to Watch Next (Catalysts & Triggers) -->
-      <div class="explain-catalysts-box">
-        <div class="explain-catalysts-title">⚡ WHAT TO WATCH NEXT (CATALYSTS &amp; TRIGGERS)</div>
-        <ul class="explain-catalysts-list">
-          ${d.whatToWatch.map(w => `<li>${w}</li>`).join('')}
-        </ul>
-      </div>
-
-      <div style="display: flex; gap: 0.75rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
-        <a href="#/ticker/${d.symbol}" class="btn-scrape-now" onclick="window.trinityApp.closeExplainMove()" style="flex: 1; text-align: center; justify-content: center;">Open Full ${d.symbol} Terminal Quote &rarr;</a>
+      <!-- Fixed Modal Footer -->
+      <div class="explain-modal-footer">
+        <div class="explain-footer-meta">
+          <span class="pulse-indicator"></span>
+          <span>Telemetry Verified: <strong>${d.generatedAt || 'Real-Time'}</strong></span>
+        </div>
+        <div class="explain-footer-actions">
+          <button class="btn-cancel-modal" onclick="window.trinityApp.closeExplainMove()">Dismiss</button>
+          <a href="#/ticker/${d.symbol}" class="btn-primary-action" onclick="window.trinityApp.closeExplainMove()">
+            <span>Open Full ${d.symbol} Terminal Quote</span>
+            <span>&rarr;</span>
+          </a>
+        </div>
       </div>
     `;
 
