@@ -1,56 +1,56 @@
 {
-  "generatedAt": "2026-10-08T12:24:49.625Z",
+  "generatedAt": "2026-10-08T22:35:30.064Z",
   "formattedDate": "Thursday, October 8, 2026",
-  "articleCount": 24,
-  "trendingCount": 16,
+  "articleCount": 68,
+  "trendingCount": 19,
   "desks": [
     {
       "desk": "Trending & Market Movers",
-      "count": 2
+      "count": 8
     },
     {
       "desk": "AI & Frontier Tech",
-      "count": 2
+      "count": 6
     },
     {
       "desk": "Stocks & Equities",
-      "count": 2
+      "count": 6
     },
     {
       "desk": "Macro & Banking",
-      "count": 2
+      "count": 6
     },
     {
       "desk": "Indian Markets & Dalal St",
-      "count": 2
+      "count": 6
     },
     {
       "desk": "Crypto & Digital Assets",
-      "count": 2
+      "count": 6
     },
     {
       "desk": "Energy & Critical Commodities",
-      "count": 2
+      "count": 5
     },
     {
       "desk": "Private Equity & VC",
-      "count": 2
+      "count": 5
     },
     {
       "desk": "Global Trade & Geopolitics",
-      "count": 2
+      "count": 5
     },
     {
       "desk": "Commercial Real Estate",
-      "count": 2
+      "count": 5
     },
     {
       "desk": "Banking & Global Fintech",
-      "count": 2
+      "count": 5
     },
     {
       "desk": "Policy & Rate Cuts",
-      "count": 2
+      "count": 5
     }
   ],
   "generator": "TRINITY Autonomous Real-World Ingestion & Synthesis Engine v3.0"
