@@ -31,6 +31,7 @@ import { audioService } from './audioService.js';
 import { aiCopilotService } from './aiCopilotService.js';
 import { calendarService } from './calendarService.js';
 import { ExplainMoveService } from './explainMoveService.js';
+import { renderSwapDesk } from './swapView.js';
 
 class TrinityMarketsApp {
   constructor() {
@@ -441,14 +442,16 @@ class TrinityMarketsApp {
       window.scrollTo({ top: 0, behavior: 'instant' });
 
 
-      // Update active nav indicators (sidebar links)
-      document.querySelectorAll('#categoryNavMenu .sidebar-link, #categoryNavMenu .nav-link-btn').forEach(btn => {
+      // Update active nav indicators (sidebar links and hero card)
+      document.querySelectorAll('#categoryNavMenu .sidebar-link, #categoryNavMenu .nav-link-btn, .hero-swap-card').forEach(btn => {
         const routeAttr = btn.dataset.route || '';
         const isChartsMatch = (routeAttr === 'charts' || routeAttr === 'markets') && (hash === 'charts' || hash.startsWith('charts') || hash === 'markets' || hash.startsWith('markets'));
         const isTerminalMatch = (routeAttr === 'terminal' || routeAttr === 'search') && (hash === 'terminal' || hash.startsWith('terminal') || hash === 'search' || hash.startsWith('search'));
+        const isSwapMatch = (routeAttr === 'swap' || routeAttr === 'bridge') && (hash === 'swap' || hash.startsWith('swap') || hash === 'bridge' || hash.startsWith('bridge'));
         const isMatch = (routeAttr === 'home' && (!hash || hash === '/' || hash === 'home')) ||
                         isChartsMatch ||
                         isTerminalMatch ||
+                        isSwapMatch ||
                         (routeAttr && hash === routeAttr) ||
                         (routeAttr && hash.startsWith(routeAttr));
         btn.classList.toggle('active', isMatch);
@@ -570,6 +573,13 @@ class TrinityMarketsApp {
         this.updateSEO({
           title: "Journal Settings | TRINITY MARKETS",
           description: "Customize reader telemetry, theme preferences, and data feed settings."
+        });
+      } else if (hash === 'swap' || hash.startsWith('swap') || hash === 'bridge' || hash.startsWith('bridge')) {
+        this.showView('viewSwap');
+        this.renderSwapView();
+        this.updateSEO({
+          title: "Trinity Swap — Instant Cross-Chain Desk (Base & Solana) | TRINITY MARKETS",
+          description: "Sub-second cross-VM token swaps between Base (EVM) and Solana (SVM) via Trinity Liquidity Mesh, plus direct fiat onramp via Robinhood Connect."
         });
       } else {
         this.showView('viewHome');
@@ -1656,6 +1666,26 @@ class TrinityMarketsApp {
           <strong style="color: var(--text-primary);">${catData.leadTicker}</strong>
         </div>
       </div>
+
+      ${resolvedSlug === 'crypto-and-digital-assets' ? `
+        <div style="background: linear-gradient(135deg, rgba(20, 241, 149, 0.08) 0%, rgba(0, 82, 255, 0.08) 100%); border: 1px solid rgba(20, 241, 149, 0.25); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <div style="font-family: var(--font-mono); font-size: 0.7rem; font-weight: 800; color: #14f195; text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.35rem;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #14f195; display: inline-block;"></span>
+              TRINITY CROSS-CHAIN ROUTER &bull; LIVE
+            </div>
+            <div style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.2rem;">
+              Trinity Swap: Base (EVM) ⇄ Solana (SVM)
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-secondary);">
+              Sub-second settlement between Solana and Base tokens with deep liquidity, plus 0% fee fiat onramp via Robinhood Connect.
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <a href="#/swap" class="btn-scrape-now" style="background: #14f195; color: #000; font-weight: 800; border-color: #14f195; box-shadow: 0 0 12px rgba(20, 241, 149, 0.25);">⚡ Open Trinity Swap &rarr;</a>
+          </div>
+        </div>
+      ` : ''}
 
       <div class="section-head">
         <div>
@@ -3319,6 +3349,13 @@ Adopt a barbell capital allocation: 60% high-cash-flow enterprise technology and
         `).join('')}
       </div>
     `;
+  }
+
+  /* ==================== PAGE VIEW 18: Instant Cross-Chain Swap & Bridge Desk ==================== */
+  renderSwapView() {
+    const container = document.getElementById('swapPageContainer');
+    if (!container) return;
+    renderSwapDesk(container, this);
   }
 
   /* ==================== PAGE VIEW 13: Dedicated Journal Settings Page ==================== */

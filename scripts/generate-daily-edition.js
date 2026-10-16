@@ -20,6 +20,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { resolveEditorialImage } from './editorialImages.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -701,6 +702,7 @@ async function main() {
   console.log(`📡 Ingesting verified real-time trending news across ${targetDesks.length} global desks...\n`);
 
   const allArticles = [];
+  const usedImagesInEdition = new Set();
   let totalCount = 0;
   let trendingCount = 0;
   const deskSummary = [];
@@ -734,7 +736,8 @@ async function main() {
         synthesized = autonomousSynthesize(realItem, desk, todayStr);
       }
 
-      const img = desk.images[j % desk.images.length];
+      const headlineText = cleanHeadline(synthesized.title || realItem.rawHeadline);
+      const img = resolveEditorialImage(headlineText, desk.slug, usedImagesInEdition);
       const isLead = (totalCount === 1);
       const isTrending = desk.isTrendingDesk || j === 0 || totalCount <= 8;
       if (isTrending) trendingCount++;

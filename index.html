@@ -52,7 +52,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;0,800;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&amp;display=swap" rel="stylesheet">
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="styles/main.css?v=19.0">
+  <link rel="stylesheet" href="styles/main.css?v=22.2">
+  <link rel="stylesheet" href="styles/swap.css?v=6.0">
+  <!-- Solana Web3 CDN for Real Mainnet SVM Bridge Execution -->
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.8/lib/index.iife.min.js"></script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><polygon points=%2250,5 95,85 5,85%22 fill=%22%23ffffff%22/><circle cx=%2250%22 cy=%2255%22 r=%2215%22 fill=%22%23000000%22/></svg>">
 </head>
 <body class="theme-dark">
@@ -94,8 +97,12 @@
         <span class="badge-count" id="bookmarkCountBadge">0</span>
       </a>
 
+      <a href="#/swap" class="topbar-btn" id="openSwapBtn" title="Trinity Swap (Base &amp; Solana)" aria-label="Trinity Swap">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+      </a>
+
       <a href="#/settings" class="topbar-btn" title="Settings" aria-label="Settings">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0 2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </a>
     </div>
   </header>
@@ -106,18 +113,16 @@
   <!-- ==================== LEFT SIDEBAR ==================== -->
   <aside class="sidebar" id="mainSidebar">
 
-    <!-- Brand row (mirrors topbar height) -->
+    <!-- Brand row -->
     <div class="sidebar-brand-area">
-      <a href="#/" class="sidebar-logo" id="sidebarLogoBtn">
-        <svg width="18" height="18" viewBox="0 0 100 100" fill="none">
+      <a href="#/" class="sidebar-brand-link" id="sidebarLogoBtn">
+        <svg width="20" height="20" viewBox="0 0 100 100" fill="none">
           <polygon points="50,4 96,86 4,86" fill="currentColor"/>
           <circle cx="50" cy="58" r="16" fill="var(--bg-primary)"/>
         </svg>
+        <span class="sidebar-brand-name">TRINITY</span>
+        <span class="sidebar-brand-tag">MARKETS</span>
       </a>
-      <div class="sidebar-brand-text">
-        <div class="sidebar-brand-name">TRINITY</div>
-        <div class="sidebar-brand-sub">Markets Journal</div>
-      </div>
       <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close" title="Close sidebar">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -125,124 +130,65 @@
       </button>
     </div>
 
-    <!-- Main nav links -->
+    <!-- Main nav links (Focused, High-Signal Desks) -->
     <nav class="sidebar-nav" id="categoryNavMenu">
-    <!-- Main nav links (5-Pillar Architecture from Brief) -->
-    <nav class="sidebar-nav" id="categoryNavMenu">
+      <!-- HERO EXECUTION DESK -->
       <div class="sidebar-nav-group">
-        <div class="sidebar-nav-label">1. Briefing</div>
-        <a href="#/" class="sidebar-link" data-route="home">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Cover
-        </a>
-        <a href="#/briefing" class="sidebar-link" data-route="briefing">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-          Daily Briefing
-        </a>
-        <a href="#/trending" class="sidebar-link" data-route="trending" style="color: #ef4444; font-weight: 700;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-          🔥 Trending Now
+        <div class="sidebar-nav-label">Execution</div>
+
+        <a href="#/swap" class="sidebar-link hero-swap-link" data-route="swap" id="sidebarHeroSwap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
+          <span>Trinity Bridge &amp; Swap</span>
         </a>
       </div>
 
-      <div class="sidebar-nav-group">
-        <div class="sidebar-nav-label">2. Markets</div>
-        <a href="#/category/stocks-and-equities" class="sidebar-link" data-route="category/stocks-and-equities">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-          Stocks &amp; Equities
+      <div class="sidebar-nav-group" style="margin-top: 1rem;">
+        <div class="sidebar-nav-label">Core Desks</div>
+
+        <a href="#/charts" class="sidebar-link" data-route="charts">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          <span>Pro Screener &amp; Charts</span>
+          <span class="sidebar-link-badge blue">LIVE</span>
         </a>
+
         <a href="#/category/crypto-and-digital-assets" class="sidebar-link" data-route="category/crypto-and-digital-assets">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.5 8h3.5a2 2 0 0 1 0 4H9.5V8zm0 4h4a2 2 0 0 1 0 4H9.5v-4z"/></svg>
-          Crypto &amp; Digital
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.5 8h3.5a2 2 0 0 1 0 4H9.5V8zm0 4h4a2 2 0 0 1 0 4H9.5v-4z"/></svg>
+          <span>Crypto &amp; Digital Assets</span>
         </a>
-        <a href="#/category/macro-and-banking" class="sidebar-link" data-route="category/macro-and-banking">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          Global Macro
+
+        <a href="#/" class="sidebar-link" data-route="home">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Daily Edition</span>
         </a>
-        <a href="#/category/policy-and-ratecuts" class="sidebar-link" data-route="category/policy-and-ratecuts">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2"/></svg>
-          Policy &amp; Rates
-        </a>
-        <a href="#/category/energy-and-critical-commodities" class="sidebar-link" data-route="category/energy-and-critical-commodities">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Commodities &amp; Energy
-        </a>
-        <a href="#/category/private-equity-and-vc" class="sidebar-link" data-route="category/private-equity-and-vc">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          PE &amp; VC
-        </a>
-        <a href="#/category/commercial-real-estate" class="sidebar-link" data-route="category/commercial-real-estate">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 21V9"/></svg>
-          Real Estate
+
+        <a href="#/terminal" class="sidebar-link" data-route="terminal">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6z"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M12 2v2"/><path d="M12 20v2"/></svg>
+          <span>AI Quant Terminal</span>
+          <span class="sidebar-link-badge purple">AI</span>
         </a>
       </div>
 
-      <div class="sidebar-nav-group">
-        <div class="sidebar-nav-label">3. Intelligence</div>
-        <a href="#/charts" class="sidebar-link" data-route="charts" style="display: flex; align-items: center; justify-content: space-between;">
-          <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-            Pro Screener &amp; Charts
-          </span>
-          <span style="font-family: var(--font-mono); font-size: 0.58rem; font-weight: 800; background: #10b981; color: #000; padding: 0.1rem 0.35rem; border-radius: 3px; letter-spacing: 0.05em;">LIVE</span>
-        </a>
-        <a href="#/wire" class="sidebar-link" data-route="wire">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.86 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l1.07-1.07a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          Live Wire
-        </a>
-        <a href="#/data" class="sidebar-link" data-route="data">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-          Market Data &amp; ETFs
-        </a>
-        <a href="#/calendar" class="sidebar-link" data-route="calendar">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Macro Calendar
-        </a>
-      </div>
+      <div class="sidebar-nav-group" style="margin-top: 1rem;">
+        <div class="sidebar-nav-label">Workspace</div>
 
-      <div class="sidebar-nav-group">
-        <div class="sidebar-nav-label">4. Research</div>
-        <a href="#/research" class="sidebar-link" data-route="research">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Deep Research
-        </a>
-        <a href="#/perspectives" class="sidebar-link" data-route="perspectives">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Perspectives
-        </a>
-        <a href="#/private-markets" class="sidebar-link" data-route="private-markets">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Private Markets
-        </a>
-      </div>
-
-      <div class="sidebar-nav-group">
-        <div class="sidebar-nav-label">5. Intelligence Terminal</div>
-        <a href="#/terminal" class="sidebar-link" data-route="terminal" style="display: flex; align-items: center; justify-content: space-between;">
-          <span style="display: inline-flex; align-items: center; gap: 0.5rem;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6z"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M12 2v2"/><path d="M12 20v2"/></svg>
-            Trinity AI Terminal
-          </span>
-          <span style="font-family: var(--font-mono); font-size: 0.58rem; font-weight: 800; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.1rem 0.35rem; border-radius: 3px; letter-spacing: 0.05em;">AI+SEARCH</span>
-        </a>
         <a href="#/saved" class="sidebar-link" data-route="saved">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-          Watchlist &amp; Saved
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span>Watchlist &amp; Saved</span>
         </a>
+
         <a href="#/settings" class="sidebar-link" data-route="settings">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          Settings
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
         </a>
       </div>
     </nav>
 
     <!-- Sidebar footer -->
     <div class="sidebar-footer">
-      <div class="sidebar-article-count">
-        <span id="articleCountBadge"></span>
-        <span class="sidebar-count-label">Today's Edition</span>
+      <div class="sidebar-mesh-status">
+        <span class="mesh-dot"></span>
+        <span class="mesh-text">Relay Protocol Online</span>
       </div>
-      <div class="sidebar-disclaimer">Institutional analysis &middot; Not financial advice</div>
     </div>
   </aside>
 
@@ -455,6 +401,11 @@
         <div class="calendar-page-container" id="calendarPageContainer"></div>
       </section>
 
+      <!-- PAGE VIEW 18: Trinity Instant Swap & Cross-Chain Desk -->
+      <section id="viewSwap" class="app-page-view hidden">
+        <div class="swap-page-container" id="swapPageContainer"></div>
+      </section>
+
     </main>
 
     <!-- Footer -->
@@ -568,7 +519,7 @@
   </aside>
 
   <!-- Scripts -->
-  <script type="module" src="js/app.js?v=19.0"></script>
+  <script type="module" src="js/app.js?v=25.2"></script>
 
   <!-- Sidebar toggle script (inline, no module dependency) -->
   <script>

@@ -120,6 +120,9 @@ export class MarketService {
         target.positive = changePct >= 0;
         target.high24h = this.formatPrice(high, true);
         target.low24h = this.formatPrice(low, true);
+        if (coin.ath) {
+          target.ath = this.formatPrice(coin.ath, true);
+        }
         target.marketCap = this.formatLargeNumber(marketCap);
         target.volume = this.formatLargeNumber(volume);
         target.lastTick = Date.now();
