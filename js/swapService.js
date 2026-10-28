@@ -386,10 +386,24 @@ export class SwapService {
     this.cachedTokens = { ...CURATED_TOKENS };
     this.customImportedTokens = this.loadImportedTokens();
 
+    // EIP-6963 Multi-Wallet Provider Storage
+    this.eip6963Providers = [];
+    this.selectedEvmProvider = null;
+    if (typeof window !== 'undefined') {
+      window.addEventListener('eip6963:announceProvider', (event) => {
+        const detail = event.detail;
+        if (detail && detail.info && !this.eip6963Providers.some(p => p.info.uuid === detail.info.uuid)) {
+          this.eip6963Providers.push(detail);
+        }
+      });
+      window.dispatchEvent(new Event('eip6963:requestProvider'));
+    }
+
     // Connected wallets
     this.wallets = {
       evm: null,
-      solana: null
+      solana: null,
+      evmProviderInfo: null
     };
 
     try {
@@ -399,6 +413,7 @@ export class SwapService {
           const parsed = JSON.parse(saved);
           this.wallets.evm = parsed.evm || null;
           this.wallets.solana = parsed.solana || null;
+          this.wallets.evmProviderInfo = parsed.evmProviderInfo || null;
         }
       }
     } catch {}
@@ -418,6 +433,9 @@ export class SwapService {
       isFetchingQuote: false,
       quote: null,
       quoteError: null,
+      priceImpact: 0,
+      userBalance: null,
+      isFetchingBalance: false,
       recentSwaps: this.loadRecentSwaps(),
       activeExecution: null // Holds live status progress tracking
     };
@@ -699,7 +717,7 @@ export class SwapService {
       const parts = fromAmount.toString().split('.');
       const whole = parts[0] || '0';
       const fraction = (parts[1] || '').slice(0, decimals).padEnd(decimals, '0');
-      atomicAmount = (BigInt(whole) * BigInt(10 ** decimals) + BigInt(fraction)).toString();
+      atomicAmount = (BigInt(whole) * (10n ** BigInt(decimals)) + BigInt(fraction)).toString();
     } catch {
       return { ok: false, error: 'Invalid number format' };
     }
@@ -761,6 +779,16 @@ export class SwapService {
         return { ok: false, error: errorMsg };
       }
 
+      // Calculate price impact
+      const inUsd = parseFloat(data.details?.currencyIn?.amountUsd || 0);
+      const outUsd = parseFloat(data.details?.currencyOut?.amountUsd || 0);
+      let priceImpactPct = 0;
+      if (inUsd > 0 && outUsd > 0) {
+        priceImpactPct = Math.max(0, ((inUsd - outUsd) / inUsd) * 100);
+      }
+      data.priceImpactPct = priceImpactPct;
+      this.state.priceImpact = priceImpactPct;
+
       this.state.isFetchingQuote = false;
       this.state.quote = data;
       this.state.quoteError = null;
@@ -788,25 +816,187 @@ export class SwapService {
   }
 
   /**
-   * EVM Wallet Connection
+   * Fetch Live Token Balance for Connected Wallet
    */
-  async connectEvmWallet() {
-    if (typeof window === 'undefined') return { ok: false, error: 'Browser environment required' };
-    if (!window.ethereum) {
-      return { ok: false, error: 'No EVM Web3 wallet detected (install MetaMask, Coinbase, or Rabby)' };
+  async getTokenBalance(token, chainId) {
+    const chain = this.getChain(chainId || this.state.fromChainId);
+    const targetToken = token || this.state.fromToken;
+    if (!chain || !targetToken) return null;
+
+    const userAddress = this.wallets[chain.vmType];
+    if (!userAddress) {
+      this.state.userBalance = null;
+      return null;
     }
 
+    this.state.isFetchingBalance = true;
+
     try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      if (chain.vmType === 'evm') {
+        const isNative = !targetToken.address || targetToken.address === '0x0000000000000000000000000000000000000000';
+        const rpcUrl = EVM_CHAIN_CONFIGS[chain.id]?.rpcUrls?.[0] || 'https://mainnet.base.org';
+
+        if (isNative) {
+          const res = await fetch(rpcUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'eth_getBalance',
+              params: [userAddress, 'latest']
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.result) {
+              const raw = BigInt(data.result);
+              const formatted = (Number(raw) / 1e18).toFixed(4);
+              this.state.userBalance = formatted;
+              this.state.isFetchingBalance = false;
+              return formatted;
+            }
+          }
+        } else {
+          // ERC20 balanceOf(address) selector 0x70a08231
+          const cleanAddr = userAddress.toLowerCase().replace('0x', '').padStart(64, '0');
+          const res = await fetch(rpcUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'eth_call',
+              params: [{
+                to: targetToken.address,
+                data: `0x70a08231${cleanAddr}`
+              }, 'latest']
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.result && data.result !== '0x') {
+              const decimals = targetToken.decimals || 18;
+              const raw = BigInt(data.result);
+              const formatted = (Number(raw) / (10 ** decimals)).toFixed(decimals <= 6 ? 2 : 4);
+              this.state.userBalance = formatted;
+              this.state.isFetchingBalance = false;
+              return formatted;
+            }
+          }
+        }
+      } else if (chain.vmType === 'svm') {
+        const isNativeSol = targetToken.address === '11111111111111111111111111111111' || targetToken.symbol === 'SOL';
+        if (isNativeSol) {
+          const res = await fetch('https://api.mainnet-beta.solana.com', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'getBalance',
+              params: [userAddress]
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.result?.value !== undefined) {
+              const formatted = (data.result.value / 1e9).toFixed(4);
+              this.state.userBalance = formatted;
+              this.state.isFetchingBalance = false;
+              return formatted;
+            }
+          }
+        } else {
+          // SPL token accounts
+          const res = await fetch('https://api.mainnet-beta.solana.com', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'getTokenAccountsByOwner',
+              params: [
+                userAddress,
+                { mint: targetToken.address },
+                { encoding: 'jsonParsed' }
+              ]
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const accounts = data.result?.value || [];
+            if (accounts.length > 0) {
+              const amount = accounts[0]?.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0;
+              const formatted = Number(amount).toFixed(2);
+              this.state.userBalance = formatted;
+              this.state.isFetchingBalance = false;
+              return formatted;
+            }
+            this.state.userBalance = '0.00';
+            this.state.isFetchingBalance = false;
+            return '0.00';
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[BALANCE] Error fetching token balance:', e.message);
+    }
+
+    this.state.isFetchingBalance = false;
+    return null;
+  }
+
+  /**
+   * EIP-6963 Discovered Providers
+   */
+  getDiscoveredEvmProviders() {
+    return this.eip6963Providers || [];
+  }
+
+  /**
+   * Connect with specific EIP-6963 provider
+   */
+  async connectEvmWithProvider(providerDetail) {
+    const provider = providerDetail ? providerDetail.provider : (this.selectedEvmProvider || window.ethereum);
+    if (!provider) return { ok: false, error: 'No EVM Web3 wallet detected' };
+
+    try {
+      const accounts = await provider.request({ method: 'eth_requestAccounts' });
       if (accounts && accounts.length > 0) {
+        this.selectedEvmProvider = provider;
         this.wallets.evm = accounts[0];
+        this.wallets.evmProviderInfo = providerDetail?.info || { name: 'EVM Wallet', icon: 'https://assets.relay.link/icons/8453/light.png' };
         this.saveWallets();
+        await this.getTokenBalance();
         return { ok: true, address: accounts[0] };
       }
       return { ok: false, error: 'No accounts selected' };
     } catch (err) {
       return { ok: false, error: err.message || 'Connection rejected' };
     }
+  }
+
+  /**
+   * EVM Wallet Connection (EIP-6963 Aware)
+   */
+  async connectEvmWallet() {
+    if (typeof window === 'undefined') return { ok: false, error: 'Browser environment required' };
+    
+    // If multiple providers discovered via EIP-6963, signal to UI to show modal
+    if (this.eip6963Providers && this.eip6963Providers.length > 1) {
+      return { ok: false, needsSelection: true, providers: this.eip6963Providers };
+    }
+
+    if (this.eip6963Providers && this.eip6963Providers.length === 1) {
+      return this.connectEvmWithProvider(this.eip6963Providers[0]);
+    }
+
+    if (!window.ethereum) {
+      return { ok: false, error: 'No EVM Web3 wallet detected (install MetaMask, Coinbase, or Rabby)' };
+    }
+
+    return this.connectEvmWithProvider({ provider: window.ethereum, info: { name: 'Injected Web3', icon: 'https://assets.relay.link/icons/8453/light.png' } });
   }
 
   /**
@@ -825,6 +1015,7 @@ export class SwapService {
       if (pubkey) {
         this.wallets.solana = pubkey;
         this.saveWallets();
+        await this.getTokenBalance();
         return { ok: true, address: pubkey };
       }
       return { ok: false, error: 'Could not obtain Solana public key' };
@@ -842,23 +1033,57 @@ export class SwapService {
   }
 
   disconnectWallet(type) {
-    if (type === 'evm') this.wallets.evm = null;
+    if (type === 'evm') {
+      this.wallets.evm = null;
+      this.wallets.evmProviderInfo = null;
+      this.selectedEvmProvider = null;
+    }
     if (type === 'solana') this.wallets.solana = null;
+    this.state.userBalance = null;
     this.saveWallets();
   }
 
   recordSwap(swapRecord) {
     const list = this.loadRecentSwaps();
-    list.unshift({
-      ...swapRecord,
-      timestamp: Date.now(),
-      id: swapRecord.requestId || `tx_${Date.now()}`
-    });
+    const existingIdx = list.findIndex(s => s.id === swapRecord.id || (swapRecord.requestId && s.requestId === swapRecord.requestId));
+    if (existingIdx > -1) {
+      list[existingIdx] = { ...list[existingIdx], ...swapRecord, updatedAt: Date.now() };
+    } else {
+      list.unshift({
+        ...swapRecord,
+        timestamp: swapRecord.timestamp || Date.now(),
+        id: swapRecord.id || swapRecord.requestId || `tx_${Date.now()}`
+      });
+    }
     const trimmed = list.slice(0, 30);
     this.state.recentSwaps = trimmed;
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('trinity_recent_swaps', JSON.stringify(trimmed));
+      }
+    } catch {}
+    return trimmed;
+  }
+
+  updateSwap(id, updates) {
+    const list = this.loadRecentSwaps();
+    const idx = list.findIndex(s => s.id === id || s.requestId === id);
+    if (idx > -1) {
+      list[idx] = { ...list[idx], ...updates, updatedAt: Date.now() };
+      this.state.recentSwaps = list;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('trinity_recent_swaps', JSON.stringify(list));
+        }
+      } catch {}
+    }
+  }
+
+  clearRecentSwaps() {
+    this.state.recentSwaps = [];
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('trinity_recent_swaps');
       }
     } catch {}
   }
@@ -877,7 +1102,14 @@ export class SwapService {
    * Real Intent Status Poller (api.relay.link/intents/status)
    */
   async pollIntentStatus(checkEndpoint, requestId, onProgress, maxAttempts = 120) {
-    const endpoint = checkEndpoint.startsWith('http') ? checkEndpoint : `${this.apiBase}${checkEndpoint}`;
+    let endpoint;
+    if (typeof checkEndpoint === 'string' && checkEndpoint.startsWith('https://api.relay.link')) {
+      endpoint = checkEndpoint;
+    } else if (typeof checkEndpoint === 'string' && checkEndpoint.startsWith('/')) {
+      endpoint = `${this.apiBase}${checkEndpoint}`;
+    } else {
+      endpoint = `${this.apiBase}/intents/status?requestId=${encodeURIComponent(requestId)}`;
+    }
     let attempts = 0;
 
     return new Promise((resolve) => {
@@ -1031,6 +1263,22 @@ export class SwapService {
                 params: [txParams]
               });
 
+              // Record in transaction history
+              this.recordSwap({
+                id: quote.requestId || originTxHash,
+                requestId: quote.requestId,
+                fromChainId: fromChain.id,
+                toChainId: toChain.id,
+                fromToken: this.state.fromToken,
+                toToken: this.state.toToken,
+                fromAmount: this.state.fromAmount,
+                expectedOutput: quote.details?.currencyOut?.amountFormatted || '...',
+                status: 'processing',
+                originTxHash,
+                originExplorer: `${fromChain.explorer}/tx/${originTxHash}`,
+                timestamp: Date.now()
+              });
+
               if (onProgress) {
                 onProgress({
                   step: i + 1,
@@ -1081,8 +1329,18 @@ export class SwapService {
             }
           });
 
+          const finalStatus = pollRes.ok ? 'success' : (pollRes.refunded ? 'refunded' : 'failed');
+          this.updateSwap(quote.requestId || originTxHash, {
+            status: finalStatus,
+            destinationTxHash: pollRes.destinationTxHash,
+            destExplorer: pollRes.destinationTxHash ? `${toChain.explorer}/tx/${pollRes.destinationTxHash}` : null
+          });
+
+          // Refresh user balance in background
+          setTimeout(() => this.getTokenBalance(), 3000);
+
           return {
-            ok: true,
+            ok: pollRes.ok,
             txHash: originTxHash,
             destinationTxHash: pollRes.destinationTxHash,
             requestId: quote.requestId,
@@ -1205,6 +1463,22 @@ export class SwapService {
           throw new Error('No signature returned from Solana wallet.');
         }
 
+        // Record in transaction history
+        this.recordSwap({
+          id: quote.requestId || solTxSignature,
+          requestId: quote.requestId,
+          fromChainId: fromChain.id,
+          toChainId: toChain.id,
+          fromToken: this.state.fromToken,
+          toToken: this.state.toToken,
+          fromAmount: this.state.fromAmount,
+          expectedOutput: quote.details?.currencyOut?.amountFormatted || '...',
+          status: 'processing',
+          originTxHash: solTxSignature,
+          originExplorer: `https://solscan.io/tx/${solTxSignature}`,
+          timestamp: Date.now()
+        });
+
         if (onProgress) {
           onProgress({
             step: 2,
@@ -1236,8 +1510,18 @@ export class SwapService {
           }
         });
 
+        const finalStatus = pollRes.ok ? 'success' : (pollRes.refunded ? 'refunded' : 'failed');
+        this.updateSwap(quote.requestId || solTxSignature, {
+          status: finalStatus,
+          destinationTxHash: pollRes.destinationTxHash,
+          destExplorer: pollRes.destinationTxHash ? `${toChain.explorer}/tx/${pollRes.destinationTxHash}` : null
+        });
+
+        // Refresh user balance in background
+        setTimeout(() => this.getTokenBalance(), 3000);
+
         return {
-          ok: true,
+          ok: pollRes.ok,
           txHash: solTxSignature,
           destinationTxHash: pollRes.destinationTxHash,
           requestId: quote.requestId,

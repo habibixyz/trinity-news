@@ -94,7 +94,7 @@ const server = http.createServer((req, res) => {
   if (urlPath === '/api/refresh-edition') {
     res.writeHead(200, {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': req.headers.origin && req.headers.origin.includes('localhost') ? req.headers.origin : 'http://localhost:' + PORT
     });
     if (isGenerating) {
       res.end(JSON.stringify({ status: 'in-progress', message: 'Generation already running' }));
@@ -109,7 +109,7 @@ const server = http.createServer((req, res) => {
   if (urlPath === '/api/edition-status') {
     res.writeHead(200, {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': req.headers.origin && req.headers.origin.includes('localhost') ? req.headers.origin : 'http://localhost:' + PORT
     });
     try {
       const meta = fs.existsSync(META_FILE) ? JSON.parse(fs.readFileSync(META_FILE, 'utf8')) : null;
@@ -123,12 +123,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  let safePath = path.normalize(urlPath).replace(/^(\.\.[\/\\])+/, '');
-  if (safePath === '/' || safePath === '\\') {
-    safePath = '/index.html';
-  }
+  // Strict Path Traversal Mitigation: Ensure filePath stays strictly within ROOT_DIR
+  const normalizedPath = path.normalize(decodeURIComponent(urlPath));
+  const relativePath = (normalizedPath === '/' || normalizedPath === '\\' || normalizedPath === '.') ? '/index.html' : normalizedPath;
+  const filePath = path.resolve(ROOT_DIR, '.' + path.sep + relativePath.replace(/^[\/\\]+/, ''));
 
-  const filePath = path.join(__dirname, safePath);
+  if (!filePath.startsWith(ROOT_DIR + path.sep) && filePath !== ROOT_DIR && filePath !== path.join(ROOT_DIR, 'index.html')) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('403 Forbidden: Path traversal attempt blocked');
+    return;
+  }
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
@@ -141,7 +145,8 @@ const server = http.createServer((req, res) => {
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
     res.writeHead(200, {
       'Content-Type': contentType,
-      'Access-Control-Allow-Origin': '*'
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'SAMEORIGIN'
     });
     res.end(data);
   });

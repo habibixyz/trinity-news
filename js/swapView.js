@@ -1,11 +1,19 @@
 /**
- * TRINITY MARKETS — Minimalist Relay Bridge Desk
+ * TRINITY MARKETS — Institutional Relay Bridge & Execution Desk
  * Production Interface for api.relay.link
+ *
+ * Fully Integrated Features:
+ * - Real-time On-Chain Swaps (Base & Solana SVM)
+ * - Live Wallet Balances & Intelligent Gas-Buffered MAX Auto-Fill
+ * - Real-Time High Price Impact & Spread Warnings
+ * - Recent Swaps Transaction History Drawer with Live Explorer Proofs
+ * - EIP-6963 Multi-Wallet Discovery & Selector Modal
+ * - Direct Fiat-to-Crypto Onramp (Robinhood Connect & Coinbase Pay)
  */
 
 import { swapService, SUPPORTED_CHAINS, CURATED_TOKENS } from './swapService.js';
 
-let activeCardTab = 'bridge'; // 'bridge' | 'deposit'
+let activeCardTab = 'bridge'; // 'bridge' | 'deposit' | 'onramp'
 let showSlippageDrawer = false;
 let showAdvancedOptions = false;
 let showRouteDetails = false;
@@ -16,6 +24,39 @@ let quoteCountdownTimer = null;
 let quoteCountdownSeconds = 15;
 let depositPollInterval = null;
 
+// Fiat Onramp State
+let onrampState = {
+  provider: 'robinhood', // 'robinhood' | 'coinbase'
+  targetAsset: 'ETH',
+  targetChainId: 8453,
+  fiatAmount: 100
+};
+
+/**
+ * Security: Strict HTML escaping to prevent DOM XSS from external token/wallet inputs
+ */
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Security: Sanitize outbound URLs to prevent javascript: pseudo-protocol execution
+ */
+function sanitizeUrl(url) {
+  if (!url || typeof url !== 'string') return '#';
+  const clean = url.trim();
+  if (clean.startsWith('https://') || clean.startsWith('http://') || clean.startsWith('#')) {
+    return clean;
+  }
+  return '#';
+}
+
 export function renderSwapDesk(container, appInstance) {
   if (!container) return;
 
@@ -25,6 +66,7 @@ export function renderSwapDesk(container, appInstance) {
   const fromToken = state.fromToken;
   const toToken = state.toToken;
   const wallets = swapService.wallets;
+  const recentSwaps = state.recentSwaps || [];
 
   container.innerHTML = `
       <!-- Slim Desk Header -->
@@ -35,11 +77,19 @@ export function renderSwapDesk(container, appInstance) {
         </div>
 
         <div class="relay-wallets-cluster">
+          <!-- History Drawer Trigger -->
+          <button class="relay-history-btn" id="relayHistoryBtn" title="Transaction Settlement History">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Activity${recentSwaps.length ? ` <span class="history-count-badge">${recentSwaps.length}</span>` : ''}</span>
+          </button>
+
+          <!-- EVM Wallet Button -->
           <button class="relay-wallet-btn ${wallets.evm ? 'connected' : ''}" id="relayEvmWalletBtn" title="${wallets.evm ? 'Connected: ' + wallets.evm : 'Connect EVM Wallet'}">
-            <img src="https://assets.relay.link/icons/8453/light.png" width="13" height="13" style="border-radius: 50%;">
+            <img src="${wallets.evmProviderInfo?.icon || 'https://assets.relay.link/icons/8453/light.png'}" width="13" height="13" style="border-radius: 50%;">
             <span>${wallets.evm ? truncateAddress(wallets.evm) : 'Connect EVM'}</span>
           </button>
 
+          <!-- Solana Wallet Button -->
           <button class="relay-wallet-btn ${wallets.solana ? 'connected' : ''}" id="relaySolanaWalletBtn" title="${wallets.solana ? 'Connected: ' + wallets.solana : 'Connect Solana Wallet'}">
             <img src="https://upload.wikimedia.org/wikipedia/en/b/b9/Solana_logo.png" width="13" height="13" style="border-radius: 50%;">
             <span>${wallets.solana ? truncateAddress(wallets.solana) : 'Connect Solana'}</span>
@@ -54,6 +104,7 @@ export function renderSwapDesk(container, appInstance) {
           <div class="relay-tabs-left">
             <button class="relay-tab-btn ${activeCardTab === 'bridge' ? 'active' : ''}" id="tabBridgeBtn">Instant Bridge</button>
             <button class="relay-tab-btn ${activeCardTab === 'deposit' ? 'active' : ''}" id="tabDepositBtn">Deposit Address</button>
+            <button class="relay-tab-btn ${activeCardTab === 'onramp' ? 'active' : ''}" id="tabOnrampBtn">Buy Crypto (Fiat)</button>
           </div>
 
           <button class="relay-settings-btn" id="relaySettingsBtn" title="Slippage settings">
@@ -75,7 +126,7 @@ export function renderSwapDesk(container, appInstance) {
 
         <!-- Card Body -->
         <div class="relay-card-body">
-          ${activeCardTab === 'bridge' ? renderBridgeWorkspace(state, fromChain, toChain, fromToken, toToken) : renderDepositWorkspace(state, fromChain, toChain, fromToken, toToken)}
+          ${activeCardTab === 'bridge' ? renderBridgeWorkspace(state, fromChain, toChain, fromToken, toToken) : (activeCardTab === 'deposit' ? renderDepositWorkspace(state, fromChain, toChain, fromToken, toToken) : renderOnrampWorkspace(state, wallets))}
         </div>
       </main>
 
@@ -105,6 +156,39 @@ export function renderSwapDesk(container, appInstance) {
 
         <div class="relay-token-list" id="relayTokenListContainer">
           <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- EIP-6963 Multi-Wallet Discovery Modal -->
+    <div class="relay-modal-backdrop hidden" id="relayWalletModalBackdrop">
+      <div class="relay-modal" style="max-width: 380px;">
+        <div class="relay-modal-header">
+          <span class="relay-modal-title">Select Web3 EVM Wallet</span>
+          <button class="relay-modal-close" id="relayCloseWalletModal">&times;</button>
+        </div>
+        <div class="relay-wallet-providers-list" id="relayWalletProvidersList">
+          <!-- Populated with discovered EIP-6963 providers -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Swaps Transaction History Modal -->
+    <div class="relay-modal-backdrop hidden" id="relayHistoryModalBackdrop">
+      <div class="relay-modal" style="max-width: 460px;">
+        <div class="relay-modal-header">
+          <div>
+            <span class="relay-modal-title">Activity &amp; Settlement Proofs</span>
+            <span style="display: block; font-size: 0.72rem; color: #64748b; margin-top: 0.15rem;">Live on-chain solver execution receipts</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            ${recentSwaps.length ? `<button class="relay-clear-history-btn" id="relayClearHistoryBtn">Clear</button>` : ''}
+            <button class="relay-modal-close" id="relayCloseHistoryModal">&times;</button>
+          </div>
+        </div>
+
+        <div class="relay-history-body" id="relayHistoryListContainer">
+          ${renderRecentSwapsList(recentSwaps)}
         </div>
       </div>
     </div>
@@ -150,6 +234,16 @@ export function renderSwapDesk(container, appInstance) {
 
   attachEventHandlers(container, appInstance);
 
+  // Trigger balance fetch in background if wallet connected
+  if (wallets[fromChain.vmType]) {
+    swapService.getTokenBalance().then(bal => {
+      if (bal !== null) {
+        const balEl = container.querySelector('#relayBalanceDisplay');
+        if (balEl) balEl.innerText = `${bal} ${fromToken.symbol}`;
+      }
+    });
+  }
+
   // Trigger initial quote fetch if not already populated
   if (!state.quote && !state.isFetchingQuote && state.fromAmount) {
     fetchQuote(container, appInstance);
@@ -191,12 +285,15 @@ function renderBridgeWorkspace(state, fromChain, toChain, fromToken, toToken) {
     rateDisplay = `1 ${fromToken.symbol} = ${rate} ${toToken.symbol}`;
   }
 
+  const userBalance = state.userBalance !== null ? `${state.userBalance} ${fromToken.symbol}` : (state.isFetchingBalance ? '...' : '--');
+  const priceImpact = state.priceImpact || quote?.priceImpactPct || 0;
+
   return `
     <!-- Pay Input Box -->
     <div class="relay-input-box">
       <div class="relay-input-header">
         <span>You pay</span>
-        <span>Balance: -- <button class="relay-max-btn" id="relayMaxAmountBtn">MAX</button></span>
+        <span>Balance: <span id="relayBalanceDisplay">${userBalance}</span> <button class="relay-max-btn" id="relayMaxAmountBtn">MAX</button></span>
       </div>
 
       <div class="relay-input-row">
@@ -256,6 +353,14 @@ function renderBridgeWorkspace(state, fromChain, toChain, fromToken, toToken) {
       </div>
     </div>
 
+    <!-- Price Impact Warning Banner -->
+    ${priceImpact >= 2.5 ? `
+      <div class="relay-warning-banner ${priceImpact >= 10 ? 'critical' : 'warning'}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>${priceImpact >= 10 ? '🚨 Severe Price Impact' : '⚠️ Elevated Price Impact'}: <strong>-${priceImpact.toFixed(1)}%</strong> spread due to pair liquidity depth.</span>
+      </div>
+    ` : ''}
+
     <!-- Collapsible Advanced Options -->
     <div class="relay-options-panel">
       <div class="relay-option-row">
@@ -292,6 +397,10 @@ function renderBridgeWorkspace(state, fromChain, toChain, fromToken, toToken) {
           <div class="relay-detail-item">
             <span>Estimated Network Gas</span>
             <span class="relay-detail-val">${gasFeeUsd}</span>
+          </div>
+          <div class="relay-detail-item">
+            <span>Price Impact</span>
+            <span class="relay-detail-val" style="color: ${priceImpact > 2 ? '#ef4444' : '#10b981'};">${priceImpact.toFixed(2)}%</span>
           </div>
           <div class="relay-detail-item">
             <span>Expected Settlement Speed</span>
@@ -380,10 +489,135 @@ function renderDepositWorkspace(state, fromChain, toChain, fromToken, toToken) {
   `;
 }
 
+function renderOnrampWorkspace(state, wallets) {
+  const defaultDest = onrampState.targetChainId === 792703809 ? (wallets.solana || '') : (wallets.evm || '');
+
+  return `
+    <div class="relay-onramp-card">
+      <div class="relay-onramp-header">
+        <span class="relay-onramp-badge">INSTITUTIONAL FIAT ONRAMP</span>
+        <p class="relay-onramp-desc">Purchase crypto with credit card, Apple Pay, or bank transfer directly into your destination wallet.</p>
+      </div>
+
+      <!-- Provider Toggle -->
+      <div class="relay-onramp-providers">
+        <button class="onramp-provider-card ${onrampState.provider === 'robinhood' ? 'active' : ''}" data-provider="robinhood">
+          <div class="onramp-provider-title">
+            <span style="color:#00c805; font-weight:800;">●</span> Robinhood Connect
+          </div>
+          <div class="onramp-provider-sub">0% promotional fee • Fast US &amp; Global</div>
+        </button>
+        <button class="onramp-provider-card ${onrampState.provider === 'coinbase' ? 'active' : ''}" data-provider="coinbase">
+          <div class="onramp-provider-title">
+            <span style="color:#0052ff; font-weight:800;">●</span> Coinbase Pay
+          </div>
+          <div class="onramp-provider-sub">Instant debit &amp; bank transfer</div>
+        </button>
+      </div>
+
+      <!-- Target Asset Picker -->
+      <div style="margin: 1.25rem 0 0.75rem; text-align: left;">
+        <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 0.4rem;">Select Asset to Purchase</label>
+        <div class="relay-onramp-assets">
+          <button class="onramp-asset-btn ${onrampState.targetAsset === 'ETH' ? 'active' : ''}" data-asset="ETH" data-cid="8453">
+            <img src="https://assets.relay.link/icons/1/light.png" width="14" height="14">
+            <span>ETH (Base)</span>
+          </button>
+          <button class="onramp-asset-btn ${onrampState.targetAsset === 'SOL' ? 'active' : ''}" data-asset="SOL" data-cid="792703809">
+            <img src="https://upload.wikimedia.org/wikipedia/en/b/b9/Solana_logo.png" width="14" height="14">
+            <span>SOL (Solana)</span>
+          </button>
+          <button class="onramp-asset-btn ${onrampState.targetAsset === 'USDC' ? 'active' : ''}" data-asset="USDC" data-cid="8453">
+            <img src="https://assets.relay.link/icons/8453/currencies/0x833589fcd6edb6e08f4c7c32d4f71b54bda02913/light.png" width="14" height="14">
+            <span>USDC (Base)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Amount Selector & Quick Chips -->
+      <div style="margin: 1rem 0; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <label style="font-size: 0.75rem; color: #94a3b8;">Amount in USD</label>
+          <span style="font-size: 0.72rem; color: #64748b;">Min $20 &bull; Max $10,000</span>
+        </div>
+        <div class="relay-input-box" style="margin-bottom: 0.5rem;">
+          <div class="relay-input-row">
+            <span style="font-size: 1.25rem; font-weight: 700; color: #64748b; margin-right: 0.35rem;">$</span>
+            <input type="number" class="relay-amount-input" id="onrampAmountInput" value="${onrampState.fiatAmount}" placeholder="100" min="20">
+            <span style="font-family: var(--font-mono); font-size: 0.82rem; color: #94a3b8;">USD</span>
+          </div>
+        </div>
+        <div class="onramp-amount-chips">
+          <button class="onramp-chip ${onrampState.fiatAmount === 50 ? 'active' : ''}" data-amt="50">$50</button>
+          <button class="onramp-chip ${onrampState.fiatAmount === 100 ? 'active' : ''}" data-amt="100">$100</button>
+          <button class="onramp-chip ${onrampState.fiatAmount === 250 ? 'active' : ''}" data-amt="250">$250</button>
+          <button class="onramp-chip ${onrampState.fiatAmount === 500 ? 'active' : ''}" data-amt="500">$500</button>
+        </div>
+      </div>
+
+      <!-- Receiving Address -->
+      <div style="margin: 1rem 0 1.25rem; text-align: left;">
+        <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 0.4rem;">Receiving Wallet Address</label>
+        <input type="text" class="relay-recipient-input" id="onrampDestAddress" value="${defaultDest}" placeholder="Connect wallet or paste recipient address...">
+      </div>
+
+      <button class="relay-submit-btn" id="launchOnrampBtn">
+        Launch ${onrampState.provider === 'robinhood' ? 'Robinhood Connect' : 'Coinbase Pay'} &nearr;
+      </button>
+    </div>
+  `;
+}
+
+function renderRecentSwapsList(recentSwaps) {
+  if (!recentSwaps || !recentSwaps.length) {
+    return `
+      <div class="relay-history-empty">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <p style="margin: 0.75rem 0 0.25rem; color: #cbd5e1; font-weight: 600; font-size: 0.9rem;">No transactions yet</p>
+        <span style="color: #64748b; font-size: 0.75rem;">Your on-chain settlement receipts will appear here automatically.</span>
+      </div>
+    `;
+  }
+
+  return recentSwaps.map(s => {
+    const fromChain = swapService.getChain(s.fromChainId);
+    const toChain = swapService.getChain(s.toChainId);
+    const statusClass = s.status === 'success' ? 'success' : (s.status === 'processing' ? 'processing' : 'refunded');
+    const statusLabel = s.status === 'success' ? 'SETTLED' : (s.status === 'processing' ? 'PROCESSING' : (s.status || 'DONE').toUpperCase());
+    const dateFormatted = new Date(s.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const originLink = s.originTxHash ? sanitizeUrl(s.originExplorer || `${fromChain.explorer}/tx/${s.originTxHash}`) : null;
+    const destLink = s.destinationTxHash ? sanitizeUrl(s.destExplorer || `${toChain.explorer}/tx/${s.destinationTxHash}`) : null;
+
+    return `
+      <div class="relay-history-item">
+        <div class="relay-history-top">
+          <div class="relay-history-pair">
+            <span style="font-weight: 700; color: #fff;">${escapeHTML(s.fromAmount)} ${escapeHTML(s.fromToken?.symbol || 'ETH')}</span>
+            <span style="color: #64748b; margin: 0 0.35rem;">&rarr;</span>
+            <span style="font-weight: 700; color: #10b981;">${escapeHTML(s.expectedOutput)} ${escapeHTML(s.toToken?.symbol || 'SOL')}</span>
+          </div>
+          <span class="relay-status-pill ${statusClass}">${escapeHTML(statusLabel)}</span>
+        </div>
+
+        <div class="relay-history-sub">
+          <span>${escapeHTML(fromChain.displayName)} &rarr; ${escapeHTML(toChain.displayName)} &bull; ${escapeHTML(dateFormatted)}</span>
+          <div class="relay-history-links">
+            ${originLink ? `<a href="${originLink}" target="_blank" rel="noopener noreferrer" class="relay-hist-link">Origin Tx &nearr;</a>` : ''}
+            ${destLink ? `<a href="${destLink}" target="_blank" rel="noopener noreferrer" class="relay-hist-link" style="color: #10b981;">Dest Tx &nearr;</a>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 function attachEventHandlers(container, appInstance) {
   // Navigation Tabs
   const tabBridge = container.querySelector('#tabBridgeBtn');
   const tabDeposit = container.querySelector('#tabDepositBtn');
+  const tabOnramp = container.querySelector('#tabOnrampBtn');
+
   if (tabBridge) {
     tabBridge.onclick = () => {
       activeCardTab = 'bridge';
@@ -395,6 +629,36 @@ function attachEventHandlers(container, appInstance) {
     tabDeposit.onclick = () => {
       activeCardTab = 'deposit';
       swapService.state.useDepositAddress = true;
+      renderSwapDesk(container, appInstance);
+    };
+  }
+  if (tabOnramp) {
+    tabOnramp.onclick = () => {
+      activeCardTab = 'onramp';
+      renderSwapDesk(container, appInstance);
+    };
+  }
+
+  // History Drawer Handler
+  const historyBtn = container.querySelector('#relayHistoryBtn');
+  const historyModal = container.querySelector('#relayHistoryModalBackdrop');
+  const closeHistoryBtn = container.querySelector('#relayCloseHistoryModal');
+  const clearHistoryBtn = container.querySelector('#relayClearHistoryBtn');
+
+  if (historyBtn && historyModal) {
+    historyBtn.onclick = () => historyModal.classList.remove('hidden');
+  }
+  if (closeHistoryBtn && historyModal) {
+    closeHistoryBtn.onclick = () => historyModal.classList.add('hidden');
+  }
+  if (historyModal) {
+    historyModal.onclick = (e) => {
+      if (e.target === historyModal) historyModal.classList.add('hidden');
+    };
+  }
+  if (clearHistoryBtn) {
+    clearHistoryBtn.onclick = () => {
+      swapService.clearRecentSwaps();
       renderSwapDesk(container, appInstance);
     };
   }
@@ -416,17 +680,23 @@ function attachEventHandlers(container, appInstance) {
     };
   });
 
-  // Wallet Connection Buttons
+  // Wallet Connection Handlers (with EIP-6963 Modal Check)
   const evmBtn = container.querySelector('#relayEvmWalletBtn');
   if (evmBtn) {
     evmBtn.onclick = async () => {
       if (swapService.wallets.evm) {
         swapService.disconnectWallet('evm');
+        renderSwapDesk(container, appInstance);
+        fetchQuote(container, appInstance);
       } else {
-        await swapService.connectEvmWallet();
+        const res = await swapService.connectEvmWallet();
+        if (res.needsSelection && res.providers?.length) {
+          openWalletSelectorModal(res.providers, container, appInstance);
+        } else {
+          renderSwapDesk(container, appInstance);
+          fetchQuote(container, appInstance);
+        }
       }
-      renderSwapDesk(container, appInstance);
-      fetchQuote(container, appInstance);
     };
   }
 
@@ -452,13 +722,33 @@ function attachEventHandlers(container, appInstance) {
     };
   }
 
-  // Max Button
+  // Max Button with intelligent gas buffering
   const maxBtn = container.querySelector('#relayMaxAmountBtn');
   if (maxBtn) {
     maxBtn.onclick = () => {
-      swapService.state.fromAmount = '1.0';
-      if (amountInput) amountInput.value = '1.0';
-      fetchQuote(container, appInstance);
+      const state = swapService.state;
+      const balStr = state.userBalance;
+      if (balStr && !isNaN(parseFloat(balStr)) && parseFloat(balStr) > 0) {
+        const balNum = parseFloat(balStr);
+        let maxVal;
+        const fromToken = state.fromToken;
+        const isNative = !fromToken.address || fromToken.address === '0x0000000000000000000000000000000000000000' || fromToken.symbol === 'SOL';
+        if (isNative) {
+          // Reserve gas buffer: 0.003 for ETH, 0.01 for SOL
+          const gasBuffer = fromToken.symbol === 'SOL' ? 0.01 : 0.003;
+          maxVal = Math.max(0, balNum - gasBuffer).toFixed(4);
+        } else {
+          maxVal = balNum.toString();
+        }
+        swapService.state.fromAmount = maxVal;
+        if (amountInput) amountInput.value = maxVal;
+        fetchQuote(container, appInstance);
+      } else {
+        // Fallback default
+        swapService.state.fromAmount = '0.1';
+        if (amountInput) amountInput.value = '0.1';
+        fetchQuote(container, appInstance);
+      }
     };
   }
 
@@ -573,6 +863,55 @@ function attachEventHandlers(container, appInstance) {
     };
   }
 
+  // Onramp Workspace Event Handlers
+  container.querySelectorAll('.onramp-provider-card').forEach(card => {
+    card.onclick = () => {
+      onrampState.provider = card.dataset.provider;
+      renderSwapDesk(container, appInstance);
+    };
+  });
+
+  container.querySelectorAll('.onramp-asset-btn').forEach(btn => {
+    btn.onclick = () => {
+      onrampState.targetAsset = btn.dataset.asset;
+      onrampState.targetChainId = Number(btn.dataset.cid);
+      renderSwapDesk(container, appInstance);
+    };
+  });
+
+  container.querySelectorAll('.onramp-chip').forEach(chip => {
+    chip.onclick = () => {
+      onrampState.fiatAmount = Number(chip.dataset.amt);
+      renderSwapDesk(container, appInstance);
+    };
+  });
+
+  const onrampAmtInput = container.querySelector('#onrampAmountInput');
+  if (onrampAmtInput) {
+    onrampAmtInput.oninput = (e) => {
+      onrampState.fiatAmount = Number(e.target.value) || 50;
+    };
+  }
+
+  const launchOnrampBtn = container.querySelector('#launchOnrampBtn');
+  if (launchOnrampBtn) {
+    launchOnrampBtn.onclick = () => {
+      const destAddr = container.querySelector('#onrampDestAddress')?.value.trim();
+      if (!destAddr) {
+        alert('Please connect a wallet or enter a destination wallet address.');
+        return;
+      }
+
+      if (onrampState.provider === 'robinhood') {
+        const url = `https://connect.robinhood.com/?asset=${encodeURIComponent(onrampState.targetAsset)}&walletAddress=${encodeURIComponent(destAddr)}&fiatAmount=${encodeURIComponent(onrampState.fiatAmount)}`;
+        window.open(url, '_blank', 'width=480,height=720,noopener,noreferrer');
+      } else {
+        const url = `https://pay.coinbase.com/buy/select-asset?destinationWallets=${encodeURIComponent(JSON.stringify([{ address: destAddr, assets: [onrampState.targetAsset] }]))}&presetFiatAmount=${encodeURIComponent(onrampState.fiatAmount)}`;
+        window.open(url, '_blank', 'width=480,height=720,noopener,noreferrer');
+      }
+    };
+  }
+
   // Execute Bridge Button
   const execBtn = container.querySelector('#relayExecuteBtn');
   if (execBtn) {
@@ -589,9 +928,55 @@ function attachEventHandlers(container, appInstance) {
     };
   }
 
+  const closeWalletModal = container.querySelector('#relayCloseWalletModal');
+  const walletBackdrop = container.querySelector('#relayWalletModalBackdrop');
+  if (closeWalletModal && walletBackdrop) {
+    closeWalletModal.onclick = () => walletBackdrop.classList.add('hidden');
+    walletBackdrop.onclick = (e) => {
+      if (e.target === walletBackdrop) walletBackdrop.classList.add('hidden');
+    };
+  }
+
   const execClose = container.querySelector('#relayExecCloseBtn');
   const execBackdrop = container.querySelector('#relayExecModalBackdrop');
   if (execClose) execClose.onclick = () => execBackdrop.classList.add('hidden');
+}
+
+function openWalletSelectorModal(providers, container, appInstance) {
+  const modal = document.getElementById('relayWalletModalBackdrop');
+  const list = document.getElementById('relayWalletProvidersList');
+  if (!modal || !list) return;
+
+  list.innerHTML = providers.map(p => {
+    const safeIcon = sanitizeUrl(p.info.icon);
+    const safeName = escapeHTML(p.info.name || 'Web3 Wallet');
+    const safeRdns = escapeHTML(p.info.rdns || 'EIP-6963 Injected Provider');
+    const safeUuid = escapeHTML(p.info.uuid || '');
+
+    return `
+      <div class="relay-wallet-provider-item" data-uuid="${safeUuid}">
+        <img src="${safeIcon}" width="28" height="28" style="border-radius: 6px;" onerror="this.src='https://assets.relay.link/icons/8453/light.png'">
+        <div style="flex: 1; text-align: left;">
+          <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">${safeName}</div>
+          <div style="font-size: 0.72rem; color: #64748b;">${safeRdns}</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('.relay-wallet-provider-item').forEach(item => {
+    item.onclick = async () => {
+      const uuid = item.dataset.uuid;
+      const selected = providers.find(p => p.info.uuid === uuid);
+      modal.classList.add('hidden');
+      await swapService.connectEvmWithProvider(selected);
+      renderSwapDesk(container, appInstance);
+      fetchQuote(container, appInstance);
+    };
+  });
+
+  modal.classList.remove('hidden');
 }
 
 function debounceQuote(container, appInstance) {
@@ -670,6 +1055,8 @@ async function executeBridgeFlow(container, appInstance) {
   stepWallet.className = 'relay-step-circle active';
   stepDeposit.className = 'relay-step-circle';
   stepFill.className = 'relay-step-circle';
+  originLink.rel = 'noopener noreferrer';
+  destLink.rel = 'noopener noreferrer';
   originLink.classList.add('hidden');
   destLink.classList.add('hidden');
 
@@ -684,7 +1071,7 @@ async function executeBridgeFlow(container, appInstance) {
       stepDeposit.className = 'relay-step-circle active';
       descDeposit.innerText = 'Transaction mined. Waiting for Relay solver sweep...';
       if (progress.txHash) {
-        originLink.href = swapService.getChain(swapService.state.fromChainId).explorer + '/tx/' + progress.txHash;
+        originLink.href = sanitizeUrl(swapService.getChain(swapService.state.fromChainId).explorer + '/tx/' + progress.txHash);
         originLink.classList.remove('hidden');
       }
     } else if (progress.action === 'Solver Settlement' || progress.action === 'Relay Solver Mesh') {
@@ -693,7 +1080,7 @@ async function executeBridgeFlow(container, appInstance) {
       stepFill.className = 'relay-step-circle active';
       descFill.innerText = progress.text || 'Solver fronting funds on destination...';
       if (progress.destinationTxHash) {
-        destLink.href = swapService.getChain(swapService.state.toChainId).explorer + '/tx/' + progress.destinationTxHash;
+        destLink.href = sanitizeUrl(swapService.getChain(swapService.state.toChainId).explorer + '/tx/' + progress.destinationTxHash);
         destLink.classList.remove('hidden');
       }
     }
@@ -705,7 +1092,7 @@ async function executeBridgeFlow(container, appInstance) {
     title.innerText = 'Bridge Complete!';
     subtitle.innerText = 'Funds have been delivered on destination.';
     if (result.destExplorerUrl) {
-      destLink.href = result.destExplorerUrl;
+      destLink.href = sanitizeUrl(result.destExplorerUrl);
       destLink.classList.remove('hidden');
     }
   } else if (result.cancelled) {
@@ -750,21 +1137,30 @@ async function populateTokenList(term, chainId, container, appInstance) {
     return;
   }
 
-  listEl.innerHTML = tokens.map(t => `
-    <div class="relay-token-row" data-sym="${t.symbol}" data-addr="${t.address}" data-cid="${t.chainId || chainId}">
+  listEl.innerHTML = tokens.map(t => {
+    const safeLogo = sanitizeUrl(t.logoURI || 'https://assets.relay.link/icons/1/light.png');
+    const safeSym = escapeHTML(t.symbol);
+    const safeName = escapeHTML(t.name);
+    const safeAddr = escapeHTML(t.address);
+    const safePrice = escapeHTML(t.priceUsd || '');
+    const chainName = escapeHTML(swapService.getChain(t.chainId || chainId).displayName);
+
+    return `
+    <div class="relay-token-row" data-sym="${safeSym}" data-addr="${safeAddr}" data-cid="${t.chainId || chainId}">
       <div class="relay-token-left">
-        <img class="relay-row-icon" src="${t.logoURI || 'https://assets.relay.link/icons/1/light.png'}" onerror="this.src='https://assets.relay.link/icons/1/light.png'">
+        <img class="relay-row-icon" src="${safeLogo}" onerror="this.src='https://assets.relay.link/icons/1/light.png'">
         <div>
-          <div class="relay-row-sym">${t.symbol}</div>
-          <div class="relay-row-sub">${t.name}</div>
+          <div class="relay-row-sym">${safeSym}</div>
+          <div class="relay-row-sub">${safeName}</div>
         </div>
       </div>
       <div style="text-align: right;">
-        <div style="font-family: var(--font-mono); font-size: 0.78rem; color: #fff;">${t.priceUsd || ''}</div>
-        <div style="font-size: 0.65rem; color: #64748b;">${swapService.getChain(t.chainId || chainId).displayName}</div>
+        <div style="font-family: var(--font-mono); font-size: 0.78rem; color: #fff;">${safePrice}</div>
+        <div style="font-size: 0.65rem; color: #64748b;">${chainName}</div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   listEl.querySelectorAll('.relay-token-row').forEach(row => {
     row.onclick = () => {
