@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-16T14:09:56.133Z",
-  "formattedDate": "Monday, November 16, 2026",
-  "articleCount": 68,
+  "generatedAt": "2026-11-17T01:14:39.001Z",
+  "formattedDate": "Tuesday, November 17, 2026",
+  "articleCount": 65,
   "trendingCount": 19,
   "desks": [
     {
@@ -46,7 +46,7 @@
     },
     {
       "desk": "Banking & Global Fintech",
-      "count": 5
+      "count": 2
     },
     {
       "desk": "Policy & Rate Cuts",
