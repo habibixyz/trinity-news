@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-20T14:31:29.117Z",
+  "generatedAt": "2026-11-20T23:29:32.491Z",
   "formattedDate": "Friday, November 20, 2026",
-  "articleCount": 65,
+  "articleCount": 68,
   "trendingCount": 19,
   "desks": [
     {
@@ -34,7 +34,7 @@
     },
     {
       "desk": "Private Equity & VC",
-      "count": 2
+      "count": 5
     },
     {
       "desk": "Global Trade & Geopolitics",
