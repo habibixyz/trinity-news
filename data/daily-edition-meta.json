@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-25T01:42:07.663Z",
+  "generatedAt": "2026-11-25T16:21:17.322Z",
   "formattedDate": "Wednesday, November 25, 2026",
-  "articleCount": 68,
+  "articleCount": 65,
   "trendingCount": 19,
   "desks": [
     {
@@ -50,7 +50,7 @@
     },
     {
       "desk": "Policy & Rate Cuts",
-      "count": 5
+      "count": 2
     }
   ],
   "generator": "TRINITY Autonomous Real-World Ingestion & Synthesis Engine v3.0"
